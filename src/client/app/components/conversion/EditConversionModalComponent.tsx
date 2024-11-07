@@ -7,13 +7,14 @@ import { useState } from 'react';
 import { FormattedMessage } from 'react-intl';
 import { Button, Col, Container, FormGroup, Input, Label, Modal, ModalBody, ModalFooter, ModalHeader, Row } from 'reactstrap';
 import TooltipHelpComponent from '../TooltipHelpComponent';
-import { conversionsApi } from '../../redux/api/conversionsApi';
+import { conversionsApi, selectConversionsDetails } from '../../redux/api/conversionsApi';
 import { selectUnitDataById } from '../../redux/api/unitsApi';
 import { useAppSelector } from '../../redux/reduxHooks';
 import '../../styles/modal.css';
 import { tooltipBaseStyle } from '../../styles/modalStyle';
 import { TrueFalseType } from '../../types/items';
 import { ConversionData } from '../../types/redux/conversions';
+import { UnitType } from '../../types/redux/units';
 import translate from '../../utils/translate';
 import ConfirmActionModalComponent from '../ConfirmActionModalComponent';
 import TooltipMarkerComponent from '../TooltipMarkerComponent';
@@ -37,6 +38,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 	const [editConversion] = conversionsApi.useEditConversionMutation();
 	const [deleteConversion] = conversionsApi.useDeleteConversionMutation();
 	const unitDataById = useAppSelector(selectUnitDataById);
+	const allConversions = useAppSelector(selectConversionsDetails);
 
 	// Set existing conversion values
 	const values = { ...props.conversion };
@@ -58,9 +60,29 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 	};
 	/* End State */
 
+	const checkState = () => {
+		const source = unitDataById[state.sourceId];
+		let count = 0;
+		let warn = false;
+		// Check if the sourceId is a unit of type 'meter' and if it's the only one used
+		if (source.typeOfUnit === UnitType.meter) {
+			for (const conversion of Object.values(allConversions)) {
+				if (conversion.sourceId === source.id) {
+					count++;
+				}
+			}
+			if (count < 2) {
+				setShowOrphanWarningModal(true);
+				warn = true;
+			}
+		}
+		return warn;
+	};
+
 	/* Confirm Delete Modal */
 	// Separate from state comment to keep everything related to the warning confirmation modal together
 	const [showDeleteConfirmationModal, setShowDeleteConfirmationModal] = useState(false);
+	const [showOrphanWarningModal, setShowOrphanWarningModal] = useState(false);
 	const deleteConfirmationMessage = translate('conversion.delete.conversion') + ' [' + props.conversionIdentifier + '] ?';
 	const deleteConfirmText = translate('conversion.delete.conversion');
 	const deleteRejectText = translate('cancel');
@@ -74,8 +96,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 	const handleDeleteConfirmationModalOpen = () => {
 		// Hide the edit modal
 		handleClose();
-		// Show the warning modal
-		setShowDeleteConfirmationModal(true);
+		checkState();
 	};
 	const handleDeleteConversion = () => {
 		// Closes the warning modal
@@ -86,6 +107,15 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 		deleteConversion({ sourceId: state.sourceId, destinationId: state.destinationId });
 
 	};
+	const handleOrphanWarningClose = () => {
+		setShowOrphanWarningModal(false);
+		handleShow();
+	};
+	const handleOrphanWarningContinue = () => {
+		setShowOrphanWarningModal(false);
+		setShowDeleteConfirmationModal(true);
+	};
+
 	/* End Confirm Delete Modal */
 
 	// Reset the state to default values
@@ -142,6 +172,22 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 				actionFunction={handleDeleteConversion}
 				actionConfirmText={deleteConfirmText}
 				actionRejectText={deleteRejectText} />
+			<Modal isOpen={showOrphanWarningModal} toggle={handleOrphanWarningClose}>
+				<ModalHeader>
+					<FormattedMessage id="Warning" />
+				</ModalHeader>
+				<ModalBody>
+					<p>{translate('conversion.orphan.warning')}</p>
+				</ModalBody>
+				<ModalFooter>
+					<Button color='primary' onClick={handleOrphanWarningContinue}>
+						<FormattedMessage id="continue" />
+					</Button>
+					<Button color="secondary" onClick={handleOrphanWarningClose}>
+						<FormattedMessage id="cancel" />
+					</Button>
+				</ModalFooter>
+			</Modal>
 			<Modal isOpen={props.show} toggle={props.handleClose}>
 				<ModalHeader>
 					<FormattedMessage id="conversion.edit.conversion" />

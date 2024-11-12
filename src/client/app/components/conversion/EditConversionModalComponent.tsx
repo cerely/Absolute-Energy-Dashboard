@@ -8,6 +8,7 @@ import { FormattedMessage } from 'react-intl';
 import { Button, Col, Container, FormGroup, Input, Label, Modal, ModalBody, ModalFooter, ModalHeader, Row } from 'reactstrap';
 import TooltipHelpComponent from '../TooltipHelpComponent';
 import { conversionsApi, selectConversionsDetails } from '../../redux/api/conversionsApi';
+import { selectMeterDataById } from '../../redux/api/metersApi';
 import { selectUnitDataById } from '../../redux/api/unitsApi';
 import { useAppSelector } from '../../redux/reduxHooks';
 import '../../styles/modal.css';
@@ -38,6 +39,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 	const [editConversion] = conversionsApi.useEditConversionMutation();
 	const [deleteConversion] = conversionsApi.useDeleteConversionMutation();
 	const unitDataById = useAppSelector(selectUnitDataById);
+	const meterDataById = useAppSelector(selectMeterDataById);
 	const allConversions = useAppSelector(selectConversionsDetails);
 
 	// Set existing conversion values
@@ -61,22 +63,31 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 	/* End State */
 
 	const checkState = () => {
-		const source = unitDataById[state.sourceId];
+		let msg = '';
 		let count = 0;
-		let warn = false;
-		// Check if the sourceId is a unit of type 'meter' and if it's the only one used
+		let cancel = false;
+		let save = false;
+		const source = unitDataById[state.sourceId];
 		if (source.typeOfUnit === UnitType.meter) {
 			for (const conversion of Object.values(allConversions)) {
 				if (conversion.sourceId === source.id) {
 					count++;
 				}
 			}
-			if (count < 2) {
-				setShowOrphanWarningModal(true);
-				warn = true;
+			if (count === 1) {
+				msg += `Deleting this meter conversion will orphan ${unitDataById[state.destinationId].name}\n`;
+				save = window.confirm(msg);
+			} else {
+				msg += 'Deleting this meter conversion will make the following meters ungraphable:\n';
+				for (const meterId of Object.values(meterDataById)) {
+					if (meterId.unitId == source.id) {
+						msg +=  `${meterId.name}\n`;
+						cancel = true;
+					}
+				}
+				save = window.confirm(msg);
 			}
 		}
-		return warn;
 	};
 
 	/* Confirm Delete Modal */

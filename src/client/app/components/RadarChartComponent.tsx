@@ -24,7 +24,6 @@ import { lineUnitLabel } from '../utils/graphics';
 import translate from '../utils/translate';
 import SpinnerComponent from './SpinnerComponent';
 import {setHelpLayout} from '../utils/setLayout';
-//import {setThreeDLayout} from '../utils/setLayout';
 
 /**
  * @returns radar plotly component

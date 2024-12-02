@@ -7,6 +7,7 @@ import { utc } from 'moment';
 import { PlotRelayoutEvent } from 'plotly.js';
 import * as React from 'react';
 import Plot from 'react-plotly.js';
+import { Icons } from 'plotly.js';
 import { TimeInterval } from '../../../common/TimeInterval';
 import { updateSliderRange } from '../redux/actions/extraActions';
 import { readingsApi, stableEmptyBarReadings } from '../redux/api/readingsApi';
@@ -17,8 +18,8 @@ import { selectBarUnitLabel, selectIsRaw } from '../redux/selectors/plotlyDataSe
 import { selectSelectedLanguage } from '../redux/slices/appStateSlice';
 import { selectBarStacking } from '../redux/slices/graphSlice';
 import Locales from '../types/locales';
-import translate from '../utils/translate';
 import SpinnerComponent from './SpinnerComponent';
+import { useTranslate } from '../redux/componentHooks';
 
 /**
  * Passes the current redux state of the barchart, and turns it into props for the React
@@ -27,6 +28,7 @@ import SpinnerComponent from './SpinnerComponent';
  * @returns Plotly BarChart
  */
 export default function BarChartComponent() {
+	const translate = useTranslate();
 	const dispatch = useAppDispatch();
 	const { barMeterDeps, barGroupDeps } = useAppSelector(selectPlotlyBarDeps);
 	const { meterArgs, groupArgs, meterShouldSkip, groupShouldSkip } = useAppSelector(selectBarChartQueryArgs);
@@ -52,6 +54,13 @@ export default function BarChartComponent() {
 	const raw = useAppSelector(selectIsRaw);
 	const unitLabel = useAppSelector(selectBarUnitLabel);
 
+	// Display Plotly Buttons Feature
+	// The number of items in defaultButtons and advancedButtons must differ as discussed below
+	const defaultButtons: Plotly.ModeBarDefaultButtons[] = ['zoom2d', 'pan2d', 'select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d',
+		'resetScale2d'];
+	const advancedButtons: Plotly.ModeBarDefaultButtons[] = ['select2d', 'lasso2d', 'autoScale2d', 'resetScale2d'];
+	// Manage button states with useState
+	const	[listOfButtons, setListOfButtons] = React.useState(defaultButtons);
 
 	// useQueryHooks for data fetching
 	const datasets: Partial<Plotly.PlotData>[] = meterReadings.concat(groupData);
@@ -81,6 +90,7 @@ export default function BarChartComponent() {
 				data={datasets}
 				style={{ width: '100%', height: '100%', minHeight: '700px' }}
 				layout={{
+					margin: { t: 0, b: 0, r: 3 }, // Eliminate top, bottom, and right margins
 					barmode: (barStacking ? 'stack' : 'group'),
 					bargap: 0.2, // Gap between different times of readings
 					bargroupgap: 0.1, // Gap between different meter's readings under the same timestamp
@@ -100,7 +110,17 @@ export default function BarChartComponent() {
 				}}
 				config={{
 					responsive: true,
-					displayModeBar: false,
+					displayModeBar: true,
+					modeBarButtonsToRemove: listOfButtons,
+					modeBarButtonsToAdd: [{
+						name: 'toggle-options',
+						title: translate('toggle.options'),
+						icon: Icons.pencil,
+						click: function () {
+							// # of items must differ so the length can tell which list of buttons is being set
+							setListOfButtons(listOfButtons.length === defaultButtons.length ? advancedButtons : defaultButtons); // Update the state
+						}
+					}],
 					// Current Locale
 					locale,
 					// Available Locales

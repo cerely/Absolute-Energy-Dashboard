@@ -11,6 +11,7 @@ import { selectUnitDataById } from '../redux/api/unitsApi';
 import { useAppSelector } from '../redux/reduxHooks';
 import { selectThreeDQueryArgs } from '../redux/selectors/chartQuerySelectors';
 import { selectThreeDComponentInfo } from '../redux/selectors/threeDSelectors';
+import { selectScalingFromEntity } from '../redux/selectors/entitySelectors';
 import { selectGraphState } from '../redux/slices/graphSlice';
 import { ThreeDReading } from '../types/readings';
 import { GraphState, MeterOrGroup } from '../types/redux/graph';
@@ -18,12 +19,16 @@ import { GroupDataByID } from '../types/redux/groups';
 import { MeterDataByID } from '../types/redux/meters';
 import { UnitDataById } from '../types/redux/units';
 import { isValidThreeDInterval, roundTimeIntervalForFetch } from '../utils/dateRangeCompatibility';
-import { AreaUnitType, getAreaUnitConversion } from '../utils/getAreaUnitConversion';
+import { AreaUnitType } from '../utils/getAreaUnitConversion';
 import { lineUnitLabel } from '../utils/graphics';
+// Both translates are used since some are in the function component where the React Hook is okay
+// and some are in other functions where the older method is needed.
+import { useTranslate } from '../redux/componentHooks';
 import translate from '../utils/translate';
 import SpinnerComponent from './SpinnerComponent';
 import ThreeDPillComponent from './ThreeDPillComponent';
 import Plot from 'react-plotly.js';
+import { Icons } from 'plotly.js';
 import { selectSelectedLanguage } from '../redux/slices/appStateSlice';
 import Locales from '../types/locales';
 import {setHelpLayout} from '../utils/setLayout';
@@ -33,6 +38,7 @@ import {setHelpLayout} from '../utils/setLayout';
  * @returns 3D Plotly 3D Surface Graph
  */
 export default function ThreeDComponent() {
+	const translate = useTranslate();
 	const { args, shouldSkipQuery } = useAppSelector(selectThreeDQueryArgs);
 	const { data, isFetching } = readingsApi.endpoints.threeD.useQuery(args, { skip: shouldSkipQuery });
 	const meterDataById = useAppSelector(selectMeterDataById);
@@ -41,13 +47,18 @@ export default function ThreeDComponent() {
 	const graphState = useAppSelector(selectGraphState);
 	const locale = useAppSelector(selectSelectedLanguage);
 	const { meterOrGroupID, meterOrGroupName, isAreaCompatible } = useAppSelector(selectThreeDComponentInfo);
-
-
 	// Initialize Default values
 	const threeDData = data;
 	let layout = {};
 	let dataToRender = null;
 
+	// Display Plotly Buttons Feature
+	// The number of items in defaultButtons and advancedButtons must differ as discussed below
+	const defaultButtons: Plotly.ModeBarDefaultButtons[] = ['zoom2d', 'pan2d', 'select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d',
+		'resetScale2d'];
+	const advancedButtons: Plotly.ModeBarDefaultButtons[] = ['resetCameraDefault3d'];
+	// Manage button states with useState
+	const	[listOfButtons, setListOfButtons] = React.useState(defaultButtons);
 
 	if (!meterOrGroupID) {
 		// No selected Meters
@@ -81,7 +92,17 @@ export default function ThreeDComponent() {
 					layout={layout as Plotly.Layout}
 					config={{
 						responsive: true,
-						displayModeBar: false,
+						displayModeBar: true,
+						modeBarButtonsToRemove: listOfButtons,
+						modeBarButtonsToAdd: [{
+							name: 'more-options',
+							title: translate('toggle.options'),
+							icon: Icons.pencil,
+							click: function () {
+								// # of items must differ so the length can tell which list of buttons is being set
+								setListOfButtons(listOfButtons.length === defaultButtons.length ? advancedButtons : defaultButtons); // Update the state
+							}
+						}],
 						// Current Locale
 						locale,
 						// Available Locales
@@ -111,6 +132,7 @@ function formatThreeDData(
 	graphState: GraphState,
 	unitDataById: UnitDataById
 ) {
+
 	// Initialize Plotly Data
 	const xDataToRender: string[] = [];
 	const yDataToRender: string[] = [];
@@ -135,23 +157,13 @@ function formatThreeDData(
 			// The rate will be 1 if it is per hour (since state readings are per hour) or no rate scaling so no change.
 			const rateScaling = needsRateScaling ? currentSelectedRate.rate : 1;
 
-			const meterArea = meterOrGroup === MeterOrGroup.meters ?
-				meterDataById[selectedMeterOrGroupID].area
+			const entity = meterOrGroup === MeterOrGroup.meters ?
+				meterDataById[selectedMeterOrGroupID]
 				:
-				groupDataById[selectedMeterOrGroupID].area;
+				groupDataById[selectedMeterOrGroupID];
+			const scaling = selectScalingFromEntity(entity, graphState.selectedAreaUnit, graphState.areaNormalization, rateScaling);
 
-			const areaUnit = meterOrGroup === MeterOrGroup.meters ?
-				meterDataById[selectedMeterOrGroupID].areaUnit
-				:
-				groupDataById[selectedMeterOrGroupID].areaUnit;
-
-			// We either don't care about area, or we do in which case there needs to be a nonzero area.
-			if (!graphState.areaNormalization || (meterArea > 0 && areaUnit != AreaUnitType.none)) {
-				// Convert the meter area into the proper unit if normalizing by area or use 1 if not so won't change reading values.
-				const areaScaling = graphState.areaNormalization ?
-					meterArea * getAreaUnitConversion(areaUnit, graphState.selectedAreaUnit) : 1;
-				// Divide areaScaling into the rate so have complete scaling factor for readings.
-				const scaling = rateScaling / areaScaling;
+			if (!graphState.areaNormalization || (entity.area > 0 && entity.areaUnit != AreaUnitType.none)) {
 				zDataToRender = data.zData.map(day => day.map(reading => reading === null ? null : reading * scaling));
 			}
 		}

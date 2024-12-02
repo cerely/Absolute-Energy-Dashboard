@@ -43,7 +43,7 @@ const generalLimiter = rateLimit({
 	standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
 	legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 	// If rate limit is 10, OED won't load and bad things will happen
-	message: async(req,res) => {	
+	message: async (req, res) => {
 		const string = `
 			<h1 style='text-align:center'>
 				You have been rate limited by your OED site.
@@ -77,7 +77,7 @@ const generalLimiter = rateLimit({
 	}
 });
 // Apply the limit to overall requests
-const app = express().use(generalLimiter); 
+const app = express().use(generalLimiter);
 
 // This is limiting 3D-Graphic
 const threeDLimiter = rateLimit({

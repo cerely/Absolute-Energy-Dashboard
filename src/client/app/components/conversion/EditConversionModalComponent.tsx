@@ -91,7 +91,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 			if (count === 1) {
 				msg += `Deleting this meter conversion will orphan ${unitDataById[state.destinationId].name}.\n`;
 			} else {
-				msg += 'Deleting this meter conversion will make the following meters ungraphable:\n';
+				msg += 'Deleting this meter conversion will make the following meter(s) ungraphable:\n';
 				for (const meterId of Object.values(meterDataById)) {
 					if (meterId.unitId == source.id) {
 						msg += `${meterId.name}\n`;

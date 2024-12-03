@@ -53,7 +53,7 @@ export default function ConfirmActionModalComponent(props: ConfirmActionModalCom
 					{props.actionTitle ? props.actionTitle : translate('confirm.action')}
 				</ModalHeader>
 				{/* Passed message is already translated */}
-				<ModalBody>{props.actionConfirmMessage}</ModalBody>
+				<ModalBody><p className="confirmation-message">{props.actionConfirmMessage}</p></ModalBody>
 				<ModalFooter>
 					{/* Do not execute the actionFunction and instead close the action confirm modal */}
 					<Button color='secondary' onClick={handleClose}>

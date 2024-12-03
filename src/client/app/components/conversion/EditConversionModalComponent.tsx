@@ -85,12 +85,10 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 		const dest = unitDataById[state.destinationId];
 		let msg = '';
 		let cancel = false;
-		let save = false;
 		if (source.typeOfUnit === UnitType.meter) {
 			const count = getConversionCount(source, conversionDetails);
 			if (count === 1) {
-				msg += `Deleting this meter conversion will orphan ${unitDataById[state.destinationId].name}\n`;
-				save = window.confirm(msg);
+				msg += `Deleting this meter conversion will orphan ${unitDataById[state.destinationId].name}.\n`;
 			} else {
 				msg += 'Deleting this meter conversion will make the following meters ungraphable:\n';
 				for (const meterId of Object.values(meterDataById)) {
@@ -99,39 +97,45 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 						cancel = true;
 					}
 				}
-				save = window.confirm(msg);
 			}
 		} else if (source.typeOfUnit === UnitType.suffix) {
 			const count = getConversionCount(source, conversionDetails);
 			if (count === 1) {
 				msg += `Deleting this suffix conversion will disable use of ${source.name}.\n`;
-				save = window.confirm(msg);
 			}
 		} else if (source.typeOfUnit === UnitType.unit && dest.typeOfUnit === UnitType.unit) {
-			const destCount = getConversionCount (dest, conversionDetails);
+			const destCount = getConversionCount(dest, conversionDetails);
 			if (destCount === 1) {
-				msg += `Deleting this unit conversion will orphan ${unitDataById[state.destinationId].name}\n`;
-				save = window.confirm(msg);
+				msg += `Deleting this unit conversion will orphan ${unitDataById[state.destinationId].name}.\n`;
 			}
 			if (state.bidirectional) {
 				const sourceCount = getConversionCount(source, conversionDetails);
 				if (sourceCount === 1) {
-					msg += `Deleting this unit conversion will orphan ${unitDataById[state.destinationId].name}\n`;
-					save = window.confirm(msg);
+					msg += `Deleting this unit conversion will orphan ${unitDataById[state.destinationId].name}.\n`;
 				}
 			}
 			if (msg = '') {
-				msg += 'Deleting this unit conversion between two units of type unit will have consequences\n';
-				save = window.confirm(msg);
+				msg += 'Deleting this unit conversion between two units of type unit will have consequences.\n';
 			}
+		}
+
+		if (msg === '') {
+			handleDeleteConfirmationModalOpen();
+		} else if (cancel) {
+			setDeleteConfirmationMessage(msg + 'This conversion cannot be deleted.\n');
+			handleCancelModalOpen();
+		} else {
+			setDeleteConfirmationMessage(msg + 'Are you sure you want to ' + deleteConfirmationMessage);
+			handleDeleteConfirmationModalOpen();
 		}
 	};
 
 	/* Confirm Delete Modal */
 	// Separate from state comment to keep everything related to the warning confirmation modal together
 	const [showDeleteConfirmationModal, setShowDeleteConfirmationModal] = useState(false);
-	const [showOrphanWarningModal, setShowOrphanWarningModal] = useState(false);
-	const deleteConfirmationMessage = translate('conversion.delete.conversion') + ' [' + props.conversionIdentifier + '] ?';
+	const [showCancelModal, setShowCancelModal] = useState(false);
+	const [deleteConfirmationMessage, setDeleteConfirmationMessage] = useState(
+		translate('conversion.delete.conversion') + ' [' + props.conversionIdentifier + '] ?');
 	const deleteConfirmText = translate('conversion.delete.conversion');
 	const deleteRejectText = translate('cancel');
 	// The first two handle functions below are required because only one Modal can be open at a time (properly)
@@ -144,7 +148,8 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 	const handleDeleteConfirmationModalOpen = () => {
 		// Hide the edit modal
 		handleClose();
-		checkState();
+		// Show the warning modal
+		setShowDeleteConfirmationModal(true);
 	};
 	const handleDeleteConversion = () => {
 		// Closes the warning modal
@@ -153,15 +158,23 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 
 		// Delete the conversion using the state object, it should only require the source and destination ids set
 		deleteConversion({ sourceId: state.sourceId, destinationId: state.destinationId });
-
 	};
-	const handleOrphanWarningClose = () => {
-		setShowOrphanWarningModal(false);
+
+	const handleCancelModalClose = () => {
+		// Hide the warning modal
+		setShowCancelModal(false);
+		// Show the edit modal
 		handleShow();
 	};
-	const handleOrphanWarningContinue = () => {
-		setShowOrphanWarningModal(false);
-		setShowDeleteConfirmationModal(true);
+	const handleCancelModalOpen = () => {
+		// Hide the edit modal
+		handleClose();
+		// Show the warning modal
+		setShowCancelModal(true);
+	};
+	const handleCancel = () => {
+		// Closes the warning modal
+		setShowCancelModal(false);
 	};
 
 	/* End Confirm Delete Modal */
@@ -220,22 +233,13 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 				actionFunction={handleDeleteConversion}
 				actionConfirmText={deleteConfirmText}
 				actionRejectText={deleteRejectText} />
-			<Modal isOpen={showOrphanWarningModal} toggle={handleOrphanWarningClose}>
-				<ModalHeader>
-					<FormattedMessage id="Warning" />
-				</ModalHeader>
-				<ModalBody>
-					<p>{translate('conversion.orphan.warning')}</p>
-				</ModalBody>
-				<ModalFooter>
-					<Button color='primary' onClick={handleOrphanWarningContinue}>
-						<FormattedMessage id="continue" />
-					</Button>
-					<Button color="secondary" onClick={handleOrphanWarningClose}>
-						<FormattedMessage id="cancel" />
-					</Button>
-				</ModalFooter>
-			</Modal>
+			<ConfirmActionModalComponent
+				show={showCancelModal}
+				actionConfirmMessage={deleteConfirmationMessage}
+				handleClose={handleCancelModalClose}
+				actionFunction={handleCancel}
+				actionConfirmText={deleteRejectText}
+				actionRejectText={deleteRejectText} />
 			<Modal isOpen={props.show} toggle={props.handleClose}>
 				<ModalHeader>
 					<FormattedMessage id="conversion.edit.conversion" />
@@ -331,7 +335,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 					</Container>
 				</ModalBody>
 				<ModalFooter>
-					<Button color='danger' onClick={handleDeleteConfirmationModalOpen}>
+					<Button color='danger' onClick={checkState}>
 						<FormattedMessage id="conversion.delete.conversion" />
 					</Button>
 					{/* Hides the modal */}

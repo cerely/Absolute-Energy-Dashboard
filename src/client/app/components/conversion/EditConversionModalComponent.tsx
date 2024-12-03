@@ -115,7 +115,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 					msg += `Deleting this unit conversion will orphan ${unitDataById[state.destinationId].name}.\n`;
 				}
 			}
-			if (msg = '') {
+			if (msg === '') {
 				msg += 'Deleting this unit conversion between two units of type unit will have consequences.\n';
 			}
 		}

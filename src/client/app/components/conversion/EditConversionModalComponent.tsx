@@ -125,7 +125,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 			setDeleteConfirmationMessage(msg + 'This conversion cannot be deleted.\n');
 			handleCancelModalOpen();
 		} else {
-			setDeleteConfirmationMessage(msg + 'Are you sure you want to ' + deleteConfirmationMessage);
+			setDeleteConfirmationMessage(msg + deleteConfirmationMessage);
 			handleDeleteConfirmationModalOpen();
 		}
 	};
@@ -239,7 +239,8 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 				handleClose={handleCancelModalClose}
 				actionFunction={handleCancel}
 				actionConfirmText={deleteRejectText}
-				actionRejectText={deleteRejectText} />
+				actionRejectText={deleteRejectText}
+				forceCancel={true} />
 			<Modal isOpen={props.show} toggle={props.handleClose}>
 				<ModalHeader>
 					<FormattedMessage id="conversion.edit.conversion" />

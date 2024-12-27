@@ -106,13 +106,13 @@ async function readMamacData(meter, conn) {
 		// Previous Mamac values should not change.
 		shouldUpdate = false,
 		conditionSet = {
-			minVal: minVal,
-			maxVal: maxVal,
+			minVal: meter.minVal,
+			maxVal: meter.maxVal,
 			minDate: meter.minDate,
 			maxDate: meter.maxDate,
 			threshold: readingGap,
 			maxError: meter.maxError,
-			disableChecks: disableChecks
+			disableChecks: meter.disableChecks
 		},
 		conn = conn,
 		honorDst = false,

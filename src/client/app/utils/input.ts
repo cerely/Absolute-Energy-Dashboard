@@ -6,6 +6,7 @@ import { GPSPoint } from './calibration';
 import { UnitData, DisplayableType, UnitRepresentType, UnitType, UnitDataById, DisableChecksType } from '../types/redux/units';
 import translate from './translate';
 import { LanguageTypes } from 'types/redux/i18n';
+import { MAX_VAL, MIN_VAL } from '../redux/selectors/adminSelectors';
 /**
  * get string value from GPSPoint or null.
  * @param gps GPS point to get value from and can be null
@@ -83,8 +84,8 @@ export const NoUnit: UnitData = {
 	displayable: DisplayableType.none,
 	preferredDisplay: false,
 	note: '',
-	minVal: -Infinity,
-	maxVal: Infinity,
+	minVal: MIN_VAL,
+	maxVal: MAX_VAL,
 	disableChecks: DisableChecksType.reject_none
 };
 

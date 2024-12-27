@@ -15,7 +15,7 @@ import { tooltipBaseStyle } from '../../styles/modalStyle';
 import { unitsApi } from '../../redux/api/unitsApi';
 import { useTranslate } from '../../redux/componentHooks';
 import { showSuccessNotification, showErrorNotification } from '../../utils/notifications';
-import { MAX_VAL,  MIN_VAL } from '../../redux/selectors/adminSelectors';
+import { MAX_VAL, MIN_VAL } from '../../redux/selectors/adminSelectors';
 
 /**
  * Defines the create unit modal form
@@ -78,7 +78,7 @@ export default function CreateUnitModalComponent() {
 	const [validUnit, setValidUnit] = useState(false);
 	useEffect(() => {
 		setValidUnit(state.name !== '' && state.secInRate > 0 &&
-			(state.typeOfUnit !== UnitType.suffix || state.suffix !== ''));
+			(state.typeOfUnit !== UnitType.suffix || state.suffix !== '') && (state?.minVal < MIN_VAL || state?.minVal > state?.maxVal));
 	}, [state.name, state.secInRate, state.typeOfUnit, state.suffix]);
 	/* End State */
 
@@ -274,7 +274,7 @@ export default function CreateUnitModalComponent() {
 					<Row xs='1' lg='2'>
 						{/* minVal input */}
 						<Col><FormGroup>
-							<Label for='minVal'>{translate('minVal')}</Label>
+							<Label for='minVal'>{translate('min.val')}</Label>
 							<Input id='minVal' name='minVal' type='number'
 								onChange={e => handleNumberChange(e)}
 								min={MIN_VAL}
@@ -287,7 +287,7 @@ export default function CreateUnitModalComponent() {
 						</FormGroup></Col>
 						{/* maxVal input */}
 						<Col><FormGroup>
-							<Label for='maxVal'>{translate('maxVal')}</Label>
+							<Label for='maxVal'>{translate('max.value')}</Label>
 							<Input id='maxVal' name='maxVal' type='number'
 								onChange={e => handleNumberChange(e)}
 								min={state.minVal}
@@ -302,7 +302,7 @@ export default function CreateUnitModalComponent() {
 					<Row xs='1' lg='2'>
 						{/* DisableChecks input */}
 						<Col><FormGroup>
-							<Label for='disableChecks'>{translate('disableChecks')}</Label>
+							<Label for='disableChecks'>{translate('disable.checks')}</Label>
 							<Input id='disableChecks' name='disableChecks' type='select'
 								onChange={e => handleStringChange(e)}
 								defaultValue={state.disableChecks}>

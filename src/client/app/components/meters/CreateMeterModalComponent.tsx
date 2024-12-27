@@ -561,7 +561,7 @@ export default function CreateMeterModalComponent(props: CreateMeterModalProps):
 					<Row xs='1' lg='2'>
 						{/* minVal input */}
 						<Col><FormGroup>
-							<Label for='minVal'>{translate('minVal')}</Label>
+							<Label for='minVal'>{translate('min.value')}</Label>
 							<Input id='minVal' name='minVal' type='number'
 								onChange={e => handleNumberChange(e)}
 								min={MIN_VAL}
@@ -574,7 +574,7 @@ export default function CreateMeterModalComponent(props: CreateMeterModalProps):
 						</FormGroup></Col>
 						{/* maxVal input */}
 						<Col><FormGroup>
-							<Label for='maxVal'>{translate('maxVal')}</Label>
+							<Label for='maxVal'>{translate('max.value')}</Label>
 							<Input id='maxVal' name='maxVal' type='number'
 								onChange={e => handleNumberChange(e)}
 								min={meterDetails.minVal}
@@ -634,7 +634,7 @@ export default function CreateMeterModalComponent(props: CreateMeterModalProps):
 							</FormFeedback>
 						</FormGroup></Col>
 						<Col><FormGroup>
-							<Label for='disableChecks'>{translate('disableChecks')}</Label>
+							<Label for='disableChecks'>{translate('disable.checks')}</Label>
 							<Input id='disableChecks' name='disableChecks' type='select'
 								value={meterDetails.disableChecks}
 								onChange={e => handleStringChange(e)}>

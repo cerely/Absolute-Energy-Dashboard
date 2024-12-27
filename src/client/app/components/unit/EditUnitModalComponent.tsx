@@ -425,7 +425,7 @@ export default function EditUnitModalComponent(props: EditUnitModalComponentProp
 					<Row xs='1' lg='2'>
 						{/* minVal input */}
 						<Col><FormGroup>
-							<Label for='minVal'>{translate('minVal')}</Label>
+							<Label for='minVal'>{translate('min.value')}</Label>
 							<Input id='minVal' name='minVal' type='number'
 								onChange={e => handleNumberChange(e)}
 								min={MIN_VAL}
@@ -438,7 +438,7 @@ export default function EditUnitModalComponent(props: EditUnitModalComponentProp
 						</FormGroup></Col>
 						{/* maxVal input */}
 						<Col><FormGroup>
-							<Label for='maxVal'>{translate('maxVal')}</Label>
+							<Label for='maxVal'>{translate('max.value')}</Label>
 							<Input id='maxVal' name='maxVal' type='number'
 								onChange={e => handleNumberChange(e)}
 								min={state.minVal}
@@ -453,7 +453,7 @@ export default function EditUnitModalComponent(props: EditUnitModalComponentProp
 					<Row xs='1' lg='2'>
 						{/* DisableChecks input */}
 						<Col><FormGroup>
-							<Label for='disableChecks'>{translate('disableChecks')}</Label>
+							<Label for='disableChecks'>{translate('disable.checks')}</Label>
 							<Input id='disableChecks' name='disableChecks' type='select'
 								onChange={e => handleStringChange(e)}
 								value={state.disableChecks}>

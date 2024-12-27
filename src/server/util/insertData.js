@@ -427,13 +427,13 @@ async function insertMeters(metersToInsert, conn) {
 					await conn.none(query);
 				}
 				const conditionSet = {
-					minVal: minVal,
-					maxVal: maxVal,
+					minVal: meter.minVal,
+					maxVal: meter.maxVal,
 					minDate: meter.minDate,
 					maxDate: meter.maxDate,
 					threshold: meter.readingGap,
 					maxError: meter.maxError,
-					disableChecks: disableChecks
+					disableChecks: meter.disableChecks
 				}
 				if (meterData.file) {
 					// load data from file

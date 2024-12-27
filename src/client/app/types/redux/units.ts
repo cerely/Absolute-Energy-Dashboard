@@ -41,19 +41,6 @@ export interface UnitData {
 	disableChecks: DisableChecksType;
 }
 
-// export interface UnitEditData {
-// 	id: number;
-// 	name: string;
-// 	identifier: string;
-// 	unitRepresent: string;
-// 	secInRate: number;
-// 	typeOfUnit: UnitType;
-// 	suffix: string;
-// 	displayable: DisplayableType;
-// 	preferredDisplay: boolean;
-// 	note: string;
-// }
-
 export interface UnitDataById extends Record<number, UnitData> { }
 
 export interface UnitsState {

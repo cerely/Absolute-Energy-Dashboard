@@ -18,8 +18,11 @@ class Unit {
 	 * @param {*} displayable Can be none, all, or admin. Restrict the type of user that can see this unit.
 	 * @param {*} preferredDisplay True if this unit is always displayed. If not, the user needs to ask to see (for future enhancement).
 	 * @param {*} note Note about this unit.
+	 * @param minVal inclusive minimum acceptable reading value (won't be rejected)
+	 * @param maxVal inclusive maximum acceptable reading value (won't be rejected)
+	 * @param disableChecks disable checks on meter for conditionSet 
 	 */
-	constructor(id, name, identifier = name, unitRepresent, secInRate = 3600, typeOfUnit, suffix = '', displayable, preferredDisplay, note, minVal, maxVal, disableChecks) {
+	constructor(id, name, identifier = name, unitRepresent, secInRate = 3600, typeOfUnit, suffix = '', displayable, preferredDisplay, note, minVal = Number.MIN_SAFE_INTEGER, maxVal = Number.MAX_SAFE_INTEGER, disableChecks = Unit.disableChecksType.REJECT_NONE) {
 		this.id = id;
 		this.name = name;
 		this.identifier = identifier;

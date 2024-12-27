@@ -5,6 +5,7 @@
 const express = require('express');
 const Preferences = require('../models/Preferences');
 const { log } = require('../log');
+const Meter = require('../models/Meter');
 const adminAuthenticator = require('./authenticator').adminAuthMiddleware;
 const validate = require('jsonschema').validate;
 const { getConnection } = require('../db');
@@ -86,7 +87,9 @@ router.post('/', async (req, res) => {
 					type: 'number'
 				},
 				defaultMeterDisableChecks: {
-					type: 'boolean'
+					type: 'string',
+					minLength: 1,
+					enum: Object.values(Meter.disableChecksType)
 				},
 				defaultHelpUrl: {
 					type: 'string'

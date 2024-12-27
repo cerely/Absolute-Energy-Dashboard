@@ -67,16 +67,18 @@ export default function EditMeterModalComponent(props: EditMeterModalComponentPr
 
 	const [validMeter, setValidMeter] = useState(isValidMeter(localMeterEdits));
 
+	// Ensure `minVal`, `maxVal` and `disableChecks` are set based on the unit on load
 	useEffect(() => {
 		const selectedUnit = unitDataById[localMeterEdits.unitId];
 		if (selectedUnit) {
 			setLocalMeterEdits(edits => ({
 				...edits,
 				minVal: selectedUnit.minVal,
-				maxVal: selectedUnit.maxVal
+				maxVal: selectedUnit.maxVal,
+				disableChecks: selectedUnit.disableChecks
 			}));
 		}
-	}, [localMeterEdits.unitId, unitDataById]);
+	}, [localMeterEdits.unitId]);
 
 	useEffect(() => { setValidMeter(isValidMeter(localMeterEdits)); }, [localMeterEdits]);
 	/* End State */
@@ -624,7 +626,7 @@ export default function EditMeterModalComponent(props: EditMeterModalComponentPr
 					<Row xs='1' lg='2'>
 						{/* minVal input */}
 						<Col><FormGroup>
-							<Label for='minVal'>{translate('minVal')}</Label>
+							<Label for='minVal'>{translate('min.value')}</Label>
 							<Input
 								id='minVal'
 								name='minVal'
@@ -640,7 +642,7 @@ export default function EditMeterModalComponent(props: EditMeterModalComponentPr
 						</FormGroup></Col>
 						{/* maxVal input */}
 						<Col><FormGroup>
-							<Label for='maxVal'>{translate('maxVal')}</Label>
+							<Label for='maxVal'>{translate('max.value')}</Label>
 							<Input
 								id='maxVal'
 								name='maxVal'
@@ -712,7 +714,7 @@ export default function EditMeterModalComponent(props: EditMeterModalComponentPr
 						</FormGroup></Col>
 						{/* DisableChecks input */}
 						<Col><FormGroup>
-							<Label for='disableChecks'>{translate('disableChecks')}</Label>
+							<Label for='disableChecks'>{translate('disable.checks')}</Label>
 							<Input
 								id='disableChecks'
 								name='disableChecks'

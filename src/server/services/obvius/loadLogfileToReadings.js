@@ -113,13 +113,13 @@ async function loadLogfileToReadings(serialNumber, ipAddress, logfile, conn) {
 				// Unsure if previous values should not change but going to assume want the latest one sent.
 				shouldUpdate = true,
 				conditionSet = {
-					minVal: minVal,
-					maxVal: maxVal,
+					minVal: meter.minVal,
+					maxVal: meter.maxVal,
 					minDate: meter.minDate,
 					maxDate: meter.maxDate,
 					threshold: readingGap,
 					maxError: meter.maxError,
-					disableChecks: disableChecks
+					disableChecks: meter.disableChecks
 				},
 				conn = conn,
 				honorDst = false,

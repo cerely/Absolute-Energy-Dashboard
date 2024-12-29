@@ -247,8 +247,7 @@ class Unit {
 Unit.unitType = Object.freeze({
 	UNIT: 'unit',
 	METER: 'meter',
-	SUFFIX: 'suffix',
-	AREA: 'area'
+	SUFFIX: 'suffix'
 });
 
 Unit.displayableType = Object.freeze({

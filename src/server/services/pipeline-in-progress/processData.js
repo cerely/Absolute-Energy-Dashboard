@@ -660,17 +660,29 @@ async function processData(rows, meterID, timeSort = MeterTimeSortTypesJS.increa
 		prevEndTimestampTz = endTimestampTz;
 	}
 	// Validate data if conditions given
-	if (conditionSet !== undefined && !conditionSet['disableChecks']) {
+	// Validate data if conditions are given and disableChecks is not set to 'reject_none'
+	if (conditionSet !== undefined && conditionSet['disableChecks'] !== 'reject_none') {
 		const { validReadings, errMsg: newErrMsg } = validateReadings(result, conditionSet, meterName);
 		({ msgTotal, msgTotalWarning } = appendMsgTotal(msgTotal, newErrMsg, msgTotalWarning));
+
 		if (!validReadings) {
-			errMsg = `<h2>For meter ${meterName}: error when validating data so all reading are rejected</h2>`;
+			errMsg = `<h2>For meter ${meterName}: error when validating data so all readings are rejected</h2>`;
 			log.error(errMsg);
 			({ msgTotal, msgTotalWarning } = appendMsgTotal(msgTotal, errMsg, msgTotalWarning));
-			// This empties the result array. Should be fast and okay with const.
-			result.splice(0, result.length);
-			isAllReadingsOk = false;
-			return { result, isAllReadingsOk, msgTotal };
+
+			// Handle 'reject_bad' specifically
+			if (conditionSet['disableChecks'] === 'reject_bad') {
+				// This removes invalid readings but keeps the valid ones.
+				result = result.filter(reading => validateSingleReading(reading, conditionSet));
+			} else {
+				// Default behavior: reject all readings
+				result.splice(0, result.length); // Empties the result array
+			}
+
+			if (result.length === 0) {
+				isAllReadingsOk = false;
+				return { result, isAllReadingsOk, msgTotal };
+			}
 		}
 	}
 	// Update the meter to contain information for the last reading in the data file.

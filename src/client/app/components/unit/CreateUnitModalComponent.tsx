@@ -76,6 +76,10 @@ export default function CreateUnitModalComponent() {
 		setState({ ...state, [e.target.name]: JSON.parse(e.target.value) });
 	};
 
+	const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		setState({ ...state, [e.target.name]: Number(e.target.value) });
+	};
+
 	/**
 	 * Updates the rate (both custom and regular state) including setting if custom.
 	 * @param newRate The new rate to set.
@@ -129,9 +133,6 @@ export default function CreateUnitModalComponent() {
 
 	// Keeps canSave state up to date. Checks if valid and if edit made.
 	useEffect(() => {
-		setValidUnit(state.name !== '' && state.secInRate > 0 &&
-			(state.typeOfUnit !== UnitType.suffix || state.suffix !== '') && (state?.minVal < MIN_VAL || state?.minVal > state?.maxVal));
-	}, [state.name, state.secInRate, state.typeOfUnit, state.suffix]);
 
 		// This checks:
 		// - Name cannot be blank
@@ -140,6 +141,7 @@ export default function CreateUnitModalComponent() {
 		// - The custom rate is a positive integer
 		const validUnit = state.name !== '' &&
 			(state.typeOfUnit !== UnitType.suffix || state.suffix !== '') && state.secInRate !== Number(CUSTOM_INPUT)
+			&& (state?.minVal < MIN_VAL || state?.minVal > state?.maxVal)
 			&& customRateValid(Number(state.secInRate));
 		setCanSave(validUnit);
 	}, [state]);
@@ -431,59 +433,59 @@ export default function CreateUnitModalComponent() {
 								</FormGroup>
 							</Col>
 						</Row>
-					<Row xs='1' lg='2'>
-						{/* minVal input */}
-						<Col><FormGroup>
-							<Label for='minVal'>{translate('min.val')}</Label>
-							<Input id='minVal' name='minVal' type='number'
-								onChange={e => handleNumberChange(e)}
-								min={MIN_VAL}
-								max={state.maxVal}
-								defaultValue={state.minVal}
-								invalid={state?.minVal < MIN_VAL || state?.minVal > state?.maxVal} />
-							<FormFeedback>
-								<FormattedMessage id="error.bounds" values={{ min: MIN_VAL, max: state.maxVal }} />
-							</FormFeedback>
-						</FormGroup></Col>
-						{/* maxVal input */}
-						<Col><FormGroup>
-							<Label for='maxVal'>{translate('max.value')}</Label>
-							<Input id='maxVal' name='maxVal' type='number'
-								onChange={e => handleNumberChange(e)}
-								min={state.minVal}
-								max={MAX_VAL}
-								defaultValue={state.maxVal}
-								invalid={state?.maxVal > MAX_VAL || state?.minVal > state?.maxVal} />
-							<FormFeedback>
-								<FormattedMessage id="error.bounds" values={{ min: state.minVal, max: MAX_VAL }} />
-							</FormFeedback>
-						</FormGroup></Col>
-					</Row>
-					<Row xs='1' lg='2'>
-						{/* DisableChecks input */}
-						<Col><FormGroup>
-							<Label for='disableChecks'>{translate('disable.checks')}</Label>
-							<Input id='disableChecks' name='disableChecks' type='select'
+						<Row xs='1' lg='2'>
+							{/* minVal input */}
+							<Col><FormGroup>
+								<Label for='minVal'>{translate('min.val')}</Label>
+								<Input id='minVal' name='minVal' type='number'
+									onChange={e => handleNumberChange(e)}
+									min={MIN_VAL}
+									max={state.maxVal}
+									defaultValue={state.minVal}
+									invalid={state?.minVal < MIN_VAL || state?.minVal > state?.maxVal} />
+								<FormFeedback>
+									<FormattedMessage id="error.bounds" values={{ min: MIN_VAL, max: state.maxVal }} />
+								</FormFeedback>
+							</FormGroup></Col>
+							{/* maxVal input */}
+							<Col><FormGroup>
+								<Label for='maxVal'>{translate('max.value')}</Label>
+								<Input id='maxVal' name='maxVal' type='number'
+									onChange={e => handleNumberChange(e)}
+									min={state.minVal}
+									max={MAX_VAL}
+									defaultValue={state.maxVal}
+									invalid={state?.maxVal > MAX_VAL || state?.minVal > state?.maxVal} />
+								<FormFeedback>
+									<FormattedMessage id="error.bounds" values={{ min: state.minVal, max: MAX_VAL }} />
+								</FormFeedback>
+							</FormGroup></Col>
+						</Row>
+						<Row xs='1' lg='2'>
+							{/* DisableChecks input */}
+							<Col><FormGroup>
+								<Label for='disableChecks'>{translate('disable.checks')}</Label>
+								<Input id='disableChecks' name='disableChecks' type='select'
+									onChange={e => handleStringChange(e)}
+									defaultValue={state.disableChecks}>
+									{Object.keys(DisableChecksType).map(key => {
+										return (<option value={key} key={key} >
+											{translate(`DisableChecksType.${key}`)}</option>);
+									})}
+								</Input>
+							</FormGroup></Col>
+						</Row>
+						{/* Note input */}
+						<FormGroup>
+							<Label for='note'>{translate('note')}</Label>
+							<Input
+								id='note'
+								name='note'
+								type='textarea'
 								onChange={e => handleStringChange(e)}
-								defaultValue={state.disableChecks}>
-								{Object.keys(DisableChecksType).map(key => {
-									return (<option value={key} key={key} >
-										{translate(`DisableChecksType.${key}`)}</option>);
-								})}
-							</Input>
-						</FormGroup></Col>
-					</Row>
-					{/* Note input */}
-					<FormGroup>
-						<Label for='note'>{translate('note')}</Label>
-						<Input
-							id='note'
-							name='note'
-							type='textarea'
-							onChange={e => handleStringChange(e)}
-							value={state.note} />
-					</FormGroup>
-				</Container></ModalBody>
+								value={state.note} />
+						</FormGroup>
+					</Container></ModalBody>
 				<ModalFooter>
 					{/* Hides the modal */}
 					<Button color="secondary" onClick={handleClose}>

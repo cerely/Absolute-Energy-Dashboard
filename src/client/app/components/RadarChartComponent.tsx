@@ -27,6 +27,15 @@ import { lineUnitLabel } from '../utils/graphics';
 import { useTranslate } from '../redux/componentHooks';
 import SpinnerComponent from './SpinnerComponent';
 
+
+// Display Plotly Buttons Feature
+// The number of items in defaultButtons and advancedButtons must differ as discussed below
+const defaultButtons: Plotly.ModeBarDefaultButtons[] = [
+	'zoom2d', 'pan2d', 'select2d', 'lasso2d', 'zoomIn2d',
+	'zoomOut2d', 'autoScale2d', 'resetScale2d'
+];
+const advancedButtons: Plotly.ModeBarDefaultButtons[] = ['select2d', 'lasso2d', 'autoScale2d', 'resetScale2d'];
+
 /**
  * @returns radar plotly component
  */
@@ -35,7 +44,6 @@ export default function RadarChartComponent() {
 	const { meterArgs, groupArgs, meterShouldSkip, groupShouldSkip } = useAppSelector(selectRadarChartQueryArgs);
 	const { data: meterReadings, isLoading: meterIsLoading } = readingsApi.useLineQuery(meterArgs, { skip: meterShouldSkip });
 	const { data: groupData, isLoading: groupIsLoading } = readingsApi.useLineQuery(groupArgs, { skip: groupShouldSkip });
-	const datasets: any[] = [];
 	// graphic unit selected
 	const graphingUnit = useAppSelector(selectSelectedUnit);
 	// The current selected rate
@@ -48,10 +56,12 @@ export default function RadarChartComponent() {
 	const selectedGroups = useAppSelector(selectSelectedGroups);
 	const meterDataById = useAppSelector(selectMeterDataById);
 	const groupDataById = useAppSelector(selectGroupDataById);
+	// Manage button states with useState
+	const [listOfButtons, setListOfButtons] = React.useState(defaultButtons);
+	const datasets: any[] = [];
 
 	if (meterIsLoading || groupIsLoading) {
 		return <SpinnerComponent loading width={50} height={50} />;
-		// return <SpinnerComponent loading width={50} height={50} />
 	}
 
 	let unitLabel = '';
@@ -69,14 +79,6 @@ export default function RadarChartComponent() {
 	}
 	// The rate will be 1 if it is per hour (since state readings are per hour) or no rate scaling so no change.
 	const rateScaling = needsRateScaling ? currentSelectedRate.rate : 1;
-
-	// Display Plotly Buttons Feature
-	// The number of items in defaultButtons and advancedButtons must differ as discussed below
-	const defaultButtons: Plotly.ModeBarDefaultButtons[] = ['zoom2d', 'pan2d', 'select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d',
-		'resetScale2d'];
-	const advancedButtons: Plotly.ModeBarDefaultButtons[] = ['select2d', 'lasso2d', 'autoScale2d', 'resetScale2d'];
-	// Manage button states with useState
-	const [listOfButtons, setListOfButtons] = React.useState(defaultButtons);
 
 	// Add all valid data from existing meters to the radar plot
 	for (const meterID of selectedMeters) {

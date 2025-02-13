@@ -45,7 +45,7 @@ export default function CreateUnitModalComponent() {
 		id: -99,
 		minVal: MIN_VAL,
 		maxVal: MAX_VAL,
-		disableChecks: DisableChecksType.reject_none
+		disableChecks: DisableChecksType.reject_all
 	};
 
 	/* State */
@@ -133,7 +133,6 @@ export default function CreateUnitModalComponent() {
 
 	// Keeps canSave state up to date. Checks if valid and if edit made.
 	useEffect(() => {
-
 		// This checks:
 		// - Name cannot be blank
 		// - If type of unit is suffix there must be a suffix
@@ -141,7 +140,7 @@ export default function CreateUnitModalComponent() {
 		// - The custom rate is a positive integer
 		const validUnit = state.name !== '' &&
 			(state.typeOfUnit !== UnitType.suffix || state.suffix !== '') && state.secInRate !== Number(CUSTOM_INPUT)
-			&& (state?.minVal < MIN_VAL || state?.minVal > state?.maxVal)
+			&& state?.minVal >= MIN_VAL && state?.maxVal <= MAX_VAL && state?.minVal <= state?.maxVal
 			&& customRateValid(Number(state.secInRate));
 		setCanSave(validUnit);
 	}, [state]);
@@ -436,7 +435,7 @@ export default function CreateUnitModalComponent() {
 						<Row xs='1' lg='2'>
 							{/* minVal input */}
 							<Col><FormGroup>
-								<Label for='minVal'>{translate('min.val')}</Label>
+								<Label for='minVal'>{translate('min.value')}</Label>
 								<Input id='minVal' name='minVal' type='number'
 									onChange={e => handleNumberChange(e)}
 									min={MIN_VAL}
@@ -482,10 +481,11 @@ export default function CreateUnitModalComponent() {
 								id='note'
 								name='note'
 								type='textarea'
-								onChange={e => handleStringChange(e)}
-								value={state.note} />
+								value={state.note}
+								onChange={e => handleStringChange(e)} />
 						</FormGroup>
-					</Container></ModalBody>
+					</Container>
+				</ModalBody>
 				<ModalFooter>
 					{/* Hides the modal */}
 					<Button color="secondary" onClick={handleClose}>

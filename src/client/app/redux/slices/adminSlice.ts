@@ -35,7 +35,7 @@ export const defaultAdminState: AdminState = {
 	defaultMeterMaximumDate: moment(0).utc().add(5000, 'years').format('YYYY-MM-DD HH:mm:ssZ'),
 	defaultMeterReadingGap: 0,
 	defaultMeterMaximumErrors: 75,
-	defaultMeterDisableChecks: DisableChecksType.reject_none,
+	defaultMeterDisableChecks: DisableChecksType.reject_all,
 	defaultHelpUrl: ''
 };
 

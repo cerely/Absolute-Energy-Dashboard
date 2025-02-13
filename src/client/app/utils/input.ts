@@ -86,7 +86,7 @@ export const NoUnit: UnitData = {
 	note: '',
 	minVal: MIN_VAL,
 	maxVal: MAX_VAL,
-	disableChecks: DisableChecksType.reject_none
+	disableChecks: DisableChecksType.reject_all
 };
 
 /**

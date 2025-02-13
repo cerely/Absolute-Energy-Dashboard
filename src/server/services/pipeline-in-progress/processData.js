@@ -9,7 +9,7 @@ const { log } = require('../../log');
 const Meter = require('../../models/Meter');
 const Reading = require('../../models/Reading');
 const handleCumulativeReset = require('./handleCumulativeReset');
-const { validateReadings } = require('./validateReadings');
+const { validateReadings, validateSingleReading } = require('./validateReadings');
 const { MeterTimeSortTypesJS } = require('../csvPipeline/validateCsvUploadParams');
 const { meterTimezone } = require('../meterTimezone');
 
@@ -659,7 +659,6 @@ async function processData(rows, meterID, timeSort = MeterTimeSortTypesJS.increa
 		// Not used in many cases but just set since easier.
 		prevEndTimestampTz = endTimestampTz;
 	}
-	// Validate data if conditions given
 	// Validate data if conditions are given and disableChecks is not set to 'reject_none'
 	if (conditionSet !== undefined && conditionSet['disableChecks'] !== 'reject_none') {
 		const { validReadings, errMsg: newErrMsg } = validateReadings(result, conditionSet, meterName);
@@ -676,13 +675,12 @@ async function processData(rows, meterID, timeSort = MeterTimeSortTypesJS.increa
 				result = result.filter(reading => validateSingleReading(reading, conditionSet));
 			} else {
 				// Default behavior: reject all readings
-				result.splice(0, result.length); // Empties the result array
+				// Empties the result array
+				result.splice(0, result.length);
 			}
 
-			if (result.length === 0) {
-				isAllReadingsOk = false;
-				return { result, isAllReadingsOk, msgTotal };
-			}
+			// Mark readings as not okay since some were dropped
+			isAllReadingsOk = false;
 		}
 	}
 	// Update the meter to contain information for the last reading in the data file.

@@ -20,9 +20,9 @@ class Unit {
 	 * @param {*} note Note about this unit.
 	 * @param minVal inclusive minimum acceptable reading value (won't be rejected)
 	 * @param maxVal inclusive maximum acceptable reading value (won't be rejected)
-	 * @param disableChecks disable checks on meter for conditionSet 
+	 * @param disableChecks disable checks on meter for conditionSet (three possible values)
 	 */
-	constructor(id, name, identifier = name, unitRepresent, secInRate = 3600, typeOfUnit, suffix = '', displayable, preferredDisplay, note, minVal = Number.MIN_SAFE_INTEGER, maxVal = Number.MAX_SAFE_INTEGER, disableChecks = Unit.disableChecksType.REJECT_NONE) {
+	constructor(id, name, identifier = name, unitRepresent, secInRate = 3600, typeOfUnit, suffix = '', displayable, preferredDisplay, note, minVal = Number.MIN_SAFE_INTEGER, maxVal = Number.MAX_SAFE_INTEGER, disableChecks = Unit.disableChecksType.REJECT_ALL) {
 		this.id = id;
 		this.name = name;
 		this.identifier = identifier;

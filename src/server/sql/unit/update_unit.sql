@@ -12,7 +12,7 @@ UPDATE units
 		displayable = ${displayable},
 		preferred_display = ${preferredDisplay},
 		note = ${note},
-		max_val = ${maxVal},
 		min_val = ${minVal},
+		max_val = ${maxVal},
 		disable_checks = ${disableChecks}
 	WHERE id = ${id};

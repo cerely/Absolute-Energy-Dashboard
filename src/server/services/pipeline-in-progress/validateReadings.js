@@ -20,26 +20,28 @@ function validateReadings(arrayToValidate, conditionSet, meterIdentifier = undef
 	/* tslint:enable:no-string-literal */
 	const errMsg = errMsgDate + errMsgValue;
 
-	 // Handle the disableChecks logic
-	 if (conditionSet['disableChecks'] === 'reject_none') {
+    const validReadings = validDates && validValues;
+    let rejectedReadings = [];
+
+	// Even when 'reject_none' is set, issues should still be logged
+    if (conditionSet['disableChecks'] === 'reject_none') {
         return {
             validReadings: true,
             rejectedReadings: [],
-            errMsg: '', // No validation errors since checks are disabled
+			// Keep the error messages even if no rejections occur
+            errMsg,
         };
-    }
-
-    let validReadings = validDates && validValues;
-    let rejectedReadings = [];
-
-    if (conditionSet['disableChecks'] === 'reject_bad') {
-        // Remove only invalid readings and return the rejected ones
-        rejectedReadings = [...rejectedDates, ...rejectedValues];
-        arrayToValidate = arrayToValidate.filter(reading => !rejectedReadings.includes(reading));
-    } else if (conditionSet['disableChecks'] === 'reject_all' && !validReadings) {
-        // Reject all readings if validation fails
-        rejectedReadings = [...arrayToValidate];
-        arrayToValidate.length = 0; // Clear the array
+    } else {
+        if (conditionSet['disableChecks'] === 'reject_bad') {
+            // Remove only invalid readings and return the rejected ones
+            rejectedReadings = [...rejectedDates, ...rejectedValues];
+            arrayToValidate = arrayToValidate.filter(reading => !rejectedReadings.includes(reading));
+        } else if (conditionSet['disableChecks'] === 'reject_all' && !validReadings) {
+            // Reject all readings if validation fails
+            rejectedReadings = [...arrayToValidate];
+			// Clear the array
+			arrayToValidate = arrayToValidate.slice(0, 0);
+        }
     }
 
 	return {
@@ -70,9 +72,20 @@ function checkDate(arrayToValidate, minDate, maxDate, maxError, meterIdentifier)
 		if (maxError <= 0) {
 			break;
 		}
-		if (reading.startTimestamp < minDate || reading.endTimestamp > maxDate) {
+		if (reading.startTimestamp < minDate) {
 			const newErrMsg = `error when checking reading time for #${readingNumber} on meter ${meterIdentifier}: ` +
-                `time ${reading.startTimestamp} or ${reading.endTimestamp} is out of bounds (min: ${minDate}, max: ${maxDate}).`;
+				`time ${reading.startTimestamp} is earlier than lower bound ${minDate} ` +
+				`with reading ${reading.reading} and endTimestamp ${reading.endTimestamp}`;
+			log.error(newErrMsg);
+			errMsg += '<br>' + newErrMsg + '<br>';
+			--maxError;
+			validDates = false;
+			rejectedDates.push(reading);
+		}
+		if (reading.endTimestamp > maxDate) {
+			const newErrMsg = `error when checking reading time for #${readingNumber} on meter ${meterIdentifier}: ` +
+			`time ${reading.endTimestamp} is later than upper bound ${maxDate} ` +
+			`with reading ${reading.reading} and startTimestamp ${reading.startTimestamp}`;
 			log.error(newErrMsg);
 			errMsg += '<br>' + newErrMsg + '<br>';
 			--maxError;
@@ -101,9 +114,19 @@ function checkValue(arrayToValidate, minVal, maxVal, maxError, meterIdentifier) 
 		if (maxError <= 0) {
 			break;
 		}
-		if (reading.reading < minVal || reading.reading > maxVal) {
+		if (reading.reading < minVal) {
 			const newErrMsg = `error when checking reading value for #${readingNumber} on meter ${meterIdentifier}: ` +
-                `value ${reading.reading} is out of bounds (min: ${minVal}, max: ${maxVal}).`;
+			`value ${reading.reading} is smaller than lower bound ${minVal} ` +
+			`with startTimestamp ${reading.startTimestamp} and endTimestamp ${reading.endTimestamp}`;
+			log.error(newErrMsg);
+			errMsg += '<br>' + newErrMsg + '<br>';
+			--maxError;
+			validValues = false;
+			rejectedValues.push(reading);
+		} else if (reading.reading > maxVal) {
+			const newErrMsg = `error when checking reading value for #${readingNumber} on meter ${meterIdentifier}: ` +
+			`value ${reading.reading} is larger than upper bound ${maxVal} ` +
+			`with startTimestamp ${reading.startTimestamp} and endTimestamp ${reading.endTimestamp}`;
 			log.error(newErrMsg);
 			errMsg += '<br>' + newErrMsg + '<br>';
 			--maxError;
@@ -155,10 +178,30 @@ function checkIntervals(arrayToValidate, threshold, meterIdentifier) {
 	return { validIntervals, errMsg };
 }
 
+/**
+ * Validate a single reading based on the provided conditionSet.
+ * @param {Reading} reading - The reading object to validate.
+ * @param {Object} conditionSet - The validation conditions including min/max values, dates, and thresholds.
+ * @returns {boolean} - Returns true if the reading is valid, false otherwise.
+ */
+function validateSingleReading(reading, conditionSet) {
+    const { minVal, maxVal, minDate, maxDate } = conditionSet;
+
+    // Check if the reading falls within the acceptable date range
+    if ((minDate && reading.startTimestamp < minDate) || (maxDate && reading.endTimestamp > maxDate)) {
+        return false;
+    }
+    // Check if the reading falls within the acceptable value range
+    if ((minVal !== undefined && reading.reading < minVal) || (maxVal !== undefined && reading.reading > maxVal)) {
+        return false;
+    }
+    return true;
+}
 
 module.exports = {
 	validateReadings,
 	checkDate,
 	checkValue,
-	checkIntervals
+	checkIntervals,
+	validateSingleReading
 };

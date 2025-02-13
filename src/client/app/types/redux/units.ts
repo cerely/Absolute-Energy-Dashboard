@@ -25,6 +25,7 @@ export enum DisableChecksType {
 	reject_all = 'reject_all',
 	reject_none = 'reject_none'
 }
+
 export interface UnitData {
 	id: number;
 	name: string;

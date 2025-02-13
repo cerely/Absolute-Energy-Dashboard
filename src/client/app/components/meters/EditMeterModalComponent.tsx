@@ -95,10 +95,7 @@ export default function EditMeterModalComponent(props: EditMeterModalComponentPr
 		if (selectedUnit) {
 			setLocalMeterEdits({
 				...localMeterEdits,
-				unitId: selectedUnitId,
-				minVal: selectedUnit.minVal,
-				maxVal: selectedUnit.maxVal,
-				disableChecks: selectedUnit.disableChecks
+				unitId: selectedUnitId
 			});
 		}
 	};

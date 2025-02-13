@@ -312,7 +312,7 @@ export const selectDefaultCreateMeterValues = createAppSelector(
 			minDate: adminPreferences.defaultMeterMinimumDate,
 			maxDate: adminPreferences.defaultMeterMaximumDate,
 			maxError: adminPreferences.defaultMeterMaximumErrors,
-			disableChecks: DisableChecksType.reject_none
+			disableChecks: DisableChecksType.reject_all
 		};
 		return defaultValues;
 	}

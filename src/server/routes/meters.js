@@ -63,7 +63,7 @@ function formatMeterForResponse(meter, hasFullAccess) {
 		minDate: null,
 		maxDate: null,
 		maxError: null,
-		disableChecks: meter.disableChecks,
+		disableChecks: null,
 	};
 
 	// Only logged in Admins can see url, types, timezones, and internal names
@@ -266,7 +266,6 @@ router.post('/edit', requiredAdmin('edit meters'), async (req, res) => {
 		const conn = getConnection();
 		try {
 			const meter = await Meter.getByID(req.body.id, conn);
-			console.log(req.body);
 			const updatedMeter = new Meter(
 				undefined, // id
 				req.body.name,

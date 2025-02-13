@@ -4,7 +4,7 @@
 
 -- Add a temporary column with the new type
 ALTER TABLE preferences 
-    ADD COLUMN default_meter_disable_checks_temp disable_checks_type NOT NULL DEFAULT 'reject_none';
+    ADD COLUMN default_meter_disable_checks_temp disable_checks_type NOT NULL DEFAULT 'reject_all';
 
 -- Update the temporary column based on the current boolean values in disable_checks
 UPDATE preferences

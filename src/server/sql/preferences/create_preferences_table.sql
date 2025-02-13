@@ -21,6 +21,6 @@ CREATE TABLE IF NOT EXISTS preferences (
     default_meter_maximum_date TIMESTAMP NOT NULL,
 	default_meter_reading_gap REAL NOT NULL,
     default_meter_maximum_errors INTEGER NOT NULL,
-	default_meter_disable_checks disable_checks_type NOT NULL DEFAULT 'reject_none',
+	default_meter_disable_checks disable_checks_type NOT NULL DEFAULT 'reject_all',
 	default_help_url TEXT DEFAULT NULL
 );

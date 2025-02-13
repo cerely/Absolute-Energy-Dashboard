@@ -12,7 +12,7 @@ ALTER TABLE preferences
     ADD COLUMN IF NOT EXISTS default_meter_maximum_date TIMESTAMP NOT NULL DEFAULT '6970-01-01 00:00:00+00:00',
 	ADD COLUMN IF NOT EXISTS default_meter_reading_gap REAL NOT NULL DEFAULT 0,
     ADD COLUMN IF NOT EXISTS default_meter_maximum_errors INTEGER NOT NULL DEFAULT 75,
-	ADD COLUMN IF NOT EXISTS default_meter_disable_checks disable_checks_type NOT NULL DEFAULT 'reject_none'
+	ADD COLUMN IF NOT EXISTS default_meter_disable_checks disable_checks_type NOT NULL DEFAULT 'reject_all'
 ;
 -- Now remove default since not desired.
 ALTER TABLE preferences

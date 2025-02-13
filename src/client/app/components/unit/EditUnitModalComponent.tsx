@@ -203,6 +203,7 @@ export default function EditUnitModalComponent(props: EditUnitModalComponentProp
 		// - The custom rate is a positive integer
 		const validUnit = state.name !== '' &&
 			(state.typeOfUnit !== UnitType.suffix || state.suffix !== '') && state.secInRate !== Number(CUSTOM_INPUT)
+			&& state?.minVal >= MIN_VAL && state?.maxVal <= MAX_VAL && state?.minVal <= state?.maxVal
 			&& customRateValid(Number(state.secInRate));
 		// Compare original props to state to see if edit made. Check above avoids thinking edit happened if
 		// custom edit started without enter hit.

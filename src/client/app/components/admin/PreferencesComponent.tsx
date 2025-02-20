@@ -10,7 +10,7 @@ import { Button, Input, FormFeedback } from 'reactstrap';
 import { UnsavedWarningComponent } from '../UnsavedWarningComponent';
 import { preferencesApi } from '../../redux/api/preferencesApi';
 import {
-	MIN_DATE, MIN_DATE_MOMENT, MAX_DATE, MAX_DATE_MOMENT, MAX_VAL, MIN_VAL, MAX_ERRORS
+	MIN_DATE, MIN_DATE_MOMENT, MAX_DATE, MAX_DATE_MOMENT, MAX_ERRORS
 } from '../../redux/selectors/adminSelectors';
 import { PreferenceRequestItem } from '../../types/items';
 import { ChartTypes } from '../../types/redux/graph';
@@ -20,7 +20,6 @@ import { showErrorNotification, showSuccessNotification } from '../../utils/noti
 import { useTranslate } from '../../redux/componentHooks';
 import TimeZoneSelect from '../TimeZoneSelect';
 import { defaultAdminState } from '../../redux/slices/adminSlice';
-import { DisableChecksType } from '../../types/redux/units';
 
 
 /**
@@ -53,16 +52,6 @@ export default function PreferencesComponent() {
 		readingFreq: (): boolean => {
 			const frequency = moment.duration(localAdminPref.defaultMeterReadingFrequency);
 			return !frequency.isValid() || frequency.asSeconds() <= 0;
-		},
-		minValue: (): boolean => {
-			const min = Number(localAdminPref.defaultMeterMinimumValue);
-			const max = Number(localAdminPref.defaultMeterMaximumValue);
-			return min < MIN_VAL || min > max;
-		},
-		maxValue: (): boolean => {
-			const min = Number(localAdminPref.defaultMeterMinimumValue);
-			const max = Number(localAdminPref.defaultMeterMaximumValue);
-			return max > MAX_VAL || min > max;
 		},
 		minDate: (): boolean => {
 			const minMoment = moment(localAdminPref.defaultMeterMinimumDate);
@@ -200,40 +189,6 @@ export default function PreferencesComponent() {
 			</div>
 			<div>
 				<p className='mt-2' style={titleStyle}>
-					{`${translate('default.meter.minimum.value')}:`}
-				</p>
-				<Input
-					type='number'
-					value={localAdminPref.defaultMeterMinimumValue}
-					onChange={e => makeLocalChanges('defaultMeterMinimumValue', e.target.value)}
-					min={MIN_VAL}
-					max={Number(localAdminPref.defaultMeterMaximumValue)}
-					maxLength={50}
-					invalid={invalidFuncs.minValue()}
-				/>
-				<FormFeedback>
-					<FormattedMessage id="error.bounds" values={{ min: MIN_VAL, max: Number(localAdminPref.defaultMeterMaximumValue) }} />
-				</FormFeedback>
-			</div>
-			<div>
-				<p className='mt-2' style={titleStyle}>
-					{`${translate('default.meter.maximum.value')}:`}
-				</p>
-				<Input
-					type='number'
-					value={localAdminPref.defaultMeterMaximumValue}
-					onChange={e => makeLocalChanges('defaultMeterMaximumValue', e.target.value)}
-					min={Number(localAdminPref.defaultMeterMinimumValue)}
-					max={MAX_VAL}
-					maxLength={50}
-					invalid={invalidFuncs.maxValue()}
-				/>
-				<FormFeedback>
-					<FormattedMessage id="error.bounds" values={{ min: Number(localAdminPref.defaultMeterMinimumValue), max: MAX_VAL }} />
-				</FormFeedback>
-			</div>
-			<div>
-				<p className='mt-2' style={titleStyle}>
 					{`${translate('default.meter.minimum.date')}:`}
 				</p>
 				<Input
@@ -294,19 +249,6 @@ export default function PreferencesComponent() {
 				<FormFeedback>
 					<FormattedMessage id="error.bounds" values={{ min: 0, max: MAX_ERRORS }} />
 				</FormFeedback>
-			</div>
-			<div>
-				<p className='mt-2' style={titleStyle}>
-					{`${translate('default.meter.disable.checks')}:`}
-				</p>
-				<Input
-					type='select'
-					value={localAdminPref.defaultMeterDisableChecks?.toString()}
-					onChange={e => makeLocalChanges('defaultMeterDisableChecks', e.target.value)}>
-					{Object.keys(DisableChecksType).map(key => {
-						return (<option value={key} key={key}>{translate(`DisableChecksType.${key}`)}</option>);
-					})}
-				</Input>
 			</div>
 			<div>
 				<h3 className='border-bottom mt-3'>{translate('site.settings')}</h3>

@@ -68,12 +68,6 @@ router.post('/', async (req, res) => {
 				defaultMeterReadingFrequency: {
 					type: 'string'
 				},
-				defaultMeterMinimumValue: {
-					type: 'number'
-				},
-				defaultMeterMaximumValue: {
-					type: 'number'
-				},
 				defaultMeterMinimumDate: {
 					type: 'string'
 				},
@@ -85,11 +79,6 @@ router.post('/', async (req, res) => {
 				},
 				defaultMeterMaximumErrors: {
 					type: 'number'
-				},
-				defaultMeterDisableChecks: {
-					type: 'string',
-					minLength: 1,
-					enum: Object.values(Meter.disableChecksType)
 				},
 				defaultHelpUrl: {
 					type: 'string'

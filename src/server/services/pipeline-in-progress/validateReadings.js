@@ -84,8 +84,8 @@ function checkDate(arrayToValidate, minDate, maxDate, maxError, meterIdentifier)
 		}
 		if (reading.endTimestamp > maxDate) {
 			const newErrMsg = `error when checking reading time for #${readingNumber} on meter ${meterIdentifier}: ` +
-			`time ${reading.endTimestamp} is later than upper bound ${maxDate} ` +
-			`with reading ${reading.reading} and startTimestamp ${reading.startTimestamp}`;
+				`time ${reading.endTimestamp} is later than upper bound ${maxDate} ` +
+				`with reading ${reading.reading} and startTimestamp ${reading.startTimestamp}`;
 			log.error(newErrMsg);
 			errMsg += '<br>' + newErrMsg + '<br>';
 			--maxError;
@@ -116,8 +116,8 @@ function checkValue(arrayToValidate, minVal, maxVal, maxError, meterIdentifier) 
 		}
 		if (reading.reading < minVal) {
 			const newErrMsg = `error when checking reading value for #${readingNumber} on meter ${meterIdentifier}: ` +
-			`value ${reading.reading} is smaller than lower bound ${minVal} ` +
-			`with startTimestamp ${reading.startTimestamp} and endTimestamp ${reading.endTimestamp}`;
+				`value ${reading.reading} is smaller than lower bound ${minVal} ` +
+				`with startTimestamp ${reading.startTimestamp} and endTimestamp ${reading.endTimestamp}`;
 			log.error(newErrMsg);
 			errMsg += '<br>' + newErrMsg + '<br>';
 			--maxError;
@@ -125,8 +125,8 @@ function checkValue(arrayToValidate, minVal, maxVal, maxError, meterIdentifier) 
 			rejectedValues.push(reading);
 		} else if (reading.reading > maxVal) {
 			const newErrMsg = `error when checking reading value for #${readingNumber} on meter ${meterIdentifier}: ` +
-			`value ${reading.reading} is larger than upper bound ${maxVal} ` +
-			`with startTimestamp ${reading.startTimestamp} and endTimestamp ${reading.endTimestamp}`;
+				`value ${reading.reading} is larger than upper bound ${maxVal} ` +
+				`with startTimestamp ${reading.startTimestamp} and endTimestamp ${reading.endTimestamp}`;
 			log.error(newErrMsg);
 			errMsg += '<br>' + newErrMsg + '<br>';
 			--maxError;

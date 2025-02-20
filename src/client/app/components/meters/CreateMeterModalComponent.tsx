@@ -54,7 +54,7 @@ export default function CreateMeterModalComponent(props: CreateMeterModalProps):
 	const [showModal, setShowModal] = useState(false);
 
 	// Handlers for each type of input change
-	const [meterDetails, setMeterDetails] = useState(defaultValues);
+	const [meterDetails, setMeterDetails] = useState({...defaultValues, minVal: MIN_VAL, maxVal: MAX_VAL, disableChecks: DisableChecksType.reject_all});
 	const unitIsSelected = meterDetails.unitId !== -999;
 	const defaultGaphicUnitIsSelected = meterDetails.defaultGraphicUnit !== -999;
 	const unitsDataById = useAppSelector(selectUnitDataById);
@@ -113,7 +113,7 @@ export default function CreateMeterModalComponent(props: CreateMeterModalProps):
 
 	// Reset the state to default values
 	const resetState = () => {
-		setMeterDetails(defaultValues);
+		setMeterDetails({...defaultValues, minVal: MIN_VAL, maxVal: MAX_VAL, disableChecks: DisableChecksType.reject_all});
 	};
 
 	const handleClose = () => {

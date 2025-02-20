@@ -55,12 +55,12 @@ async function loadLogfileToReadings(serialNumber, ipAddress, logfile, conn) {
 				undefined, // default graphic unit
 				undefined, // area unit
 				preferences.defaultMeterReadingFrequency, // reading frequency
-				preferences.defaultMeterMinimumValue, // minVal
-				preferences.defaultMeterMaximumValue, // maxVal
+				Number.MIN_SAFE_INTEGER, // minVal
+				Number.MAX_SAFE_INTEGER, // maxVal
 				preferences.defaultMeterMinimumDate, // minDate
 				preferences.defaultMeterMaximumDate, // maxDate
 				preferences.defaultMeterMaximumErrors, // maxError
-				preferences.defaultMeterDisableChecks  // disableChecks
+				Meter.disableChecksType.REJECT_ALL // disable checks
 			);
 			await meter.insert(conn);
 			log.warn('WARNING: Created a meter (' + `${serialNumber}.${i}` +
@@ -113,13 +113,10 @@ async function loadLogfileToReadings(serialNumber, ipAddress, logfile, conn) {
 				// Unsure if previous values should not change but going to assume want the latest one sent.
 				shouldUpdate = true,
 				conditionSet = {
-					minVal: meter.minVal,
-					maxVal: meter.maxVal,
 					minDate: meter.minDate,
 					maxDate: meter.maxDate,
 					threshold: readingGap,
-					maxError: meter.maxError,
-					disableChecks: meter.disableChecks
+					maxError: meter.maxError
 				},
 				conn = conn,
 				honorDst = false,

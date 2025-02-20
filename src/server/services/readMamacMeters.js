@@ -97,12 +97,9 @@ async function getMeterInfo(url, ip, csvLine) {
 				unitId, // default graphic unit
 				undefined, // area unit
 				preferences.defaultMeterReadingFrequency, // reading frequency
-				preferences.defaultMeterMinimumValue, // minVal
-				preferences.defaultMeterMaximumValue, // maxVal
 				preferences.defaultMeterMinimumDate, // minDate
 				preferences.defaultMeterMaximumDate, // maxDate
-				preferences.defaultMeterMaximumErrors, // maxError
-				preferences.defaultMeterDisableChecks  // disableChecks
+				preferences.defaultMeterMaximumErrors // maxError
 			);
 		});
 }

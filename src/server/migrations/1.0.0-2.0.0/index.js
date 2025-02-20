@@ -23,6 +23,6 @@ module.exports = {
         await db.none(sqlFile('../migrations/1.0.0-2.0.0/sql/units/add_disable_checks_types.sql'));
         await db.none(sqlFile('../migrations/1.0.0-2.0.0/sql/units/alter_units_table_add_columns.sql'));
         await db.none(sqlFile('../migrations/1.0.0-2.0.0/sql/meter/alter_meter_disable_checks.sql'));
-        await db.none(sqlFile('../migrations/1.0.0-2.0.0/sql/preferences/alter_preferences_default_meter_disable_checks.sql'));
+        await db.none(sqlFile('../migrations/1.0.0-2.0.0/sql/preferences/alter_preferences_table.sql'));
     }
 };

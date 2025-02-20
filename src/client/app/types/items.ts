@@ -7,7 +7,7 @@ import { LanguageTypes } from './redux/i18n';
 import { AreaUnitType } from '../utils/getAreaUnitConversion';
 import { MeterData } from './redux/meters';
 import { GroupData } from './redux/groups';
-import { DisableChecksType, UnitData } from './redux/units';
+import { UnitData } from './redux/units';
 
 /**
  * The type of options displayed in Select components.
@@ -57,13 +57,10 @@ export interface PreferenceRequestItem {
 	defaultAreaNormalization: boolean;
 	defaultAreaUnit: AreaUnitType;
 	defaultMeterReadingFrequency: string;
-	defaultMeterMinimumValue: number;
-	defaultMeterMaximumValue: number;
 	defaultMeterMinimumDate: string;
 	defaultMeterMaximumDate: string;
 	defaultMeterReadingGap: number;
 	defaultMeterMaximumErrors: number;
-	defaultMeterDisableChecks: DisableChecksType;
 	defaultHelpUrl: string;
 }
 

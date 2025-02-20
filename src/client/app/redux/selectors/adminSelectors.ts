@@ -9,7 +9,7 @@ import { selectAllMeters, selectMeterById } from '../../redux/api/metersApi';
 import { selectAdminPreferences } from '../../redux/slices/adminSlice';
 import { ConversionData } from '../../types/redux/conversions';
 import { MeterData, MeterTimeSortType } from '../../types/redux/meters';
-import { DisableChecksType, UnitData, UnitType } from '../../types/redux/units';
+import { UnitData, UnitType } from '../../types/redux/units';
 import { unitsCompatibleWithUnit } from '../../utils/determineCompatibleUnits';
 import { AreaUnitType } from '../../utils/getAreaUnitConversion';
 import { noUnitTranslated, potentialGraphicUnits } from '../../utils/input';
@@ -307,12 +307,9 @@ export const selectDefaultCreateMeterValues = createAppSelector(
 			previousEnd: '',
 			areaUnit: AreaUnitType.none,
 			readingFrequency: adminPreferences.defaultMeterReadingFrequency,
-			minVal: adminPreferences.defaultMeterMinimumValue,
-			maxVal: adminPreferences.defaultMeterMaximumValue,
 			minDate: adminPreferences.defaultMeterMinimumDate,
 			maxDate: adminPreferences.defaultMeterMaximumDate,
-			maxError: adminPreferences.defaultMeterMaximumErrors,
-			disableChecks: DisableChecksType.reject_all
+			maxError: adminPreferences.defaultMeterMaximumErrors
 		};
 		return defaultValues;
 	}

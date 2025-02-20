@@ -5,7 +5,6 @@
 import { ChartTypes } from './graph';
 import { LanguageTypes } from './i18n';
 import { AreaUnitType } from '../../utils/getAreaUnitConversion';
-import { DisableChecksType } from './units';
 
 
 export interface AdminState {
@@ -22,12 +21,9 @@ export interface AdminState {
 	defaultAreaNormalization: boolean;
 	defaultAreaUnit: AreaUnitType;
 	defaultMeterReadingFrequency: string;
-	defaultMeterMinimumValue: number;
-	defaultMeterMaximumValue: number;
 	defaultMeterMinimumDate: string;
 	defaultMeterMaximumDate: string;
 	defaultMeterReadingGap: number;
 	defaultMeterMaximumErrors: number;
-	defaultMeterDisableChecks: DisableChecksType;
 	defaultHelpUrl: string;
 }

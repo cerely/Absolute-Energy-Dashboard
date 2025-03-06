@@ -1,7 +1,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
- 
+
 /*
     This file tests the readings retrieval API for charts quantity meters.
     See: https://github.com/OpenEnergyDashboard/DesignDocs/blob/main/testing/testing.md for information.

@@ -119,16 +119,20 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 				msg += `${translate('conversion.delete.suffix.disable')} "${source.name}".\n`;
 			}
 		} else if (source.typeOfUnit === UnitType.unit && dest.typeOfUnit === UnitType.unit) {
-			const destCount = getConversionCount(dest, conversionDetails);
-			if (destCount === 1) {
+			const destConversions = conversionDetails.filter(conversion =>
+				(conversion.sourceId === dest.id) ||
+				(conversion.bidirectional && conversion.destinationId === dest.id)
+			);
+
+			const remainingDestConversions = destConversions.filter(conversion =>
+				!(conversion.sourceId === source.id && conversion.destinationId === dest.id)
+			);
+
+			if (remainingDestConversions.length === 0) {
 				msg += `${translate('conversion.delete.unit.orphan')} "${dest.name}".\n`;
+				cancel = true;
 			}
-			if (state.bidirectional) {
-				const srcCount = getConversionCount(source, conversionDetails);
-				if (srcCount === 1) {
-					msg += `${translate('conversion.delete.unit.orphan')} "${dest.name}".\n`;
-				}
-			}
+
 			if (msg === '') {
 				msg += `${translate('conversion.delete.unit')}\n`;
 				// TODO: Check after deleting the conversion to see if a change happens.

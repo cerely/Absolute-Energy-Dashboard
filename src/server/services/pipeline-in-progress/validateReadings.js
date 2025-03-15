@@ -65,34 +65,33 @@ function checkDate(arrayToValidate, minDate, maxDate, maxError, meterIdentifier)
 	let validDates = true;
 	let errMsg = '';
 	const rejectedDates = [];
-	if (minDate === null && maxDate === null) {
-		return { validDates, rejectedDates, errMsg };
-	}
-	let readingNumber = 0;
-	for (const reading of arrayToValidate) {
-		readingNumber++;
-		if (maxError <= 0) {
-			break;
-		}
-		if (reading.startTimestamp < minDate) {
-			const newErrMsg = `error when checking reading time for #${readingNumber} on meter ${meterIdentifier}: ` +
-				`time ${reading.startTimestamp} is earlier than lower bound ${minDate} ` +
-				`with reading ${reading.reading} and endTimestamp ${reading.endTimestamp}`;
-			log.error(newErrMsg);
-			errMsg += '<br>' + newErrMsg + '<br>';
-			--maxError;
-			validDates = false;
-			rejectedDates.push(reading);
-		}
-		if (reading.endTimestamp > maxDate) {
-			const newErrMsg = `error when checking reading time for #${readingNumber} on meter ${meterIdentifier}: ` +
-				`time ${reading.endTimestamp} is later than upper bound ${maxDate} ` +
-				`with reading ${reading.reading} and startTimestamp ${reading.startTimestamp}`;
-			log.error(newErrMsg);
-			errMsg += '<br>' + newErrMsg + '<br>';
-			--maxError;
-			validDates = false;
-			rejectedDates.push(reading);
+	if (minDate !== null || maxDate !== null) {
+		let readingNumber = 0;
+		for (const reading of arrayToValidate) {
+			readingNumber++;
+			if (maxError <= 0) {
+				break;
+			}
+			if (reading.startTimestamp < minDate) {
+				const newErrMsg = `error when checking reading time for #${readingNumber} on meter ${meterIdentifier}: ` +
+					`time ${reading.startTimestamp} is earlier than lower bound ${minDate} ` +
+					`with reading ${reading.reading} and endTimestamp ${reading.endTimestamp}`;
+				log.error(newErrMsg);
+				errMsg += '<br>' + newErrMsg + '<br>';
+				--maxError;
+				validDates = false;
+				rejectedDates.push(reading);
+			}
+			if (reading.endTimestamp > maxDate) {
+				const newErrMsg = `error when checking reading time for #${readingNumber} on meter ${meterIdentifier}: ` +
+					`time ${reading.endTimestamp} is later than upper bound ${maxDate} ` +
+					`with reading ${reading.reading} and startTimestamp ${reading.startTimestamp}`;
+				log.error(newErrMsg);
+				errMsg += '<br>' + newErrMsg + '<br>';
+				--maxError;
+				validDates = false;
+				rejectedDates.push(reading);
+			}
 		}
 	}
 	return { validDates, rejectedDates, errMsg };

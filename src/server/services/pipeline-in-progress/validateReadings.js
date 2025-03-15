@@ -12,6 +12,8 @@ const { log } = require('../../log');
  * @param {Reading[]} arrayToValidate
  * @param {dict} conditionSet used to validate readings (minVal, maxVal, minDate, maxDate, threshold, maxError)
  * @param {string} meterIdentifier identifier of meter being checked
+ * @returns {object} {validReadings, rejectedReadings, errMsg} validReadings: true if readings valid & false otherwise,
+ * 	rejectedReadings: array of reading with invalid dates, errMsg: error message associated with checks.
  */
 function validateReadings(arrayToValidate, conditionSet, meterIdentifier = undefined) {
 	/* tslint:disable:no-string-literal */
@@ -29,7 +31,7 @@ function validateReadings(arrayToValidate, conditionSet, meterIdentifier = undef
 		// Unclear why run checks if reject_none but leave it this way. NOte error
 		// msgs still returned.
 		validReadings = true;
-     } else {
+	} else {
 		if (conditionSet['disableChecks'] === 'reject_bad') {
 			// Remove only invalid readings and return the rejected ones
 			rejectedReadings = [...rejectedDates, ...rejectedValues];
@@ -56,6 +58,8 @@ function validateReadings(arrayToValidate, conditionSet, meterIdentifier = undef
  * @param {Moment} maxDate inclusive latest acceptable date (won't be rejected)
  * @param {number} maxError maximum number of errors to be reported, ignore the rest
  * @param {string} meterIdentifier identifier of meter being checked.
+ * @returns {object} {validDates, rejectedDates, errMsg} validDates: true if dates valid & false otherwise, rejectedDates: array of reading with
+ * 	invalid dates, errMsg: error message associated with date check.
  */
 function checkDate(arrayToValidate, minDate, maxDate, maxError, meterIdentifier) {
 	let validDates = true;
@@ -101,6 +105,8 @@ function checkDate(arrayToValidate, minDate, maxDate, maxError, meterIdentifier)
  * @param {number} maxVal inclusive maximum acceptable reading value (won't be rejected)
  * @param {number} maxError maximum number of errors to be reported, ignore the rest
  * @param {string} meterIdentifier identifier of meter being checked.
+ * @returns {object} {validValues, rejectedValues, errMsg} validValues: true if values valid & false otherwise, rejectedValues: array of reading with
+ * 	invalid values, errMsg: error message associated with value check.
  */
 function checkValue(arrayToValidate, minVal, maxVal, maxError, meterIdentifier) {
 	let validValues = true;
@@ -140,6 +146,8 @@ function checkValue(arrayToValidate, minVal, maxVal, maxError, meterIdentifier) 
  * @param {Readings[]} arrayToValidate
  * @param {number} threshold the maximum allowed difference between consecutive data points' intervals
  * @param {string} meterIdentifier identifier of meter being checked.
+ * @returns {object} {validIntervals, errMsg} validIntervals: true if intervals valid & false otherwise,
+ * 	errMsg: error message associated with interval check.
  */
 function checkIntervals(arrayToValidate, threshold, meterIdentifier) {
 	let validIntervals = true;

@@ -20,33 +20,31 @@ function validateReadings(arrayToValidate, conditionSet, meterIdentifier = undef
 	/* tslint:enable:no-string-literal */
 	const errMsg = errMsgDate + errMsgValue;
 
-    const validReadings = validDates && validValues;
-    let rejectedReadings = [];
+	const validReadings = validDates && validValues;
+	let rejectedReadings = [];
 
 	// Even when 'reject_none' is set, issues should still be logged
-    if (conditionSet['disableChecks'] === 'reject_none') {
-        return {
-            validReadings: true,
-            rejectedReadings: [],
-			// Keep the error messages even if no rejections occur
-            errMsg,
-        };
-    } else {
-        if (conditionSet['disableChecks'] === 'reject_bad') {
-            // Remove only invalid readings and return the rejected ones
-            rejectedReadings = [...rejectedDates, ...rejectedValues];
-            arrayToValidate = arrayToValidate.filter(reading => !rejectedReadings.includes(reading));
-        } else if (conditionSet['disableChecks'] === 'reject_all' && !validReadings) {
-            // Reject all readings if validation fails
-            rejectedReadings = [...arrayToValidate];
+	if (conditionSet['disableChecks'] === 'reject_none') {
+		// Note all readings considered valid. Might not be eue to checks done above.
+		// Unclear why run checks if reject_none but leave it this way. NOte error
+		// msgs still returned.
+		validReadings = true;
+     } else {
+		if (conditionSet['disableChecks'] === 'reject_bad') {
+			// Remove only invalid readings and return the rejected ones
+			rejectedReadings = [...rejectedDates, ...rejectedValues];
+			arrayToValidate = arrayToValidate.filter(reading => !rejectedReadings.includes(reading));
+		} else if (conditionSet['disableChecks'] === 'reject_all' && !validReadings) {
+			// Reject all readings if validation fails
+			rejectedReadings = [...arrayToValidate];
 			// Clear the array
 			arrayToValidate = arrayToValidate.slice(0, 0);
-        }
-    }
+		}
+	}
 
 	return {
 		validReadings,
-        rejectedReadings,
+		rejectedReadings,
 		errMsg,
 	};
 }
@@ -165,9 +163,9 @@ function checkIntervals(arrayToValidate, threshold, meterIdentifier) {
 		const currGap = reading.startTimestamp.diff(lastTime, 'seconds');
 		// Compare the current time gap with the expected interval. Terminate if the difference is larger than the accepted threshold
 		if (Math.abs(currGap - interval) > threshold) {
-			const newErrMsg = `warning when checking reading gap for #${readingNumber} on meter ${meterIdentifier}: ` + 
+			const newErrMsg = `warning when checking reading gap for #${readingNumber} on meter ${meterIdentifier}: ` +
 				`time gap is detected between current start time ${reading.startTimestamp} and previous end time ${lastTime} that exceeds threshold of ${threshold} ` +
-				`with current reading ${reading.reading} and endTimestamp ${reading.endTimestamp}`;		
+				`with current reading ${reading.reading} and endTimestamp ${reading.endTimestamp}`;
 			log.error(newErrMsg);
 			errMsg += '<br>' + newErrMsg + '<br>';
 			validIntervals = false;
@@ -185,17 +183,17 @@ function checkIntervals(arrayToValidate, threshold, meterIdentifier) {
  * @returns {boolean} - Returns true if the reading is valid, false otherwise.
  */
 function validateSingleReading(reading, conditionSet) {
-    const { minVal, maxVal, minDate, maxDate } = conditionSet;
+	const { minVal, maxVal, minDate, maxDate } = conditionSet;
 
-    // Check if the reading falls within the acceptable date range
-    if ((minDate && reading.startTimestamp < minDate) || (maxDate && reading.endTimestamp > maxDate)) {
-        return false;
-    }
-    // Check if the reading falls within the acceptable value range
-    if ((minVal !== undefined && reading.reading < minVal) || (maxVal !== undefined && reading.reading > maxVal)) {
-        return false;
-    }
-    return true;
+	// Check if the reading falls within the acceptable date range
+	if ((minDate && reading.startTimestamp < minDate) || (maxDate && reading.endTimestamp > maxDate)) {
+		return false;
+	}
+	// Check if the reading falls within the acceptable value range
+	if ((minVal !== undefined && reading.reading < minVal) || (maxVal !== undefined && reading.reading > maxVal)) {
+		return false;
+	}
+	return true;
 }
 
 module.exports = {

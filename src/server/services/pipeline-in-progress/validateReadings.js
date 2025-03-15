@@ -20,7 +20,7 @@ function validateReadings(arrayToValidate, conditionSet, meterIdentifier = undef
 	/* tslint:enable:no-string-literal */
 	const errMsg = errMsgDate + errMsgValue;
 
-	const validReadings = validDates && validValues;
+	let validReadings = validDates && validValues;
 	let rejectedReadings = [];
 
 	// Even when 'reject_none' is set, issues should still be logged

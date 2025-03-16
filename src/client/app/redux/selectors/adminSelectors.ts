@@ -18,6 +18,7 @@ import { selectAllUnits, selectUnitDataById } from '../api/unitsApi';
 import { selectVisibleMetersAndGroups } from './authVisibilitySelectors';
 import { createAppSelector } from './selectors';
 import { selectSelectedLanguage } from '../../redux/slices/appStateSlice';
+import { DisableChecksType } from '../../types/redux/units';
 
 export const MIN_VAL = Number.MIN_SAFE_INTEGER;
 export const MAX_VAL = Number.MAX_SAFE_INTEGER;
@@ -309,7 +310,10 @@ export const selectDefaultCreateMeterValues = createAppSelector(
 			readingFrequency: adminPreferences.defaultMeterReadingFrequency,
 			minDate: adminPreferences.defaultMeterMinimumDate,
 			maxDate: adminPreferences.defaultMeterMaximumDate,
-			maxError: adminPreferences.defaultMeterMaximumErrors
+			maxError: adminPreferences.defaultMeterMaximumErrors,
+			minVal: MIN_VAL,
+			maxVal: MAX_VAL,
+			disableChecks: DisableChecksType.reject_all
 		};
 		return defaultValues;
 	}

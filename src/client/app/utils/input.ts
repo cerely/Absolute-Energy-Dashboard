@@ -6,7 +6,10 @@ import { GPSPoint } from './calibration';
 import { UnitData, DisplayableType, UnitRepresentType, UnitType, UnitDataById, DisableChecksType } from '../types/redux/units';
 import translate from './translate';
 import { LanguageTypes } from 'types/redux/i18n';
-import { MAX_VAL, MIN_VAL } from '../redux/selectors/adminSelectors';
+
+export const MIN_VAL = Number.MIN_SAFE_INTEGER;
+export const MAX_VAL = Number.MAX_SAFE_INTEGER;
+
 /**
  * get string value from GPSPoint or null.
  * @param gps GPS point to get value from and can be null

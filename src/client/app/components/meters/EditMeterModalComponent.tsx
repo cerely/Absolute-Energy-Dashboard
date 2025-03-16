@@ -14,8 +14,7 @@ import { selectUnitDataById } from '../../redux/api/unitsApi';
 import { useAppSelector } from '../../redux/reduxHooks';
 import {
 	MAX_DATE, MAX_DATE_MOMENT, MAX_ERRORS,
-	MAX_VAL, MIN_DATE, MIN_DATE_MOMENT, MIN_VAL,
-	selectGraphicUnitCompatibility
+	MIN_DATE, MIN_DATE_MOMENT, selectGraphicUnitCompatibility
 } from '../../redux/selectors/adminSelectors';
 import '../../styles/modal.css';
 import { tooltipBaseStyle } from '../../styles/modalStyle';
@@ -24,7 +23,7 @@ import { MeterData, MeterTimeSortType, MeterType } from '../../types/redux/meter
 import { DisableChecksType, UnitRepresentType } from '../../types/redux/units';
 import { GPSPoint, isValidGPSInput } from '../../utils/calibration';
 import { AreaUnitType } from '../../utils/getAreaUnitConversion';
-import { getGPSString, nullToEmptyString } from '../../utils/input';
+import { getGPSString, nullToEmptyString, NoUnit, MIN_VAL, MAX_VAL } from '../../utils/input';
 import { showErrorNotification } from '../../utils/notifications';
 import { useTranslate } from '../../redux/componentHooks';
 import TimeZoneSelect from '../TimeZoneSelect';
@@ -78,16 +77,21 @@ export default function EditMeterModalComponent(props: EditMeterModalComponentPr
 
 	const handleUnitChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const selectedUnitId = Number(e.target.value);
-		const selectedUnit = unitDataById[selectedUnitId];
-		if (selectedUnit) {
-			setLocalMeterEdits({
-				...localMeterEdits,
-				unitId: selectedUnitId,
-				minVal: selectedUnit.minVal,
-				maxVal: selectedUnit.maxVal,
-				disableChecks: selectedUnit.disableChecks
-			});
+		let selectedUnit;
+		if (selectedUnitId === -99) {
+			// No unit so set specially
+			selectedUnit = NoUnit;
+		} else {
+			selectedUnit = unitDataById[selectedUnitId];
 		}
+
+		setLocalMeterEdits({
+			...localMeterEdits,
+			unitId: selectedUnitId,
+			minVal: selectedUnit.minVal,
+			maxVal: selectedUnit.maxVal,
+			disableChecks: selectedUnit.disableChecks
+		});
 	};
 
 	// Save changes

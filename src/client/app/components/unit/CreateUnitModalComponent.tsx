@@ -15,7 +15,7 @@ import { tooltipBaseStyle } from '../../styles/modalStyle';
 import { unitsApi } from '../../redux/api/unitsApi';
 import { useTranslate } from '../../redux/componentHooks';
 import { showSuccessNotification, showErrorNotification } from '../../utils/notifications';
-import { MAX_VAL, MIN_VAL } from '../../redux/selectors/adminSelectors';
+import { MIN_VAL, MAX_VAL } from '../../utils/input';
 import { LineGraphRates } from '../../types/redux/graph';
 import { customRateValid, isCustomRate } from '../../utils/unitInput';
 

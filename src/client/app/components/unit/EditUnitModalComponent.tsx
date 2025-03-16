@@ -21,7 +21,7 @@ import { conversionArrow } from '../../utils/conversionArrow';
 import { showErrorNotification, showSuccessNotification } from '../../utils/notifications';
 import ConfirmActionModalComponent from '../ConfirmActionModalComponent';
 import TooltipMarkerComponent from '../TooltipMarkerComponent';
-import { MAX_VAL, MIN_VAL } from '../../redux/selectors/adminSelectors';
+import { MIN_VAL, MAX_VAL } from '../../utils/input';
 import { LineGraphRates } from '../../types/redux/graph';
 import { customRateValid, isCustomRate } from '../../utils/unitInput';
 

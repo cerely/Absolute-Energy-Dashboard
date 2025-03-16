@@ -12,8 +12,8 @@ import { metersApi } from '../../redux/api/metersApi';
 import { useAppSelector } from '../../redux/reduxHooks';
 import {
 	MAX_DATE, MAX_DATE_MOMENT,
-	MAX_ERRORS, MAX_VAL, MIN_DATE,
-	MIN_DATE_MOMENT, MIN_VAL,
+	MAX_ERRORS, MIN_DATE,
+	MIN_DATE_MOMENT,
 	isValidCreateMeter,
 	selectCreateMeterUnitCompatibility,
 	selectDefaultCreateMeterValues
@@ -31,6 +31,7 @@ import TooltipHelpComponent from '../TooltipHelpComponent';
 import TooltipMarkerComponent from '../TooltipMarkerComponent';
 import { selectUnitDataById } from '../../redux/api/unitsApi';
 import { DisableChecksType } from '../../types/redux/units';
+import { NoUnit, MIN_VAL, MAX_VAL } from '../../utils/input';
 
 interface CreateMeterModalProps {
 	onCreateMeter?: (meterIdentifier: string) => void; // Define the type of the callback function
@@ -54,10 +55,10 @@ export default function CreateMeterModalComponent(props: CreateMeterModalProps):
 	const [showModal, setShowModal] = useState(false);
 
 	// Handlers for each type of input change
-	const [meterDetails, setMeterDetails] = useState({...defaultValues});
+	const [meterDetails, setMeterDetails] = useState({ ...defaultValues });
 	const unitIsSelected = meterDetails.unitId !== -999;
 	const defaultGaphicUnitIsSelected = meterDetails.defaultGraphicUnit !== -999;
-	const unitsDataById = useAppSelector(selectUnitDataById);
+	const unitDataById = useAppSelector(selectUnitDataById);
 
 	const { compatibleGraphicUnits, incompatibleGraphicUnits, compatibleUnits } = useAppSelector(state =>
 		// Type assertion due to conflicting GPS Property
@@ -98,22 +99,26 @@ export default function CreateMeterModalComponent(props: CreateMeterModalProps):
 
 	const handleUnitChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const selectedUnitId = Number(e.target.value);
-		const selectedUnit = unitsDataById[selectedUnitId];
-
-		if (selectedUnit) {
-			setMeterDetails(details => ({
-				...details,
-				unitId: selectedUnitId,
-				minVal: selectedUnit.minVal,
-				maxVal: selectedUnit.maxVal,
-				disableChecks: selectedUnit.disableChecks
-			}));
+		let selectedUnit;
+		if (selectedUnitId === -99) {
+			// No unit so set specially
+			selectedUnit = NoUnit;
+		} else {
+			selectedUnit = unitDataById[selectedUnitId];
 		}
+
+		setMeterDetails(details => ({
+			...details,
+			unitId: selectedUnitId,
+			minVal: selectedUnit.minVal,
+			maxVal: selectedUnit.maxVal,
+			disableChecks: selectedUnit.disableChecks
+		}));
 	};
 
 	// Reset the state to default values
 	const resetState = () => {
-		setMeterDetails({...defaultValues});
+		setMeterDetails({ ...defaultValues });
 	};
 
 	const handleClose = () => {

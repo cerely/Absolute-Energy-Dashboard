@@ -9,6 +9,9 @@ not exceed the start/end times for the readings in the supplied meter. This can 
 because infinity is used to indicate to graph all readings. This version does it to the nearest
 day by using the day reading view and is used by 3D readings which only allow days and a single meter.
  */
+ CREATE INDEX IF NOT EXISTS idx_hourly_readings_unit_meter_time
+ON hourly_readings_unit (meter_id, lower(time_interval));
+
 CREATE OR REPLACE FUNCTION shrink_tsrange_to_meter_readings_by_day(tsrange_to_shrink TSRANGE, meter_id_desired INTEGER)
 	RETURNS TSRANGE
 AS $$
@@ -103,23 +106,7 @@ BEGIN
         -- do the generate_series since that case aligns with the hourly table.
         -- The more general code is currently slower than desired so doing this.
         -- TODO Can we optimize the code so this is not needed or the slowdown is less?
-        IF (reading_length_hours_use = 1) THEN
-            -- If want every hour then can just return the items in the hourly table in the desired range of time.
-            -- Note could do outside the meter loop as is done for line readings and use the DB to do all the
-            -- meters but this makes both cases parallel and is still fast enough.
-            RETURN QUERY
-                SELECT
-                    hr.meter_id as meter_id,
-                    hr.reading_rate * slope + intercept as reading_rate,
-                    lower(hr.time_interval) AS start_timestamp,
-                    upper(hr.time_interval) AS end_timestamp
-                FROM hourly_readings_unit hr
-                -- Only want the desired meter and within the time requested
-                WHERE hr.meter_id = current_meter_id and requested_range @> hr.time_interval
-                 -- Time sort by which meter and the start time for graphing.
-                ORDER BY meter_id, start_timestamp
-            ;
-        ELSIF (reading_length_hours_use <= 12) THEN
+        IF (reading_length_hours_use <= 12) THEN
             -- Need to generate_series to group the desired hours together
             RETURN QUERY
                 -- The readings are rates in the hourly table so want to average not sum so
@@ -138,7 +125,7 @@ BEGIN
                 -- is inclusive.
                 FROM (
                     SELECT hour
-                    FROM generate_series(
+                    FROM generate_series( 
                         lower(requested_range),
                         upper(requested_range) - reading_length_interval,
                         reading_length_interval
@@ -151,6 +138,7 @@ BEGIN
                 -- Only want readings that lie within this slice of the desired data
                 AND lower(hr.time_interval) >= hours.hour
                 AND upper(hr.time_interval) <= hours.hour + reading_length_interval
+                AND lower(hr.time_interval) <= hours.hour + reading_length_interval
                 -- Group by the start time of the generated series since all points in
                 -- the desired slice have the same start time for the series.
                 -- Also group by the meter_id since Postgres wants and desired for graphing

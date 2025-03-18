@@ -4,6 +4,7 @@
 
 const moment = require('moment');
 const Meter = require('../../models/Meter');
+const Unit = require('../../models/Unit');
 const loadArrayInput = require('../pipeline-in-progress/loadArrayInput');
 const { log } = require('../../log');
 const demuxCsvWithSingleColumnTimestamps = require('./csvDemux');
@@ -60,7 +61,7 @@ async function loadLogfileToReadings(serialNumber, ipAddress, logfile, conn) {
 				preferences.defaultMeterMinimumDate, // minDate
 				preferences.defaultMeterMaximumDate, // maxDate
 				preferences.defaultMeterMaximumErrors, // maxError
-				Meter.disableChecksType.REJECT_ALL // disable checks
+				Unit.disableChecksType.REJECT_ALL // disable checks
 			);
 			await meter.insert(conn);
 			log.warn('WARNING: Created a meter (' + `${serialNumber}.${i}` +
@@ -113,10 +114,13 @@ async function loadLogfileToReadings(serialNumber, ipAddress, logfile, conn) {
 				// Unsure if previous values should not change but going to assume want the latest one sent.
 				shouldUpdate = true,
 				conditionSet = {
+					minVal: meter.minVal,
+					maxVal: meter.maxVal,
 					minDate: meter.minDate,
 					maxDate: meter.maxDate,
 					threshold: readingGap,
-					maxError: meter.maxError
+					maxError: meter.maxError,
+					disableChecks: meter.disableChecks
 				},
 				conn = conn,
 				honorDst = false,

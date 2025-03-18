@@ -13,7 +13,7 @@ const { log } = require('../../log');
  * @param {dict} conditionSet used to validate readings (minVal, maxVal, minDate, maxDate, threshold, maxError)
  * @param {string} meterIdentifier identifier of meter being checked
  * @returns {object} {validReadings, rejectedReadings, errMsg} validReadings: true if readings valid & false otherwise,
- * 	rejectedReadings: array of reading with invalid dates, errMsg: error message associated with checks.
+ * 	rejectedReadings: array of reading with invalid date/value, errMsg: error message associated with checks.
  */
 function validateReadings(arrayToValidate, conditionSet, meterIdentifier = undefined) {
 	/* tslint:disable:no-string-literal */
@@ -23,12 +23,13 @@ function validateReadings(arrayToValidate, conditionSet, meterIdentifier = undef
 	const errMsg = errMsgDate + errMsgValue;
 
 	let validReadings = validDates && validValues;
+	// At the current time rejectedReadings does not seem to be used but leaving for now.
 	let rejectedReadings = [];
 
 	// Even when 'reject_none' is set, issues should still be logged
 	if (conditionSet['disableChecks'] === 'reject_none') {
-		// Note all readings considered valid. Might not be eue to checks done above.
-		// Unclear why run checks if reject_none but leave it this way. NOte error
+		// Note all readings considered valid. Might not be due to checks done above.
+		// Unclear why run checks if reject_none but leave it this way. Note error
 		// msgs still returned.
 		validReadings = true;
 	} else {

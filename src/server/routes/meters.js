@@ -249,7 +249,7 @@ function validateMeterParams(params) {
 			disableChecks: {
 				type: 'string',
 				minLength: 1,
-				enum: Object.values(Meter.disableChecksType)
+				enum: Object.values(Unit.disableChecksType)
 			}
 		}
 	}

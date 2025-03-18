@@ -5,7 +5,6 @@
 const express = require('express');
 const Preferences = require('../models/Preferences');
 const { log } = require('../log');
-const Meter = require('../models/Meter');
 const adminAuthenticator = require('./authenticator').adminAuthMiddleware;
 const validate = require('jsonschema').validate;
 const { getConnection } = require('../db');

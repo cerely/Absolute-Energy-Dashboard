@@ -16,7 +16,8 @@ function formatUnitForResponse(item) {
 	return {
 		id: item.id, name: item.name, identifier: item.identifier, unitRepresent: item.unitRepresent,
 		secInRate: item.secInRate, typeOfUnit: item.typeOfUnit, suffix: item.suffix,
-		displayable: item.displayable, preferredDisplay: item.preferredDisplay, note: item.note, minVal: item.minVal, maxVal: item.maxVal, disableChecks: item.disableChecks
+		displayable: item.displayable, preferredDisplay: item.preferredDisplay, note: item.note,
+		minVal: item.minVal, maxVal: item.maxVal, disableChecks: item.disableChecks
 	};
 }
 

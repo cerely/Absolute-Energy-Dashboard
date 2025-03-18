@@ -27,8 +27,7 @@ class Preferences {
 	*/
 	constructor(displayTitle, defaultChartToRender, defaultBarStacking, defaultLanguage, defaultTimezone,
 		defaultWarningFileSize, defaultFileSizeLimit, defaultAreaNormalization, defaultAreaUnit, defaultMeterReadingFrequency,
-		defaultMeterMinimumDate,
-		defaultMeterMaximumDate, defaultMeterReadingGap, defaultMeterMaximumErrors, defaultHelpUrl) {
+		defaultMeterMinimumDate, defaultMeterMaximumDate, defaultMeterReadingGap, defaultMeterMaximumErrors, defaultHelpUrl) {
 		this.displayTitle = displayTitle;
 		this.defaultChartToRender = defaultChartToRender;
 		this.defaultBarStacking = defaultBarStacking;

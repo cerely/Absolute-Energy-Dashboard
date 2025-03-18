@@ -607,7 +607,7 @@ export default function EditUnitModalComponent(props: EditUnitModalComponentProp
 						</Row>
 						{/* Note input */}
 						<FormGroup>
-							<Label for='note'>{translate('unit')}</Label>
+							<Label for='note'>{translate('note')}</Label>
 							<Input
 								id='note'
 								name='note'

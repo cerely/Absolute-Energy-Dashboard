@@ -11,12 +11,8 @@ import { Button, Col, Container, FormFeedback, FormGroup, Input, Label, Modal, M
 import { metersApi } from '../../redux/api/metersApi';
 import { useAppSelector } from '../../redux/reduxHooks';
 import {
-	MAX_DATE, MAX_DATE_MOMENT,
-	MAX_ERRORS, MIN_DATE,
-	MIN_DATE_MOMENT,
-	isValidCreateMeter,
-	selectCreateMeterUnitCompatibility,
-	selectDefaultCreateMeterValues
+	MAX_DATE, MAX_DATE_MOMENT, MAX_ERRORS, MIN_DATE, MIN_DATE_MOMENT,
+	isValidCreateMeter, selectCreateMeterUnitCompatibility, selectDefaultCreateMeterValues
 } from '../../redux/selectors/adminSelectors';
 import '../../styles/modal.css';
 import { tooltipBaseStyle } from '../../styles/modalStyle';
@@ -55,7 +51,7 @@ export default function CreateMeterModalComponent(props: CreateMeterModalProps):
 	const [showModal, setShowModal] = useState(false);
 
 	// Handlers for each type of input change
-	const [meterDetails, setMeterDetails] = useState({ ...defaultValues });
+	const [meterDetails, setMeterDetails] = useState(defaultValues);
 	const unitIsSelected = meterDetails.unitId !== -999;
 	const defaultGaphicUnitIsSelected = meterDetails.defaultGraphicUnit !== -999;
 	const unitDataById = useAppSelector(selectUnitDataById);
@@ -118,7 +114,7 @@ export default function CreateMeterModalComponent(props: CreateMeterModalProps):
 
 	// Reset the state to default values
 	const resetState = () => {
-		setMeterDetails({ ...defaultValues });
+		setMeterDetails(defaultValues);
 	};
 
 	const handleClose = () => {

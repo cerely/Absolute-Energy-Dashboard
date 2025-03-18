@@ -13,8 +13,7 @@ import { metersApi, selectMeterById, selectMeterDataById } from '../../redux/api
 import { selectUnitDataById } from '../../redux/api/unitsApi';
 import { useAppSelector } from '../../redux/reduxHooks';
 import {
-	MAX_DATE, MAX_DATE_MOMENT, MAX_ERRORS,
-	MIN_DATE, MIN_DATE_MOMENT, selectGraphicUnitCompatibility
+	MAX_DATE, MAX_DATE_MOMENT, MAX_ERRORS, MIN_DATE, MIN_DATE_MOMENT, selectGraphicUnitCompatibility
 } from '../../redux/selectors/adminSelectors';
 import '../../styles/modal.css';
 import { tooltipBaseStyle } from '../../styles/modalStyle';

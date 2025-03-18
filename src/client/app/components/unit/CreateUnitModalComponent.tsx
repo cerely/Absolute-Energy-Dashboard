@@ -440,7 +440,7 @@ export default function CreateUnitModalComponent() {
 									onChange={e => handleNumberChange(e)}
 									min={MIN_VAL}
 									max={state.maxVal}
-									defaultValue={state.minVal}
+									value={state.minVal}
 									invalid={state?.minVal < MIN_VAL || state?.minVal > state?.maxVal} />
 								<FormFeedback>
 									<FormattedMessage id="error.bounds" values={{ min: MIN_VAL, max: state.maxVal }} />
@@ -453,7 +453,7 @@ export default function CreateUnitModalComponent() {
 									onChange={e => handleNumberChange(e)}
 									min={state.minVal}
 									max={MAX_VAL}
-									defaultValue={state.maxVal}
+									value={state.maxVal}
 									invalid={state?.maxVal > MAX_VAL || state?.minVal > state?.maxVal} />
 								<FormFeedback>
 									<FormattedMessage id="error.bounds" values={{ min: state.minVal, max: MAX_VAL }} />
@@ -466,7 +466,7 @@ export default function CreateUnitModalComponent() {
 								<Label for='disableChecks'>{translate('disable.checks')}</Label>
 								<Input id='disableChecks' name='disableChecks' type='select'
 									onChange={e => handleStringChange(e)}
-									defaultValue={state.disableChecks}>
+									value={state.disableChecks}>
 									{Object.keys(DisableChecksType).map(key => {
 										return (<option value={key} key={key} >
 											{translate(`DisableChecksType.${key}`)}</option>);

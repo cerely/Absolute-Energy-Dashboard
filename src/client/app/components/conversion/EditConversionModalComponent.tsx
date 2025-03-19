@@ -97,31 +97,47 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 		let msg = '';
 		let cancel = false;
 		if (source.typeOfUnit === UnitType.meter) {
+			// How many conversions have this conversion's source so are conversions from a meter.
 			const srcCount = getConversionCount(source, conversionDetails);
+			// How many meters use this conversion, i.e., have the source as its unit.
 			const relatedMeters = Object.values(meterDataById).filter(meter => meter.unitId === source.id);
-			if (srcCount === 1) {
-				msg += `${translate('conversion.delete.meter.orphan')} "${dest.name}".\n`;
+			if (srcCount === 1 && relatedMeters.length !== 0) {
+				// This is the only conversion for this meter unit so if it is removed then
+				// you cannot graph any meters using this unit. Not allowed to delete if
+				// any meters use this unit as in this case.
+				msg += `${translate('conversion.delete.meter.orphan')} "${source.name}".\n`;
 				msg += `${translate('conversion.delete.meter.related')} "${source.name}":\n`;
 				relatedMeters.forEach(meter => {
 					msg += `"${meter.name}"\n`;
 				});
 				cancel = true;
-			} else {
+			} else if (relatedMeters.length !== 0) {
+				// Some meters use this meter unit but there are other ways to graphic it
+				// so warn the admin and tell each meter impacted.
 				msg += `${translate('conversion.delete.meter.related')} "${source.name}":\n`;
 				relatedMeters.forEach(meter => {
 					msg += `"${meter.name}"\n`;
 				});
-				msg += `${translate('conversion.delete.meter.ungraphable')} "${source.name}".\n`;
+				msg += `${translate('conversion.delete.meter.reduce.graphable')} "${source.name}".\n`;
+			} else if (srcCount === 1) {
+				// No meters use this meter unit so warn that will is ungraphable if used.
+				msg += `${translate('conversion.delete.meter.orphan')} "${source.name}".\n`;
+			} else {
+				// No meters use this meter unit so warn that reduced graphable units if used.
+				msg += `${translate('conversion.delete.meter.reduce.graphable')} "${source.name}".\n`;
 			}
-		} else if (source.typeOfUnit === UnitType.suffix) {
-			const srcCount = getConversionCount(source, conversionDetails);
-			if (srcCount === 1) {
-				msg += `${translate('conversion.delete.suffix.disable')} "${source.name}".\n`;
-			}
+			// TODO The following code did what was originally in issue #905 but there were issues
+			// with the design and usage of suffix units. It is commented out for now and needs
+			// to be revisited when the design for suffix is better.
+		// } else if (source.typeOfUnit === UnitType.suffix) {
+		// 	const srcCount = getConversionCount(source, conversionDetails);
+		// 	if (srcCount === 1) {
+		// 		msg += `${translate('conversion.delete.suffix.disable')} "${source.name}".\n`;
+		// 	}
 		} else if (source.typeOfUnit === UnitType.unit && dest.typeOfUnit === UnitType.unit) {
 			const destConversions = conversionDetails.filter(conversion =>
-				(conversion.sourceId === dest.id) ||
-				(conversion.bidirectional && conversion.destinationId === dest.id)
+				(conversion.destinationId === dest.id) ||
+				(conversion.bidirectional && conversion.sourceId === dest.id)
 			);
 
 			const remainingDestConversions = destConversions.filter(conversion =>

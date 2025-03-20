@@ -364,7 +364,7 @@ mocha.describe('readings API', () => {
 						}
 					];
 					await prepareTest(unitData, conversionData, meterData);
-					const unitId = await getUnitId('kW');
+					const unitId = await getUnitId('kWh');
 					const expected = [27067.4812056454, 3286.9345597083];    
 
 					const res = await chai.request(app).get(`/api/compareReadings/meters/${METER_ID}`)

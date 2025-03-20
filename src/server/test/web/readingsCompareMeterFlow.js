@@ -366,6 +366,13 @@ mocha.describe('readings API', () => {
 					const unitId = await getUnitId('kW');
 					const expected = [27067.4812056454, 3286.9345597083];    
 
+					const res = await chai.request(app).get(`/api/compareReadings/meters/${METER_ID}`)
+						.query({
+							curr_start: '2022-10-09 00:00:00',
+							curr_end: '2022-10-31 17:12:34',
+							shift: 'P28D',
+							graphicUnitId: unitId
+						});
 			});
 		});
 	});

@@ -309,8 +309,7 @@ mocha.describe('readings API', () => {
 				// Add C19 here
 
 				// Add C20 here
-				mocha.it('C20: 28 day shift end 2022-10-31 17:12:34 (partial hour) for 15 minute reading intervals and quantity units & kWh as kWh', async () => {
-					// Units and Conversions
+				mocha.it('C20: 28 day shift end 2022-10-31 17:12:34 (partial hour) for 15 minute reading intervals and quantity units & kWh as kWh', async () =>{
 					unitData = [ 
 						{
 							//u4

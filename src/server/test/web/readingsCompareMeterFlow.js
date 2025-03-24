@@ -306,7 +306,6 @@ mocha.describe('readings API', () => {
 
 				});
 	
-				// Add C19 here
 				mocha.it('C19: 7 day shift end 2022-11-01 15:00:00 (beyond data) for 15 minute reading intervals and quantity units & kWh as kWh', async () => {
 					const unitData = [
 						{

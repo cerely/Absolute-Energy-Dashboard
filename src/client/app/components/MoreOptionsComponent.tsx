@@ -26,7 +26,6 @@ export default function MoreOptionsComponent() {
 	const chartToRender = useAppSelector(selectChartToRender);
 	const queryTimeInterval = useAppSelector(selectQueryTimeInterval);
 	const isBounded = queryTimeInterval.getIsBounded();
-	console.log(isBounded);
 	const [showModal, setShowModal] = useState(false);
 	const handleShow = () => setShowModal(true);
 	const handleClose = () => {

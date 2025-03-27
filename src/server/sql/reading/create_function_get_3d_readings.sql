@@ -3,16 +3,16 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
  */
 
+
+ -- By indexing both columns together, the database can efficiently handle queries that involve both meter_id and time_interval
+ CREATE INDEX IF NOT EXISTS idx_hourly_readings_unit_meter_time
+ON hourly_readings_unit (meter_id, lower(time_interval));
 /*
 This takes tsrange_to_shrink which is the requested time range to plot and makes sure it does
 not exceed the start/end times for the readings in the supplied meter. This can be an issue, in particular,
 because infinity is used to indicate to graph all readings. This version does it to the nearest
 day by using the day reading view and is used by 3D readings which only allow days and a single meter.
  */
- -- By indexing both columns together, the database can efficiently handle queries that involve both meter_id and time_interval
- CREATE INDEX IF NOT EXISTS idx_hourly_readings_unit_meter_time
-ON hourly_readings_unit (meter_id, lower(time_interval));
-
 CREATE OR REPLACE FUNCTION shrink_tsrange_to_meter_readings_by_day(tsrange_to_shrink TSRANGE, meter_id_desired INTEGER)
 	RETURNS TSRANGE
 AS $$
@@ -25,8 +25,6 @@ BEGIN
 	RETURN tsrange_to_shrink * readings_max_tsrange;
 END;
 $$ LANGUAGE 'plpgsql';
-
-
 -- Gets meters graphing data for 3D graphic by returning points that span the requested
 -- length of time over the days requested. This function can be slower than line readings
 -- so is designed to be called for one year or less of data.
@@ -98,11 +96,9 @@ BEGIN
 		INNER JOIN cik c on c.source_id = m.unit_id AND c.destination_id = graphic_unit_id
         WHERE m.id = current_meter_id
         ;
-
         -- Get the range of days requested by calling shrink_tsrange_to_meter_readings_by_day.
         -- First make requested range only be full days by dropping any partial days at start/end.
         requested_range := shrink_tsrange_to_meter_readings_by_day(tsrange(date_trunc_up('day', start_stamp), date_trunc('day', end_stamp)), current_meter_id);
-
         -- This currently does a special case if you want every hour since there is no need to
         -- do the generate_series since that case aligns with the hourly table.
         -- The more general code is currently slower than desired so doing this.
@@ -139,6 +135,7 @@ BEGIN
                 -- Only want readings that lie within this slice of the desired data
                 AND lower(hr.time_interval) >= hours.hour
                 AND upper(hr.time_interval) <= hours.hour + reading_length_interval
+                -- ensures that the start of the reading time intervals does not exceed the end of the current generated interval
                 AND lower(hr.time_interval) <= hours.hour + reading_length_interval
                 -- Group by the start time of the generated series since all points in
                 -- the desired slice have the same start time for the series.
@@ -155,14 +152,11 @@ BEGIN
                 SELECT -999, -999::FLOAT, '1900-01-01 00:00:00'::TIMESTAMP, '1900-01-01 00:00:00'::TIMESTAMP + reading_length_interval
             ;
         END IF;
-
         -- Go to the next meter
 		current_meter_index := current_meter_index + 1;
 	END LOOP;
 END;
 $$ LANGUAGE plpgsql;
-
-
 /*Gets group meters graphing data for 3D graphic by returning points that span the requested
   length of time over the days requested. 
 */

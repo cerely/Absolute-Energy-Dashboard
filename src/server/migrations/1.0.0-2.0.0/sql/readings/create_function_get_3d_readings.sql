@@ -2,32 +2,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. 
  */
-
-/*
-This takes tsrange_to_shrink which is the requested time range to plot and makes sure it does
-not exceed the start/end times for the readings in the supplied meter. This can be an issue, in particular,
-because infinity is used to indicate to graph all readings. This version does it to the nearest
-day by using the day reading view and is used by 3D readings which only allow days and a single meter.
- */
- -- By indexing both columns together, the database can efficiently handle queries that involve both meter_id and time_interval
- CREATE INDEX IF NOT EXISTS idx_hourly_readings_unit_meter_time
+-- By indexing both columns together, the database can efficiently handle queries that involve both meter_id and time_interval
+CREATE INDEX IF NOT EXISTS idx_hourly_readings_unit_meter_time-- was created to support the usage of the view by 3d
 ON hourly_readings_unit (meter_id, lower(time_interval));
-
-CREATE OR REPLACE FUNCTION shrink_tsrange_to_meter_readings_by_day(tsrange_to_shrink TSRANGE, meter_id_desired INTEGER)
-	RETURNS TSRANGE
-AS $$
-DECLARE
-	readings_max_tsrange TSRANGE;
-BEGIN
-	SELECT tsrange(min(lower(time_interval)), max(upper(time_interval))) INTO readings_max_tsrange
-	FROM daily_readings_unit
-	where meter_id = meter_id_desired;
-	RETURN tsrange_to_shrink * readings_max_tsrange;
-END;
 $$ LANGUAGE 'plpgsql';
-
-
--- Gets meters graphing data for 3D graphic by returning points that span the requested
+-- Gets meters graphing data for 3D graphic by returning points that span the requestedS
 -- length of time over the days requested. This function can be slower than line readings
 -- so is designed to be called for one year or less of data.
 CREATE OR REPLACE FUNCTION meter_3d_readings_unit (
@@ -86,19 +65,16 @@ BEGIN
     END IF;
     -- Hours per reading determined returned as an interval.
     reading_length_interval := (reading_length_hours_use::TEXT || ' hour')::INTERVAL;
-
 	-- Loop over all meters.
 	WHILE current_meter_index <= cardinality(meter_ids_requested) LOOP
         -- ID of the current meter in loop
         current_meter_id := meter_ids_requested[current_meter_index];
-
         -- Get the conversion from the current meter's unit to the desired graphing unit.
         SELECT c.slope, c.intercept into slope, intercept
         FROM meters m
 		INNER JOIN cik c on c.source_id = m.unit_id AND c.destination_id = graphic_unit_id
         WHERE m.id = current_meter_id
         ;
-
         -- Get the range of days requested by calling shrink_tsrange_to_meter_readings_by_day.
         -- First make requested range only be full days by dropping any partial days at start/end.
         requested_range := shrink_tsrange_to_meter_readings_by_day(tsrange(date_trunc_up('day', start_stamp), date_trunc('day', end_stamp)), current_meter_id);
@@ -139,6 +115,7 @@ BEGIN
                 -- Only want readings that lie within this slice of the desired data
                 AND lower(hr.time_interval) >= hours.hour
                 AND upper(hr.time_interval) <= hours.hour + reading_length_interval
+                -- ensures that the start of the reading time intervals does not exceed the end of the current generated interval
                 AND lower(hr.time_interval) <= hours.hour + reading_length_interval
                 -- Group by the start time of the generated series since all points in
                 -- the desired slice have the same start time for the series.
@@ -155,14 +132,11 @@ BEGIN
                 SELECT -999, -999::FLOAT, '1900-01-01 00:00:00'::TIMESTAMP, '1900-01-01 00:00:00'::TIMESTAMP + reading_length_interval
             ;
         END IF;
-
         -- Go to the next meter
 		current_meter_index := current_meter_index + 1;
 	END LOOP;
 END;
 $$ LANGUAGE plpgsql;
-
-
 /*Gets group meters graphing data for 3D graphic by returning points that span the requested
   length of time over the days requested. 
 */
@@ -188,17 +162,16 @@ BEGIN
 	SELECT array_agg(DISTINCT gdm.meter_id) INTO meter_ids
 	FROM groups_deep_meters gdm
     WHERE group_id = group_id_requested; 
-
 	RETURN QUERY
 		SELECT
             --Sum the reading rates of the meters. 
-			SUM(readings.reading_rate) AS reading_rate,
+			SUM(readings.reading_rate) AS reading_rate, -- may need to implement a view to calculate sum aswell as utilizing the GROUP method line 191
 			readings.start_timestamp,
 			readings.end_timestamp
 		-- Call meter_3d_readings_unit that will return the reading rate for the meters in the group that was requested. 
 		FROM meter_3d_readings_unit(meter_ids, graphic_unit_id, start_stamp, end_stamp, reading_length_hours) readings
         -- Group data by start timestamp and end timestamp.
-		GROUP BY readings.start_timestamp, readings.end_timestamp
+		GROUP BY readings.start_timestamp, readings.end_timestamp -- might beslowdown
 		-- Sort data by ascending order. 
 		ORDER BY readings.start_timestamp ASC;
 END;

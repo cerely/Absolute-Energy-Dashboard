@@ -12,7 +12,7 @@ import { store } from '../store';
 import { DataType } from '../types/Datasources';
 import { SelectOption } from '../types/items';
 import { GroupData } from '../types/redux/groups';
-import { LanguageTypes } from 'types/redux/i18n';
+import { LanguageTypes } from '../types/redux/i18n';
 
 /**
  * The intersect operation of two sets.
@@ -314,7 +314,7 @@ function groupCase(currentUnits: Set<number>, newUnits: Set<number>, defaultGrap
  * @param compatibilityChangeCase Which GroupCase is involved.
  * @returns the desired color for styling.
  */
-function getMenuOptionFont(compatibilityChangeCase: GroupCase): React.CSSProperties {
+export function getMenuOptionFont(compatibilityChangeCase: GroupCase): React.CSSProperties {
 	switch (compatibilityChangeCase) {
 		case GroupCase.NoChange:
 			return { color: 'black' };

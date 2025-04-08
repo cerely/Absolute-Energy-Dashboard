@@ -17,6 +17,7 @@ import { TrueFalseType } from '../../types/items';
 import { showErrorNotification } from '../../utils/notifications';
 import { useTranslate } from '../../redux/componentHooks';
 import TooltipMarkerComponent from '../TooltipMarkerComponent';
+import { UnitType } from '../../types/redux/units';
 
 /**
  * Defines the create conversion modal form
@@ -44,6 +45,9 @@ export default function CreateConversionModalComponent() {
 	// If the currently selected conversion is valid
 	const [validConversion, reason] = useAppSelector(state => selectIsValidConversion(state, conversionState));
 
+	// Tracks whether the source of the conversion is a meter
+	const [isMeterSource, setIsMeterSource] = useState(false);
+
 	const handleStringChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		setConversionState({ ...conversionState, [e.target.name]: e.target.value });
 	};
@@ -55,16 +59,21 @@ export default function CreateConversionModalComponent() {
 	const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		// once a source or destination is selected, it will be removed from the other options.
 		if (e.target.name === 'sourceId') {
+			const selectedID = Number(e.target.value);
+			const selectedSource = defaultValues.sourceOptions.find(u => u.id == selectedID);
 			setConversionState(state => ({
 				...state,
-				sourceId: Number(e.target.value),
-				destinationOptions: defaultValues.destinationOptions.filter(destination => destination.id !== Number(e.target.value))
+				sourceId: selectedID,
+				destinationOptions: defaultValues.destinationOptions.filter(destination => destination.id !== selectedID),
+				bidirectional: selectedSource?.typeOfUnit === UnitType.meter ? false : state.bidirectional
 			}));
+			setIsMeterSource(selectedSource?.typeOfUnit == UnitType.meter);
 		} else if (e.target.name === 'destinationId') {
+			const selectedID = Number(e.target.value);
 			setConversionState(state => ({
 				...state,
-				destinationId: Number(e.target.value),
-				sourceOptions: defaultValues.sourceOptions.filter(source => source.id !== Number(e.target.value))
+				destinationId: selectedID,
+				sourceOptions: defaultValues.sourceOptions.filter(source => source.id !== selectedID)
 			}));
 		} else {
 			setConversionState(state => ({ ...state, [e.target.name]: Number(e.target.value) }));
@@ -75,6 +84,7 @@ export default function CreateConversionModalComponent() {
 	// Reset the state to default values
 	const resetState = () => {
 		setConversionState(defaultValues);
+		setIsMeterSource(false);
 	};
 
 	// Submit
@@ -178,11 +188,21 @@ export default function CreateConversionModalComponent() {
 								id='bidirectional'
 								name='bidirectional'
 								type='select'
-								onChange={e => handleBooleanChange(e)}>
+								onChange={e => handleBooleanChange(e)}
+								value={String(conversionState.bidirectional)}
+								disabled={isMeterSource}>
 								{Object.keys(TrueFalseType).map(key => {
 									return (<option value={key} key={key}>{translate(`TrueFalseType.${key}`)}</option>);
 								})}
 							</Input>
+							{isMeterSource && (
+								<p className='text-muted'>
+									<FormattedMessage 
+										id="conversion.bidirectional.disabled.meter" 
+										defaultMessage="Bidirectional conversions are not allowed for meter units. Automatically set to false."
+									/>
+								</p>
+							)}
 						</FormGroup>
 						<Row xs='1' lg='2'>
 							<Col>

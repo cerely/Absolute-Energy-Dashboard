@@ -354,10 +354,10 @@ export default function EditGroupModalComponent(props: EditGroupModalComponentPr
 		if (loggedInAsAdmin) {
 			// Get meters that okay for this group in a format the component can display.
 			const possibleMeters =
-			getMeterMenuOptionsForGroup(groupState.defaultGraphicUnit, groupState.deepMeters, globalCikState, meterDataById, meterData,locale);
+				getMeterMenuOptionsForGroup(groupState.defaultGraphicUnit, groupState.deepMeters, globalCikState, meterDataById, meterData, locale);
 			// Get groups okay for this group. Similar to meters.
 			const possibleGroups =
-			getGroupMenuOptionsForGroup(groupState.id, groupState.defaultGraphicUnit, groupState.deepMeters, globalCikState, meterDataById, groupsData, locale);
+				getGroupMenuOptionsForGroup(groupState.id, groupState.defaultGraphicUnit, groupState.deepMeters, globalCikState, meterDataById, groupsData, locale);
 			// Update the state
 			setGroupChildrenState(groupChildrenState => ({
 				...groupChildrenState,
@@ -938,7 +938,7 @@ export default function EditGroupModalComponent(props: EditGroupModalComponentPr
 		});
 		// Want chosen in sorted order.
 		return selectedMetersUnsorted.sort((meterA, meterB) => meterA.label.toLowerCase()?.
-			localeCompare(meterB.label.toLowerCase(), String(locale), { sensitivity: 'accent'}));
+			localeCompare(meterB.label.toLowerCase(), String(locale), { sensitivity: 'accent' }));
 	}
 
 	/**
@@ -960,7 +960,7 @@ export default function EditGroupModalComponent(props: EditGroupModalComponentPr
 		});
 		// Want chosen in sorted order.
 		return selectedGroupsUnsorted.sort((groupA, groupB) => groupA.label.toLowerCase()?.
-			localeCompare(groupB.label.toLowerCase(), String(locale), { sensitivity: 'accent'}));
+			localeCompare(groupB.label.toLowerCase(), String(locale), { sensitivity: 'accent' }));
 	}
 
 	/**
@@ -984,7 +984,7 @@ export default function EditGroupModalComponent(props: EditGroupModalComponentPr
 			}
 		});
 		// Sort for display. Before were sorted by id so not okay here.
-		listedMeters.sort((meterA, meterB) => meterA.toLowerCase().localeCompare(meterB.toLowerCase(), locale, { sensitivity : 'accent' }));
+		listedMeters.sort((meterA, meterB) => meterA.toLowerCase().localeCompare(meterB.toLowerCase(), locale, { sensitivity: 'accent' }));
 		if (hasHidden) {
 			// There are hidden meters so note at bottom of list.
 			listedMeters.push(translate('meter.hidden'));
@@ -1016,7 +1016,7 @@ export default function EditGroupModalComponent(props: EditGroupModalComponentPr
 		});
 		// Sort for display. Before were sorted by id so not okay here.
 		listedGroups.sort((groupA, groupB) => groupA.toLowerCase().localeCompare(
-			groupB.toLowerCase(), locale, { sensitivity : 'accent' }));
+			groupB.toLowerCase(), locale, { sensitivity: 'accent' }));
 		if (hasHidden) {
 			// There are hidden groups so note at bottom of list.
 			listedGroups.push(translate('group.hidden'));
@@ -1045,7 +1045,7 @@ export default function EditGroupModalComponent(props: EditGroupModalComponentPr
 		});
 		// Sort for display.
 		listedDeepMeters.sort((deepMeterA, deepMeterB) => deepMeterA.toLowerCase().localeCompare(
-			deepMeterB.toLowerCase(), locale, { sensitivity : 'accent' }));
+			deepMeterB.toLowerCase(), locale, { sensitivity: 'accent' }));
 		if (hasHidden) {
 			// There are hidden meters so note at bottom of list.
 			// This should never happen to an admin.

@@ -47,7 +47,7 @@ export default function CreateGroupModalComponent() {
 	const globalCikState = useAppSelector(selectCik);
 	// Meters state
 	const metersDataById = useAppSelector(selectMeterDataById);
-	const metersData =  useAppSelector(selectAllMeters);
+	const metersData = useAppSelector(selectAllMeters);
 	// Groups state
 	const groupDataById = useAppSelector(selectGroupDataById);
 	const groupsData = useAppSelector(selectAllGroups);
@@ -526,7 +526,7 @@ export default function CreateGroupModalComponent() {
 		});
 		// Want chosen in sorted order.
 		return selectedMetersUnsorted.sort((meterA, meterB) => meterA.label.toLowerCase()?.
-			localeCompare(meterB.label.toLowerCase(), String(locale), { sensitivity: 'accent'}));
+			localeCompare(meterB.label.toLowerCase(), String(locale), { sensitivity: 'accent' }));
 	}
 
 	/**
@@ -546,7 +546,7 @@ export default function CreateGroupModalComponent() {
 		});
 		// Want chosen in sorted order.
 		return selectedGroupsUnsorted.sort((groupA, groupB) => groupA.label.toLowerCase()?.
-			localeCompare(groupB.label.toLowerCase(), String(locale), { sensitivity: 'accent'}));
+			localeCompare(groupB.label.toLowerCase(), String(locale), { sensitivity: 'accent' }));
 	}
 
 	/**

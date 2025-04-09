@@ -233,7 +233,7 @@ export default function CreateConversionModalComponent() {
 						<FormattedMessage id="discard.changes" />
 					</Button>
 					{/* On click calls the function handleSaveChanges in this component */}
-					<Button color='primary' onClick={handleSubmit} >
+					<Button color='primary' onClick={handleSubmit} disabled={!validConversion} >
 						<FormattedMessage id="save.all" />
 					</Button>
 				</ModalFooter>

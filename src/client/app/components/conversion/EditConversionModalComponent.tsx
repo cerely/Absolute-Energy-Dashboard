@@ -303,7 +303,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 				actionConfirmMessage={warningMessage}
 				handleClose={handleWarningCancel}
 				actionFunction={handleWarningConfirm}
-				actionConfirmText={translate('confirm')}
+				actionConfirmText={translate('confirm.action')}
 				actionRejectText={translate('cancel')} />
 			<ConfirmActionModalComponent
 				show={showDeleteConfirmationModal}

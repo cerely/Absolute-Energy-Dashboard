@@ -131,7 +131,7 @@ export default function CreateConversionModalComponent() {
 				actionConfirmMessage={warningMessage}
 				handleClose={handleWarningCancel}
 				actionFunction={handleWarningConfirm}
-				actionConfirmText={translate('confirm')}
+				actionConfirmText={translate('confirm.action')}
 				actionRejectText={translate('cancel')}
 			/>
 			{/* Show modal button */}

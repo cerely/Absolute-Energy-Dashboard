@@ -10,8 +10,9 @@ import {
 	Label, Modal, ModalBody, ModalFooter, ModalHeader, Row
 } from 'reactstrap';
 import { GroupData } from 'types/redux/groups';
-import { groupsApi, selectGroupDataById } from '../../redux/api/groupsApi';
-import { selectMeterDataById } from '../../redux/api/metersApi';
+import { selectCik } from '../../redux/api/conversionsApi';
+import { groupsApi, selectAllGroups, selectGroupDataById } from '../../redux/api/groupsApi';
+import { selectAllMeters, selectMeterDataById } from '../../redux/api/metersApi';
 import { selectUnitDataById } from '../../redux/api/unitsApi';
 import { useAppSelector } from '../../redux/reduxHooks';
 import { selectPossibleGraphicUnits } from '../../redux/selectors/adminSelectors';
@@ -43,10 +44,13 @@ export default function CreateGroupModalComponent() {
 	const translate = useTranslate();
 	const [createGroup] = groupsApi.useCreateGroupMutation();
 
+	const globalCikState = useAppSelector(selectCik);
 	// Meters state
 	const metersDataById = useAppSelector(selectMeterDataById);
+	const metersData =  useAppSelector(selectAllMeters);
 	// Groups state
 	const groupDataById = useAppSelector(selectGroupDataById);
+	const groupsData = useAppSelector(selectAllGroups);
 	// Units state
 	const unitsDataById = useAppSelector(selectUnitDataById);
 	// Which units are possible for graphing state
@@ -231,11 +235,11 @@ export default function CreateGroupModalComponent() {
 		// The id is not really needed so set to -1 since same function for edit.
 		const groupDeepMeter = metersInChangedGroup(state, groupDataById);
 		// Get meters that okay for this group in a format the component can display.
-		const possibleMeters = getMeterMenuOptionsForGroup(state.defaultGraphicUnit, groupDeepMeter, locale);
+		const possibleMeters = getMeterMenuOptionsForGroup(state.defaultGraphicUnit, groupDeepMeter, globalCikState, metersDataById, metersData, locale);
 		// Get groups okay for this group. Similar to meters.
 		// Since creating a group, the group cannot yet exist in the Redux state. Thus, the id is not used
 		// in this case so set to -1 so it never matches in this function.
-		const possibleGroups = getGroupMenuOptionsForGroup(-1, state.defaultGraphicUnit, groupDeepMeter, locale);
+		const possibleGroups = getGroupMenuOptionsForGroup(-1, state.defaultGraphicUnit, groupDeepMeter, globalCikState, metersDataById, groupsData, locale);
 		// Update the state
 		setGroupChildrenState(groupChildrenState => ({
 			...groupChildrenState,
@@ -254,7 +258,7 @@ export default function CreateGroupModalComponent() {
 		// First must get a set from the array of deep meter numbers which is all meters currently in this group.
 		const deepMetersSet = new Set(state.deepMeters);
 		// Get the units that are compatible with this set of meters.
-		const allowedDefaultGraphicUnit = unitsCompatibleWithMeters(deepMetersSet);
+		const allowedDefaultGraphicUnit = unitsCompatibleWithMeters(deepMetersSet, metersDataById, globalCikState);
 		// No unit allowed so modify allowed ones. Should not be there but will be fine if is.
 		allowedDefaultGraphicUnit.add(-99);
 		graphicUnitsState.possibleGraphicUnits.forEach(unit => {
@@ -431,7 +435,7 @@ export default function CreateGroupModalComponent() {
 									// The selection encodes this information in the color but recalculate
 									// to see if this is the case.
 									// Get the units compatible with the new set of deep meters in group.
-									const newAllowedDGU = unitsCompatibleWithMeters(new Set(newDeepMeters));
+									const newAllowedDGU = unitsCompatibleWithMeters(new Set(newDeepMeters), metersDataById, globalCikState);
 									// Add no unit (-99) since that is okay so no change needed if current default graphic unit.
 									newAllowedDGU.add(-99);
 									let dgu = state.defaultGraphicUnit;
@@ -467,7 +471,7 @@ export default function CreateGroupModalComponent() {
 								// The selection encodes this information in the color but recalculate
 								// to see if this is the case.
 								// Get the units compatible with the new set of deep meters in group.
-								const newAllowedDGU = unitsCompatibleWithMeters(new Set(newDeepMeters));
+								const newAllowedDGU = unitsCompatibleWithMeters(new Set(newDeepMeters), metersDataById, globalCikState);
 								// Add no unit (-99) since that is okay so no change needed if current default graphic unit.
 								newAllowedDGU.add(-99);
 								let dgu = state.defaultGraphicUnit;

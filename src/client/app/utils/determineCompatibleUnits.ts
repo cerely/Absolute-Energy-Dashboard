@@ -2,16 +2,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// TODO it is a bad practice to import store anywhere other than index.tsx These utils need to be converted into selectors.
 import { get } from 'lodash';
 import React from 'react';
-import { selectCik } from '../redux/api/conversionsApi';
-import { selectAllGroups} from '../redux/api/groupsApi';
-import { selectAllMeters, selectMeterDataById } from '../redux/api/metersApi';
-import { store } from '../store';
+import { CikData } from '../types/redux/ciks';
 import { DataType } from '../types/Datasources';
 import { SelectOption } from '../types/items';
 import { GroupData } from '../types/redux/groups';
+import { MeterData } from '../types/redux/meters';
 import { LanguageTypes } from '../types/redux/i18n';
 
 /**
@@ -27,10 +24,11 @@ export function setIntersect(setA: Set<number>, setB: Set<number>): Set<number> 
 /**
  * Takes a set of meter ids and returns the set of compatible unit ids.
  * @param meters The set of meter ids.
+ * @param meterDataById The meter data from Redux state.
+ * @param globalCiksState The global CIKs state from Redux.
  * @returns Set of compatible unit ids.
  */
-export function unitsCompatibleWithMeters(meters: Set<number>): Set<number> {
-	const meterDataByID = selectMeterDataById(store.getState());
+export function unitsCompatibleWithMeters(meters: Set<number>, meterDataById: Record<number, MeterData>, globalCiksState: CikData[]): Set<number> {
 
 	// The first meter processed is different since intersection with empty set is empty.
 	let first = true;
@@ -39,7 +37,7 @@ export function unitsCompatibleWithMeters(meters: Set<number>): Set<number> {
 	// Loops over all meters.
 	meters.forEach(function (meterId: number) {
 		// Gets the meter associated with the meterId.
-		const meter = get(meterDataByID, meterId);
+		const meter = get(meterDataById, meterId);
 		let meterUnits = new Set<number>();
 		// If meter had no unit then nothing compatible with it.
 		// This probably won't happen but be safe. Note once you have one of these then
@@ -47,7 +45,7 @@ export function unitsCompatibleWithMeters(meters: Set<number>): Set<number> {
 		// null meter can crash on startup without undef check here
 		if (meter && meter.unitId != -99) {
 			// Set of compatible units with this meter.
-			meterUnits = unitsCompatibleWithUnit(meter.unitId);
+			meterUnits = unitsCompatibleWithUnit(meter.unitId, globalCiksState);
 		}
 		// meterUnits now has all compatible units.
 		if (first) {
@@ -64,27 +62,26 @@ export function unitsCompatibleWithMeters(meters: Set<number>): Set<number> {
 }
 
 /**
- * Returns a set of units ids that are compatible with a specific unit id.
- * @param unitId The unit id
- * @returns a set of compatible unit ids
+ * Returns a set of unit IDs that are compatible with a specific unit ID.
+ * @param unitId The unit ID.
+ * @param globalCiksState The global CIKs state from Redux.
+ * @returns A set of compatible unit IDs.
  */
-export function unitsCompatibleWithUnit(unitId: number): Set<number> {
-	// access the global state
-	const state = store.getState();
+export function unitsCompatibleWithUnit(unitId: number, globalCiksState: CikData[]): Set<number> {
 	const unitSet = new Set<number>();
-	// get all ciks data
-	const globalCiksState = selectCik(state);
+
 	// If unit was null in the database then -99. This means there is no unit
-	// so nothing is compatible with it. Skip processing and return empty set at end.
+	// so nothing is compatible with it. Skip processing and return an empty set at the end.
 	if (unitId !== -99) {
-		// loop through each cik to find ones whose meterUnitId equals unitId param
-		// then add the corresponding nonMeterUnitId to the unitSet
+		// Loop through each CIK to find ones whose meterUnitId equals the unitId parameter
+		// then add the corresponding nonMeterUnitId to the unitSet.
 		for (const cik of globalCiksState) {
 			if (cik.meterUnitId === unitId) {
 				unitSet.add(cik.nonMeterUnitId);
 			}
 		}
 	}
+
 	return unitSet;
 }
 
@@ -135,20 +132,25 @@ export function metersInChangedGroup(changedGroupState: GroupData, groupDataById
  * Get options for the meter menu on the group page.
  * @param defaultGraphicUnit The groups current default graphic unit which may have been updated from what is in Redux state.
  * @param deepMeters The groups current deep meters (all recursively) which may have been updated from what is in Redux state.
+ * @param globalCiksState The global CIKs state from Redux.
+ * @param meterDataById The meter data from Redux state.
+ * @param meterData All meters' data from Redux state.
  * @param locale Current language from Redux state.
  * @returns The current meter options for this group.
  */
-export function getMeterMenuOptionsForGroup(defaultGraphicUnit: number, deepMeters: number[] = [], locale: LanguageTypes): SelectOption[] {
-	// deepMeters has a default value since it is optional for the type of state but it should always be set in the code.
-	const state = store.getState();
+export function getMeterMenuOptionsForGroup(
+	defaultGraphicUnit: number,
+	deepMeters: number[] = [],
+	globalCiksState: CikData[],
+	meterDataById: Record<number, MeterData>,
+	meterData: MeterData[],
+	locale: LanguageTypes): SelectOption[] {
+
 	// Get the currentGroup's compatible units. We need to use the current deep meters to get it right.
 	// First must get a set from the array of meter numbers.
 	const deepMetersSet = new Set(deepMeters);
 	// Get the units that are compatible with this set of meters.
-	const currentUnits = unitsCompatibleWithMeters(deepMetersSet);
-	// Get all meters' state.
-	const meterData = selectAllMeters(state);
-
+	const currentUnits = unitsCompatibleWithMeters(deepMetersSet, meterDataById, globalCiksState);
 	// Options for the meter menu.
 	const options: SelectOption[] = [];
 	// For each meter, decide its compatibility for the menu
@@ -160,7 +162,9 @@ export function getMeterMenuOptionsForGroup(defaultGraphicUnit: number, deepMete
 			style: {}
 		} as SelectOption;
 
-		const compatibilityChangeCase = getCompatibilityChangeCase(currentUnits, meter.id, DataType.Meter, defaultGraphicUnit, []);
+		const compatibilityChangeCase =
+		getCompatibilityChangeCase(currentUnits, meter.id, DataType.Meter, defaultGraphicUnit, [], globalCiksState, meterDataById);
+
 		if (compatibilityChangeCase === GroupCase.NoCompatibleUnits) {
 			// This meter was not compatible with the ones in the group so disable it as a choice.
 			option.isDisabled = true;
@@ -182,18 +186,27 @@ export function getMeterMenuOptionsForGroup(defaultGraphicUnit: number, deepMete
  * @param groupId The id of the group being worked on.
  * @param defaultGraphicUnit The group's current default graphic unit which may have been updated from what is in Redux state.
  * @param deepMeters The group's current deep meters (all recursively) which may have been updated from what is in Redux state.
+ * @param globalCiksState The global CIKs state from Redux.
+ * @param meterDataById The meter data from Redux state.
+ * @param groupData All groups' data from Redux state.
  * @param locale Current language from Redux state.
  * @returns The current group options for this group.
  */
-export function getGroupMenuOptionsForGroup(groupId: number, defaultGraphicUnit: number, deepMeters: number[] = [], locale: LanguageTypes):
-SelectOption[] {
+export function getGroupMenuOptionsForGroup(
+	groupId: number,
+	defaultGraphicUnit: number,
+	deepMeters: number[] = [],
+	globalCiksState: CikData[],
+	meterDataById: Record<number, MeterData>,
+	groupData: GroupData[],
+	locale: LanguageTypes):
+	SelectOption[] {
 	// Get the currentGroup's compatible units. We need to use the current deep meters to get it right.
 	// First must get a set from the array of meter numbers.
 	const deepMetersSet = new Set(deepMeters);
 	// Get the currentGroup's compatible units.
-	const currentUnits = unitsCompatibleWithMeters(deepMetersSet);
-	// Get all groups' state.
-	const groupData = selectAllGroups(store.getState());
+	const currentUnits = unitsCompatibleWithMeters(deepMetersSet, meterDataById, globalCiksState);
+
 
 	// Options for the group menu.
 	const options: SelectOption[] = [];
@@ -208,7 +221,8 @@ SelectOption[] {
 				style: {}
 			} as SelectOption;
 
-			const compatibilityChangeCase = getCompatibilityChangeCase(currentUnits, group.id, DataType.Group, defaultGraphicUnit, group.deepMeters);
+			const compatibilityChangeCase =
+			getCompatibilityChangeCase(currentUnits, group.id, DataType.Group, defaultGraphicUnit, group.deepMeters, globalCiksState, meterDataById);
 			if (compatibilityChangeCase === GroupCase.NoCompatibleUnits) {
 				option.isDisabled = true;
 			} else {
@@ -247,12 +261,20 @@ export const enum GroupCase {
  * @param type Can be METER or GROUP.
  * @param currentDefaultGraphicUnit The default graphic unit for group changing
  * @param deepMeters The deep meters for the group, ignored if meter
+ * @param globalCiksState The global CIKs state from Redux.
+ * @param meterDataById The meter data from Redux state.
  * @returns the type of change this involves.
  */
-export function getCompatibilityChangeCase(currentUnits: Set<number>, idToAdd: number, type: DataType,
-	currentDefaultGraphicUnit: number, deepMeters: number[]): GroupCase {
+export function getCompatibilityChangeCase(
+	currentUnits: Set<number>,
+	idToAdd: number,
+	type: DataType,
+	currentDefaultGraphicUnit: number,
+	deepMeters: number[],
+	globalCiksState: CikData[],
+	meterDataById: Record<number, MeterData> ): GroupCase {
 	// Determine the compatible units for meter or group represented by the id.
-	const newUnits = getCompatibleUnits(idToAdd, type, deepMeters);
+	const newUnits = getCompatibleUnits(idToAdd, type, deepMeters, globalCiksState, meterDataById);
 	// Returns the associated case.
 	return groupCase(currentUnits, newUnits, currentDefaultGraphicUnit);
 }
@@ -262,19 +284,24 @@ export function getCompatibilityChangeCase(currentUnits: Set<number>, idToAdd: n
  * @param id The meter or group's id.
  * @param type Can be Meter or Group.
  * @param deepMeters The deep meter of the id if it is a group, ignored if meter.
+ * @param globalCiksState The global CIKs state from Redux.
+ * @param meterDataById The meter data from Redux state.
  * @returns Set of ids of compatible units.
  */
-function getCompatibleUnits(id: number, type: DataType, deepMeters: number[]): Set<number> {
+function getCompatibleUnits(
+	id: number,
+	type: DataType,
+	deepMeters: number[],
+	globalCiksState: CikData[],
+	meterDataById: Record<number, MeterData>): Set<number> {
 	if (type == DataType.Meter) {
-		const state = store.getState();
-		const meterDataByID = selectMeterDataById(state);
 		// Get the unit id of meter.
-		const unitId = meterDataByID[id].unitId;
+		const unitId = meterDataById[id].unitId;
 		// Returns all compatible units with this unit id.
-		return unitsCompatibleWithUnit(unitId);
+		return unitsCompatibleWithUnit(unitId, globalCiksState);
 	} else {
 		// Returns all compatible units with this group.
-		return unitsCompatibleWithMeters(new Set(deepMeters));
+		return unitsCompatibleWithMeters(new Set(deepMeters), meterDataById, globalCiksState);
 	}
 }
 

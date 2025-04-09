@@ -17,6 +17,7 @@ import { TrueFalseType } from '../../types/items';
 import { showErrorNotification } from '../../utils/notifications';
 import { useTranslate } from '../../redux/componentHooks';
 import TooltipMarkerComponent from '../TooltipMarkerComponent';
+import ConfirmActionModalComponent from '../ConfirmActionModalComponent';
 
 /**
  * Defines the create conversion modal form
@@ -32,6 +33,11 @@ export default function CreateConversionModalComponent() {
 	/* State */
 	// Modal show
 	const [showModal, setShowModal] = useState(false);
+
+	// State for the warning modal
+	const [showWarningModal, setShowWarningModal] = useState(false);
+	const [warningMessage, setWarningMessage] = useState('');
+
 	const handleClose = () => {
 		setShowModal(false);
 		resetState();
@@ -72,14 +78,35 @@ export default function CreateConversionModalComponent() {
 	};
 	/* End State */
 
+	/* Warning Modal */
+	const handleWarningConfirm = () => {
+		//Close the warning modal
+		setShowWarningModal(false);
+
+		//Proceed with the creation of the conversion
+		setShowModal(false);
+		addConversionMutation(omit(conversionState, 'sourceOptions'));
+		resetState();
+	};
+
+	const handleWarningCancel = () => {
+		//Close the warning modal
+		setShowWarningModal(false);
+	};
+
 	// Reset the state to default values
 	const resetState = () => {
 		setConversionState(defaultValues);
 	};
+	/* End Warning Modal */
 
 	// Submit
 	const handleSubmit = () => {
-		if (validConversion) {
+		// Show warning modal if slope and intercept are both 0
+		if (conversionState.slope === 0 && conversionState.intercept === 0) {
+			setWarningMessage(translate('conversion.slope.intercept.zero'));
+			setShowWarningModal(true);
+		} else if (validConversion) {
 			// Close modal first to avoid repeat clicks
 			setShowModal(false);
 			// Add the new conversion and update the store
@@ -99,6 +126,14 @@ export default function CreateConversionModalComponent() {
 
 	return (
 		<>
+			<ConfirmActionModalComponent
+				show={showWarningModal}
+				actionConfirmMessage={warningMessage}
+				handleClose={handleWarningCancel}
+				actionFunction={handleWarningConfirm}
+				actionConfirmText={translate('confirm.action')}
+				actionRejectText={translate('cancel')}
+			/>
 			{/* Show modal button */}
 			<Button color='secondary' onClick={handleShow}>
 				<FormattedMessage id="create.conversion" />

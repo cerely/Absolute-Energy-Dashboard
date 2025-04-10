@@ -18,6 +18,7 @@ import { showErrorNotification } from '../../utils/notifications';
 import { useTranslate } from '../../redux/componentHooks';
 import TooltipMarkerComponent from '../TooltipMarkerComponent';
 import ConfirmActionModalComponent from '../ConfirmActionModalComponent';
+import { UnitType } from '../../types/redux/units';
 
 /**
  * Defines the create conversion modal form
@@ -78,6 +79,12 @@ export default function CreateConversionModalComponent() {
 	};
 	/* End State */
 
+	// Determines whether the selected source is of type meter
+	const isMeterSource = () => {
+		const source = defaultValues.sourceOptions.find(u => u.id === conversionState.sourceId);
+		return source?.typeOfUnit === UnitType.meter;
+	};
+
 	/* Warning Modal */
 	const handleWarningConfirm = () => {
 		//Close the warning modal
@@ -85,7 +92,7 @@ export default function CreateConversionModalComponent() {
 
 		//Proceed with the creation of the conversion
 		setShowModal(false);
-		addConversionMutation(omit(conversionState, 'sourceOptions'));
+		addConversionMutation({...omit(conversionState, 'sourceOptions'), bidirectional: isMeterSource() ? false : conversionState.bidirectional});
 		resetState();
 	};
 
@@ -111,8 +118,8 @@ export default function CreateConversionModalComponent() {
 			setShowModal(false);
 			// Add the new conversion and update the store
 			// Omit the source options , do not need to send in request so remove here.
-			//
-			addConversionMutation(omit(conversionState, 'sourceOptions'));
+			// If source is a meter, make bidirectional false
+			addConversionMutation({...omit(conversionState, 'sourceOptions'), bidirectional: isMeterSource() ? false : conversionState.bidirectional});
 			resetState();
 		} else {
 			showErrorNotification(reason);
@@ -213,11 +220,18 @@ export default function CreateConversionModalComponent() {
 								id='bidirectional'
 								name='bidirectional'
 								type='select'
-								onChange={e => handleBooleanChange(e)}>
+								onChange={e => handleBooleanChange(e)}
+								value={String(conversionState.bidirectional)}
+								invalid={isMeterSource() && conversionState.bidirectional === true}>
 								{Object.keys(TrueFalseType).map(key => {
 									return (<option value={key} key={key}>{translate(`TrueFalseType.${key}`)}</option>);
 								})}
 							</Input>
+							{isMeterSource() && conversionState.bidirectional === true && (
+								<FormFeedback className='d-block'>
+									<FormattedMessage id="conversion.bidirectional.disabled.meter"/>
+								</FormFeedback>
+							)}
 						</FormGroup>
 						<Row xs='1' lg='2'>
 							<Col>

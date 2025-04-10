@@ -121,14 +121,13 @@ export default function ThreeDPillComponent() {
 }
 
 // TODO Styling for the component, may need to be converted into .css files
-// TODO ISSUE when many meters selected they are cut off.
 const pillContainer: React.CSSProperties = {
 	display: 'flex',
 	justifyContent: 'space-between',
 	margin: '0px',
 	padding: '0px',
 	minHeight: '100px',
-	maxHeight: '200px'
+	maxHeight: '100px'
 };
 
 const pillBoxLabel: React.CSSProperties = {
@@ -143,7 +142,6 @@ const pillBox: React.CSSProperties = {
 	flexDirection: 'column',
 	justifyContent: 'left',
 	width: '45%',
-	maxHeight: '100%',
 	maxWidth: '45%',
 	margin: '0px',
 	padding: '0px'
@@ -153,9 +151,9 @@ const pills: React.CSSProperties = {
 	display: 'flex',
 	flexWrap: 'wrap',
 	justifyContent: 'left',
-	maxHeight: '100%',
-	margin: '0px',
-	padding: '0px'
+	overflowY: 'auto',
+	maxHeight: '120px',
+	paddingRight: '8px'
 };
 
 const pill: React.CSSProperties = {

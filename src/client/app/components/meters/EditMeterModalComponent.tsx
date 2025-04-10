@@ -23,7 +23,7 @@ import { DisableChecksType, UnitRepresentType } from '../../types/redux/units';
 import { GPSPoint, isValidGPSInput } from '../../utils/calibration';
 import { AreaUnitType } from '../../utils/getAreaUnitConversion';
 import { getGPSString, nullToEmptyString, NoUnit, MIN_VAL, MAX_VAL } from '../../utils/input';
-import { showErrorNotification } from '../../utils/notifications';
+import { showSuccessNotification, showErrorNotification } from '../../utils/notifications';
 import { useTranslate } from '../../redux/componentHooks';
 import TimeZoneSelect from '../TimeZoneSelect';
 import TooltipHelpComponent from '../TooltipHelpComponent';
@@ -173,7 +173,16 @@ export default function EditMeterModalComponent(props: EditMeterModalComponentPr
 						(unitDataById[props.meter.unitId].unitRepresent != UnitRepresentType.quantity
 							&& unitDataById[localMeterEdits.unitId].unitRepresent == UnitRepresentType.quantity));
 				// Submit new meter if checks where ok.
-				editMeter({ meterData: submitState, shouldRefreshViews: shouldRefreshReadingViews });
+				editMeter({ meterData: submitState, shouldRefreshViews: shouldRefreshReadingViews })
+					.unwrap()
+					.then(() => {
+						showSuccessNotification(translate('meter.successfully.edited.meter'));
+					})
+					.catch(err => {
+						showErrorNotification(
+							translate('meter.failed.to.edit.meter') + '"' + err.data + '"'
+						);
+					});
 			} else if (error_message) {
 				// Display an error message if there are dependent deep meters and checked.
 				// Undo the unit change.

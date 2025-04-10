@@ -135,11 +135,11 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 			// TODO The following code did what was originally in issue #905 but there were issues
 			// with the design and usage of suffix units. It is commented out for now and needs
 			// to be revisited when the design for suffix is better.
-		// } else if (source.typeOfUnit === UnitType.suffix) {
-		// 	const srcCount = getConversionCount(source, conversionDetails);
-		// 	if (srcCount === 1) {
-		// 		msg += `${translate('conversion.delete.suffix.disable')} "${source.name}".\n`;
-		// 	}
+			// } else if (source.typeOfUnit === UnitType.suffix) {
+			// 	const srcCount = getConversionCount(source, conversionDetails);
+			// 	if (srcCount === 1) {
+			// 		msg += `${translate('conversion.delete.suffix.disable')} "${source.name}".\n`;
+			// 	}
 		} else if (source.typeOfUnit === UnitType.unit && dest.typeOfUnit === UnitType.unit) {
 			const destConversions = conversionDetails.filter(conversion =>
 				(conversion.destinationId === dest.id) ||
@@ -239,13 +239,15 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 		props.handleClose();
 		resetState();
 	};
+	/* Warning Modal State */
+	const [showWarningModal, setShowWarningModal] = useState(false);
+	const [warningMessage, setWarningMessage] = useState('');
 
-	// Save changes
-	// Currently using the old functionality which is to compare inherited prop values to state values
-	// If there is a difference between props and state, then a change was made
-	// Side note, we could probably just set a boolean when any input i
-	// Edit Conversion Validation: is not needed as no breaking edits can be made
-	const handleSaveChanges = () => {
+	const handleWarningConfirm = () => {
+		// Close the warning modal
+		setShowWarningModal(false);
+
+		// Proceed with saving changes
 		// Close the modal first to avoid repeat clicks
 		props.handleClose();
 
@@ -261,6 +263,38 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 			editConversion({ conversionData: { ...state, bidirectional: isMeterSource() ? false : state.bidirectional }, shouldRedoCik });
 		}
 	};
+	const handleWarningCancel = () => {
+		// Close the warning modal
+		setShowWarningModal(false);
+	};
+
+	// Save changes
+	// Currently using the old functionality which is to compare inherited prop values to state values
+	// If there is a difference between props and state, then a change was made
+	// Side note, we could probably just set a boolean when any input i
+	// Edit Conversion Validation: is not needed as no breaking edits can be made
+	const handleSaveChanges = () => {
+		// Check if slope and intercept are both 0
+		if (state.slope === 0 && state.intercept === 0) {
+			setWarningMessage(translate('conversion.slope.intercept.zero'));
+			setShowWarningModal(true);
+		} else {
+			// Close the modal first to avoid repeat clicks
+			props.handleClose();
+
+			// Need to redo Cik if slope, intercept, or bidirectional changes.
+			const shouldRedoCik = props.conversion.slope !== state.slope
+				|| props.conversion.intercept !== state.intercept
+				|| props.conversion.bidirectional !== state.bidirectional;
+			// Check for changes by comparing state to props
+			const conversionHasChanges = shouldRedoCik || props.conversion.note != state.note;
+			// Only do work if there are changes
+			if (conversionHasChanges) {
+				// Save our changes
+				editConversion({ conversionData: state, shouldRedoCik });
+			}
+		}
+	};
 
 	const tooltipStyle = {
 		...tooltipBaseStyle,
@@ -269,6 +303,14 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 
 	return (
 		<>
+			{/* Warning Modal */}
+			<ConfirmActionModalComponent
+				show={showWarningModal}
+				actionConfirmMessage={warningMessage}
+				handleClose={handleWarningCancel}
+				actionFunction={handleWarningConfirm}
+				actionConfirmText={translate('confirm.action')}
+				actionRejectText={translate('cancel')} />
 			<ConfirmActionModalComponent
 				show={showDeleteConfirmationModal}
 				actionConfirmMessage={deleteConfirmationMessage}

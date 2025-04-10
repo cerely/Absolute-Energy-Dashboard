@@ -64,6 +64,7 @@ const LocaleTranslationData = {
 		"contact.us": "Contact us",
 		"conversion": "Conversion",
 		"conversion.bidirectional": "Bidirectional:",
+		"conversion.bidirectional.disabled.meter": "Selecting meter units as sources will set bidirectional to false.",
 		"conversion.create.destination.meter": "The destination cannot be a meter",
 		"conversion.create.exists": "This conversion already exists",
 		"conversion.create.exists.inverse": "This conversion already exists where one is not bidirectional",

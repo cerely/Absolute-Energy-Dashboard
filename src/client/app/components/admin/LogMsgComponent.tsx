@@ -16,9 +16,9 @@ import DateRangePicker from '@wojtekmaj/react-daterange-picker';
 import { useAppSelector } from '../../redux/reduxHooks';
 import { selectSelectedLanguage } from '../../redux/slices/appStateSlice';
 import { logsApi } from '../../utils/api';
-import translate from '../../utils/translate';
 import { TimeInterval } from '../../../../common/TimeInterval';
 import { dateRangeToTimeInterval, timeIntervalToDateRange } from '../../utils/dateRangeCompatibility';
+import { useTranslate } from '../../redux/componentHooks';
 
 // number of log messages to display per page
 const PER_PAGE = 20;
@@ -41,6 +41,7 @@ const initialLogs: any[] = [];
  * @returns LogMsgComponent element
  */
 export default function LogMsgComponent() {
+	const translate = useTranslate();
 	const locale = useAppSelector(selectSelectedLanguage);
 	// Log messages state
 	const [logs, setLogs] = React.useState(initialLogs);

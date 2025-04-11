@@ -99,7 +99,8 @@ export default function CreateConversionModalComponent() {
 
 		//Proceed with the creation of the conversion
 		setShowModal(false);
-		addConversionMutation({...omit(conversionState, 'sourceOptions'), bidirectional: isMeterSource() ? false : conversionState.bidirectional});
+		addConversionMutation({...omit(conversionState, 'sourceOptions'),
+			bidirectional: (isMeterSource() || isSuffixUsed()) ? false : conversionState.bidirectional});
 		resetState();
 	};
 

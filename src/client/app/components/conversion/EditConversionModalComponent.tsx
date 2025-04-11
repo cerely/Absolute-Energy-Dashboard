@@ -267,7 +267,10 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 		// Only do work if there are changes
 		if (conversionHasChanges) {
 			// Save our changes
-			editConversion({ conversionData: { ...state, bidirectional: isMeterSource() ? false : state.bidirectional }, shouldRedoCik });
+			editConversion({
+				conversionData: {
+					...state,
+					bidirectional: (isMeterSource() || isSuffixUsed()) ? false : state.bidirectional }, shouldRedoCik });
 		}
 	};
 	const handleWarningCancel = () => {
@@ -298,7 +301,10 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 			// Only do work if there are changes
 			if (conversionHasChanges) {
 				// Save our changes
-				editConversion({ conversionData: state, shouldRedoCik });
+				editConversion({
+					conversionData: {
+						...state,
+						bidirectional: (isMeterSource() || isSuffixUsed()) ? false : state.bidirectional }, shouldRedoCik });
 			}
 		}
 	};

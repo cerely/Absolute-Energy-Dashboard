@@ -12,8 +12,9 @@ import {
 	Button, Col, Container, FormFeedback, FormGroup, Input, InputGroup,
 	Label, Modal, ModalBody, ModalFooter, ModalHeader, Row
 } from 'reactstrap';
-import { groupsApi, selectGroupDataById } from '../../redux/api/groupsApi';
-import { selectMeterDataById } from '../../redux/api/metersApi';
+import { selectCik } from '../../redux/api/conversionsApi';
+import { groupsApi, selectAllGroups, selectGroupDataById } from '../../redux/api/groupsApi';
+import { selectAllMeters, selectMeterDataById } from '../../redux/api/metersApi';
 import { useAppSelector } from '../../redux/reduxHooks';
 import { selectPossibleGraphicUnits } from '../../redux/selectors/adminSelectors';
 import { selectIsAdmin } from '../../redux/slices/currentUserSlice';
@@ -62,10 +63,14 @@ export default function EditGroupModalComponent(props: EditGroupModalComponentPr
 	const translate = useTranslate();
 	const [submitGroupEdits] = groupsApi.useEditGroupMutation();
 	const [deleteGroup] = groupsApi.useDeleteGroupMutation();
+	const globalCikState = useAppSelector(selectCik);
 	// Meter state
 	const meterDataById = useAppSelector(selectMeterDataById);
+	const meterData = useAppSelector(selectAllMeters);
+	// Group state
 	const groupDataById = useAppSelector(selectGroupDataById);
-	// Group state used on other pages
+	const groupsData = useAppSelector(selectAllGroups);
+
 	// Make a local copy of the group data so we can update during the edit process.
 	// When the group is saved the values will be synced again with the global state.
 	// This needs to be a deep clone so the changes are only local.
@@ -348,9 +353,11 @@ export default function EditGroupModalComponent(props: EditGroupModalComponentPr
 		// Can only vary if admin and only used then.
 		if (loggedInAsAdmin) {
 			// Get meters that okay for this group in a format the component can display.
-			const possibleMeters = getMeterMenuOptionsForGroup(groupState.defaultGraphicUnit, groupState.deepMeters, locale);
+			const possibleMeters =
+			getMeterMenuOptionsForGroup(groupState.defaultGraphicUnit, groupState.deepMeters, globalCikState, meterDataById, meterData,locale);
 			// Get groups okay for this group. Similar to meters.
-			const possibleGroups = getGroupMenuOptionsForGroup(groupState.id, groupState.defaultGraphicUnit, groupState.deepMeters, locale);
+			const possibleGroups =
+			getGroupMenuOptionsForGroup(groupState.id, groupState.defaultGraphicUnit, groupState.deepMeters, globalCikState, meterDataById, groupsData, locale);
 			// Update the state
 			setGroupChildrenState(groupChildrenState => ({
 				...groupChildrenState,
@@ -373,7 +380,7 @@ export default function EditGroupModalComponent(props: EditGroupModalComponentPr
 			// First must get a set from the array of deep meter numbers which is all meters currently in this group.
 			const deepMetersSet = new Set(groupState.deepMeters);
 			// Get the units that are compatible with this set of meters.
-			const allowedDefaultGraphicUnit = unitsCompatibleWithMeters(deepMetersSet);
+			const allowedDefaultGraphicUnit = unitsCompatibleWithMeters(deepMetersSet, meterDataById, globalCikState);
 			// No unit allowed so modify allowed ones. Should not be there but will be fine if is since set.
 			allowedDefaultGraphicUnit.add(-99);
 			graphicUnitsState.possibleGraphicUnits.forEach(unit => {
@@ -787,10 +794,10 @@ export default function EditGroupModalComponent(props: EditGroupModalComponentPr
 			// Use the edit group since want the current values for deepMeters for comparison.
 			const parentGroup = editGroupsState[groupId];
 			// Get parent's compatible units
-			const parentCompatibleUnits = unitsCompatibleWithMeters(new Set(parentGroup.deepMeters));
+			const parentCompatibleUnits = unitsCompatibleWithMeters(new Set(parentGroup.deepMeters), meterDataById, globalCikState);
 			// Get compatibility change case when add this group to its parent.
 			const compatibilityChangeCase = getCompatibilityChangeCase(parentCompatibleUnits, gid, DataType.Group,
-				parentGroup.defaultGraphicUnit, groupsState[groupId].deepMeters);
+				parentGroup.defaultGraphicUnit, groupsState[groupId].deepMeters, globalCikState, meterDataById);
 			switch (compatibilityChangeCase) {
 				case GroupCase.NoCompatibleUnits:
 					// The group has no compatible units so cannot do this.

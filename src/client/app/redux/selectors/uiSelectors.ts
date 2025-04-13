@@ -26,6 +26,7 @@ import {
 import { selectVisibleMetersAndGroups, selectVisibleUnitOrSuffixState } from './authVisibilitySelectors';
 import { selectDefaultGraphicUnitFromEntity, selectMeterOrGroupFromEntity, selectNameFromEntity } from './entitySelectors';
 import { createAppSelector } from './selectors';
+
 import { selectCik } from '../api/conversionsApi';
 export const selectCurrentUnitCompatibility = createAppSelector(
 	[

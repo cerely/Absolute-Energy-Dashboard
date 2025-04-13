@@ -337,7 +337,7 @@ function groupCase(currentUnits: Set<number>, newUnits: Set<number>, defaultGrap
  * @param compatibilityChangeCase Which GroupCase is involved.
  * @returns the desired color for styling.
  */
-export function getMenuOptionFont(compatibilityChangeCase: GroupCase): React.CSSProperties {
+function getMenuOptionFont(compatibilityChangeCase: GroupCase): React.CSSProperties {
 	switch (compatibilityChangeCase) {
 		case GroupCase.NoChange:
 			return { color: 'black' };

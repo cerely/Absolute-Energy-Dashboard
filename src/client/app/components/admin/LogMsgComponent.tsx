@@ -18,6 +18,7 @@ import { selectSelectedLanguage } from '../../redux/slices/appStateSlice';
 import { logsApi } from '../../utils/api';
 import { TimeInterval } from '../../../../common/TimeInterval';
 import { dateRangeToTimeInterval, timeIntervalToDateRange } from '../../utils/dateRangeCompatibility';
+import { titleStyle } from '../../styles/modalStyle';
 import { useTranslate } from '../../redux/componentHooks';
 
 // number of log messages to display per page
@@ -338,9 +339,6 @@ const headerStyle: React.CSSProperties = {
 };
 const bodyStyle: React.CSSProperties = {
 	textAlign: 'left'
-};
-const titleStyle: React.CSSProperties = {
-	textAlign: 'center'
 };
 
 const tableStyle: React.CSSProperties = {

@@ -14,6 +14,7 @@ import ConversionViewComponent from './ConversionViewComponent';
 import CreateConversionModalComponent from './CreateConversionModalComponent';
 import { useAppSelector } from '../../redux/reduxHooks';
 import { selectRefreshingReadings, selectSelectedLanguage } from '../../redux/slices/appStateSlice';
+import { titleStyle, tooltipBaseStyle } from '../../styles/modalStyle';
 
 /**
  * Defines the conversions page card view
@@ -34,13 +35,8 @@ export default function ConversionsDetailComponent() {
 		})
 	});
 
-	const titleStyle: React.CSSProperties = {
-		textAlign: 'center'
-	};
-
 	const tooltipStyle = {
-		display: 'inline-block',
-		fontSize: '50%',
+		...tooltipBaseStyle,
 		// For now, only an admin can see the conversion page.
 		tooltipConversionView: 'help.admin.conversionview'
 	};

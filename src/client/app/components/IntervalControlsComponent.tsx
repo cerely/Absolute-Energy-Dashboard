@@ -11,6 +11,8 @@ import { selectChartToRender, graphSlice, selectWidthDays, selectComparePeriod }
 import { ChartTypes } from '../types/redux/graph';
 import { ComparePeriod } from '../utils/calculateCompare';
 import TooltipMarkerComponent from './TooltipMarkerComponent';
+import { labelStyle } from '../styles/modalStyle';
+import { divTopBottomPadding } from '../styles/modalStyle';
 import { useTranslate } from '../redux/componentHooks';
 
 /**
@@ -171,13 +173,3 @@ export default function IntervalControlsComponent() {
 		</div>
 	);
 }
-
-const divTopBottomPadding: React.CSSProperties = {
-	paddingTop: '0px',
-	paddingBottom: '15px'
-};
-
-const labelStyle: React.CSSProperties = {
-	fontWeight: 'bold',
-	margin: 0
-};

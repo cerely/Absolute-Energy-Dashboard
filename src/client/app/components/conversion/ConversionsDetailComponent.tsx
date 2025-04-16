@@ -68,7 +68,7 @@ export default function ConversionsDetailComponent() {
 									.sort((conversionA: ConversionData, conversionB: ConversionData) =>
 										((unitDataById[conversionA.sourceId]?.identifier + unitDataById[conversionA.destinationId]?.identifier).toLowerCase().localeCompare((
 											unitDataById[conversionB.sourceId]?.identifier + unitDataById[conversionB.destinationId]?.identifier).toLowerCase(), locale,
-										{ sensitivity: 'accent'})))
+										{ sensitivity: 'accent' })))
 									.map(conversionData => (
 										<ConversionViewComponent
 											conversion={conversionData}

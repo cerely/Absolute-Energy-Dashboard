@@ -16,7 +16,6 @@ const Point = require('../models/Point');
 const { failure, success } = require('./response');
 
 const router = express.Router();
-router.use(optionalAuthenticator);
 
 /**
  * Given a meter or group, return id, name, displayable, gps, note, area.
@@ -49,7 +48,7 @@ function formatToOnlyNameID(item) {
 /**
  * GET info of all groups
  */
-router.get('/', async (req, res) => {
+router.get('/', optionalAuthenticator, async (req, res) => {
 	const conn = getConnection();
 	try {
 		const rows = await Group.getAll(conn);
@@ -66,7 +65,7 @@ router.get('/', async (req, res) => {
 	}
 });
 
-router.get('/idname', async (req, res) => {
+router.get('/idname', optionalAuthenticator, async (req, res) => {
 	const conn = getConnection();
 	try {
 		const rows = await Group.getAll(conn);
@@ -83,7 +82,7 @@ router.get('/idname', async (req, res) => {
  * @param int group_id
  * @returns {[int], [int]}  child meter IDs and child group IDs
  */
-router.get('/children/:group_id', async (req, res) => {
+router.get('/children/:group_id', optionalAuthenticator, async (req, res) => {
 	const conn = getConnection();
 	try {
 		const [meters, groups, deepMeters] = await Promise.all([
@@ -103,7 +102,7 @@ router.get('/children/:group_id', async (req, res) => {
  * only the IDs of the children.
  * @return {[int, [int], [int]]}  array where each entry has the group id, array of child meter IDs and array of child group IDs
  */
-router.get('/allChildren/', async (req, res) => {
+router.get('/allChildren/', optionalAuthenticator, async (req, res) => {
 	// There are not parameters so nothing to verify.
 	const conn = getConnection();
 	try {
@@ -114,7 +113,7 @@ router.get('/allChildren/', async (req, res) => {
 	}
 });
 
-router.get('/deep/groups/:group_id', async (req, res) => {
+router.get('/deep/groups/:group_id', optionalAuthenticator, async (req, res) => {
 	const validParams = {
 		type: 'object',
 		maxProperties: 1,
@@ -142,7 +141,7 @@ router.get('/deep/groups/:group_id', async (req, res) => {
 	}
 });
 
-router.get('/deep/meters/:group_id', async (req, res) => {
+router.get('/deep/meters/:group_id', optionalAuthenticator, async (req, res) => {
 	const validParams = {
 		type: 'object',
 		maxProperties: 1,
@@ -170,7 +169,7 @@ router.get('/deep/meters/:group_id', async (req, res) => {
 	}
 });
 
-router.get('/parents/:group_id', async (req, res) => {
+router.get('/parents/:group_id', optionalAuthenticator, async (req, res) => {
 	const validParams = {
 		type: 'object',
 		maxProperties: 1,

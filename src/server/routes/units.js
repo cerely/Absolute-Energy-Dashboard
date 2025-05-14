@@ -48,7 +48,7 @@
  */
  router.post(
    '/edit',
-   authMiddleware('manage units'),
+   authMiddleware('make changes to a unit'),
    async (req, res) => {
 	 const unitSchema = { /* ... your schema ... */ };
 	 const result = validate(req.body, unitSchema);
@@ -79,7 +79,7 @@
  */
  router.post(
    '/addUnit',
-   authMiddleware('manage units'),
+   authMiddleware('add a new unit'),
    async (req, res) => {
 	 const unitSchema = { /* ... your schema ... */ };
 	 const result = validate(req.body, unitSchema);
@@ -118,7 +118,7 @@
  */
  router.post(
    '/delete',
-   authMiddleware('manage units'),
+   authMiddleware('removes a certain unit'),
    async (req, res) => {
 	 const paramsSchema = {
 	   type: 'object',

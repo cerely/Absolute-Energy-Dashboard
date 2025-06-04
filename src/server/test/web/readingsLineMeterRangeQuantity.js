@@ -40,7 +40,6 @@ mocha.describe('readings API', () => {
                         expectRangeToEqualExpected(res, expected);
                     });
 
-                    // Add LR2 here
                     mocha.it('LR2: range should have daily points for 15 minute reading intervals and quantity units with explicit start/end time & kWh as kWh', async () => {
                         // Load the data into the database
                         await prepareTest(unitDatakWh, conversionDatakWh, meterDatakWh);

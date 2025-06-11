@@ -16,7 +16,6 @@ import { useAppSelector } from '../../redux/reduxHooks';
 import { selectSelectedLanguage } from '../../redux/slices/appStateSlice';
 import { titleStyle, tooltipBaseStyle } from '../../styles/modalStyle';
 
-
 /**
  * Defines the conversions page card view
  * @returns Conversion page element
@@ -24,7 +23,6 @@ import { titleStyle, tooltipBaseStyle } from '../../styles/modalStyle';
 export default function ConversionsDetailComponent() {
 	// The route stops you from getting to this page if not an admin.
 	const locale = useAppSelector(selectSelectedLanguage);
-
 	// Conversions state
 	const { data: conversionsState = stableEmptyConversions, isFetching: conversionsFetching } = conversionsApi.useGetConversionsDetailsQuery();
 	// Units DataById

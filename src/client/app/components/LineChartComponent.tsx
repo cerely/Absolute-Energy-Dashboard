@@ -19,7 +19,7 @@ import { selectSelectedLanguage } from '../redux/slices/appStateSlice';
 import Locales from '../types/locales';
 import { useTranslate } from '../redux/componentHooks';
 import SpinnerComponent from './SpinnerComponent';
-import { selectSliderRangeInterval } from '../redux/slices/graphSlice';
+import { setInitialXAxisRange, selectSliderRangeInterval } from '../redux/slices/graphSlice';
 import { fullSizeContainer } from '../styles/modalStyle';
 
 /**
@@ -70,7 +70,32 @@ export default function LineChartComponent() {
 	const [listOfButtons, setListOfButtons] = React.useState(defaultButtons);
 
 	const data: Partial<Plotly.PlotData>[] = React.useMemo(() => meterPlotlyData.concat(groupPlotlyData), [meterPlotlyData, groupPlotlyData]);
+	// Getting the entire x-axis range from all traces
+	// This is used to set the initial x-axis range when the component mounts.
+	// It ensures that the graph starts with a range that covers all data points. That would be used for querying the data.
+	// If there are no data points, minX and maxX will be undefined.
+	const allX = React.useMemo(
+		() =>
+			data.flatMap(trace => {
+				if (!trace.x) return [];
+				// If trace.x is an array of arrays, flatten it
+				if (Array.isArray(trace.x[0])) {
+					return (trace.x as any[][]).flat();
+				}
+				// Otherwise, it's a flat array
+				return trace.x as (string | number | Date)[];
+			}),
+		[data]
+	);
 
+	const minX = allX.length ? utc(allX.reduce((a, b) => utc(a).isBefore(utc(b)) ? a : b)) : undefined;
+	const maxX = allX.length ? utc(allX.reduce((a, b) => utc(a).isAfter(utc(b)) ? a : b)) : undefined;
+
+	React.useEffect(() => {
+		if (minX && maxX) {
+			dispatch(setInitialXAxisRange(new TimeInterval(minX, maxX)));
+		}
+	}, [minX, maxX]);
 
 	if (meterIsFetching || groupIsFetching) {
 		return <SpinnerComponent loading height={50} width={50} />;

@@ -24,14 +24,13 @@ import { lineUnitLabel } from '../utils/graphics';
 // Both translates are used since some are in the function component where the React Hook is okay
 // and some are in other functions where the older method is needed.
 import { useTranslate } from '../redux/componentHooks';
-import translate from '../utils/translate';
 import SpinnerComponent from './SpinnerComponent';
 import ThreeDPillComponent from './ThreeDPillComponent';
 import Plot from 'react-plotly.js';
 import { Icons } from 'plotly.js';
 import { selectSelectedLanguage } from '../redux/slices/appStateSlice';
 import Locales from '../types/locales';
-import {setHelpLayout} from '../utils/setLayout';
+import { fullSizeContainer } from '../styles/modalStyle';
 
 /**
  * Component used to render 3D graphics
@@ -78,7 +77,7 @@ export default function ThreeDComponent() {
 		// Special Case where meter frequency is greater than 12 hour intervals
 		layout = setHelpLayout(translate('threeD.incompatible'));
 	} else {
-		[dataToRender, layout] = formatThreeDData(threeDData, meterOrGroupID, meterDataById, groupDataById, graphState, unitDataById);
+		[dataToRender, layout] = formatThreeDData(translate, threeDData, meterOrGroupID, meterDataById, groupDataById, graphState, unitDataById);
 	}
 
 	return (
@@ -87,7 +86,7 @@ export default function ThreeDComponent() {
 			{isFetching
 				? <SpinnerComponent loading width={50} height={50} />
 				: <Plot
-					style={{ width: '100%', height: '100%', minHeight: '700px' }}
+					style={fullSizeContainer}
 					data={dataToRender as Plotly.PlotData[]}
 					layout={layout as Plotly.Layout}
 					config={{
@@ -116,6 +115,7 @@ export default function ThreeDComponent() {
 
 /**
  * Formats Readings for plotly 3d surface
+ * @param translate translate function for internationalization
  * @param data 3D data to be formatted
  * @param selectedMeterOrGroupID meter or group id to lookup data for
  * @param meterDataById redux meters state
@@ -125,6 +125,7 @@ export default function ThreeDComponent() {
  * @returns Data, and Layout objects for a 3D Plotly Graph
  */
 function formatThreeDData(
+	translate: (messageID: string) => string,
 	data: ThreeDReading,
 	selectedMeterOrGroupID: number,
 	meterDataById: MeterDataByID,
@@ -202,17 +203,44 @@ function formatThreeDData(
 		hoverinfo: 'text',
 		hovertext: hoverText
 	}];
-	const layout = setThreeDLayout(unitLabel, yDataToRender);
+	const layout = setThreeDLayout(translate, unitLabel, yDataToRender);
 	return [formattedData, layout];
 }
 
 /**
+ * Utility to get/ set help text plotlyLayout
+ * @param helpText 3D data to be formatted
+ * @param fontSize current application state
+ * @returns plotly layout object.
+ */
+export function setHelpLayout(helpText: string = 'Help Text Goes Here', fontSize: number = 28) {
+	return {
+		'xaxis': {
+			'visible': false
+		},
+		'yaxis': {
+			'visible': false
+		},
+		'annotations': [
+			{
+				'text': helpText,
+				'xref': 'paper',
+				'yref': 'paper',
+				'showarrow': false,
+				'font': { 'size': fontSize }
+			}
+		]
+	};
+}
+
+/**
  * Utility to get / set 3D graphic plotlyLayout
+ * @param translate translate function for internationalization
  * @param zLabelText 3D data to be formatted
  * @param yDataToRender Data range for yaxis
  * @returns plotly layout object.
  */
-export function setThreeDLayout(zLabelText: string = 'Resource Usage', yDataToRender: string[]) {
+export function setThreeDLayout(translate: (messageID: string) => string, zLabelText: string = 'Resource Usage', yDataToRender: string[]) {
 	// Convert date strings to JavaScript Date objects and then get dataRange
 	const dateObjects = yDataToRender.map(dateStr => new Date(dateStr));
 	const dataMin = Math.min(...dateObjects.map(date => date.getTime()));

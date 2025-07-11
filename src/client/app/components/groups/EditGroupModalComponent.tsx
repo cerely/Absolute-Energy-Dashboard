@@ -293,7 +293,8 @@ export default function EditGroupModalComponent(props: EditGroupModalComponentPr
 			// If the user input a value then gpsInput should be a string
 			// null came from DB and it is okay to just leave it - Not a String.
 			if (typeof gpsInput === 'string') {
-				if (isValidGPSInput(gpsInput)) {
+				const { validGps, message } = isValidGPSInput(gpsInput);
+				if (validGps) {
 					// Clearly gpsInput is a string but TS complains about the split so cast.
 					const gpsValues = (gpsInput as string).split(',').map((value: string) => parseFloat(value));
 					// It is valid and needs to be in this format for routing
@@ -302,10 +303,7 @@ export default function EditGroupModalComponent(props: EditGroupModalComponentPr
 						latitude: gpsValues[latitudeIndex]
 					};
 				} else if ((gpsInput as string).length !== 0) {
-					// GPS not okay and there since non-zero length value.
-					// TODO isValidGPSInput currently pops up an alert so not doing it here, may change
-					// so leaving code commented out.
-					// showErrorNotification(translate('input.gps.range') + groupState.gps + '.');
+					showErrorNotification(message);
 					inputOk = false;
 				}
 			}

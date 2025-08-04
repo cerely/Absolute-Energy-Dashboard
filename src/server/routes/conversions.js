@@ -8,7 +8,7 @@ const { getConnection } = require('../db');
 const Conversion = require('../models/Conversion');
 const { success, failure } = require('./response');
 const validate = require('jsonschema').validate;
-const { optionalAuthMiddleware, adminAuthMiddleware } = require('./authenticator');
+const { adminAuthMiddleware, optionalAuthMiddleware } = require('./authenticator');
 
 const router = express.Router();
 

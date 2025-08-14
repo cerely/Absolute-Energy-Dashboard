@@ -20,6 +20,7 @@ import { UnitData, UnitType } from '../../types/redux/units';
 import { useTranslate } from '../../redux/componentHooks';
 import ConfirmActionModalComponent from '../ConfirmActionModalComponent';
 import TooltipMarkerComponent from '../TooltipMarkerComponent';
+import { GroupPayloadForGroupAPI } from 'types/redux/groups';
 
 interface EditConversionModalComponentProps {
 	show: boolean;
@@ -215,7 +216,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 				}).unwrap();
 
 				// Orphaned groups check
-				const orphanedGroups = result.affectedGroups?.filter(group => group.orphaned) || [];
+				const orphanedGroups = result.affectedGroups?.filter(group => group.orphaned);
 				if (orphanedGroups.length > 0) {
 					msgElements.push(
 						<div key="orphaned-groups">
@@ -259,7 +260,7 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 
 					// Group non-orphaned groups by lostUnits
 					const groupLossMap = new Map<string, string[]>();
-					const nonOrphanedGroups = result.affectedGroups?.filter(group => !group.orphaned) || [];
+					const nonOrphanedGroups = result.affectedGroups?.filter(group => !group.orphaned);
 					nonOrphanedGroups.forEach(group => {
 						const key = JSON.stringify([...group.lostUnits].sort());
 						if (!groupLossMap.has(key)){
@@ -332,7 +333,6 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 			}
 		}
 
-
 		if (cancel) {
 			msgElements.push(
 				<div key="restricted">
@@ -386,24 +386,10 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 
 		// Update groups
 		for (const groupId of groupsWithLostDefault) {
-			const groupData = groupDataById[groupId];
+			const groupEditPayload: GroupPayloadForGroupAPI = { ...groupDataById[groupId], defaultGraphicUnit: -99 };
 			// The GroupsAPI expect only 10 properties, and does not expect deepMeters, so this is my way of removing it
-			const {
-				id, name, displayable, gps, note, area,
-				childGroups, childMeters, areaUnit
-			} = groupData;
-			await editGroup({
-				id,
-				name,
-				displayable,
-				gps,
-				note,
-				area,
-				childGroups,
-				childMeters,
-				defaultGraphicUnit: -99,
-				areaUnit
-			});
+			delete (groupEditPayload as any).deepMeters;
+			await editGroup(groupEditPayload);
 		}
 
 		// Delete the conversion

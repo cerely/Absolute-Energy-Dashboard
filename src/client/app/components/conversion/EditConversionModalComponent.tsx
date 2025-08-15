@@ -20,7 +20,7 @@ import { UnitData, UnitType } from '../../types/redux/units';
 import { useTranslate } from '../../redux/componentHooks';
 import ConfirmActionModalComponent from '../ConfirmActionModalComponent';
 import TooltipMarkerComponent from '../TooltipMarkerComponent';
-import { GroupPayloadForGroupAPI } from 'types/redux/groups';
+import omit from 'lodash/omit';
 
 interface EditConversionModalComponentProps {
 	show: boolean;
@@ -299,8 +299,10 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 							msgElements.push(
 								<div key={`meter-default-${meter.meterId}`}>
 									<span className="bold">{translate('conversion.delete.meter.default.lost')}</span>
+									<br />
 									"{meterData.name}"
-									({translate('conversion.default.graphic.unit')}: "{unitDataById[meterData.defaultGraphicUnit].name}")
+									<br />
+									({translate('conversion.default.graphic.unit')}: "<span>{unitDataById[meterData.defaultGraphicUnit].name}</span>")
 								</div>
 							);
 						}
@@ -314,8 +316,10 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 							msgElements.push(
 								<div key={`group-default-${group.groupId}`}>
 									<span className="bold">{translate('conversion.delete.group.default.lost')}</span>
+									<br />
 									"{groupData.name}"
-									({translate('conversion.default.graphic.unit')}:"{unitDataById[groupData.defaultGraphicUnit].name}")
+									<br />
+									({translate('conversion.default.graphic.unit')}: <span>{unitDataById[groupData.defaultGraphicUnit].name}</span>)
 								</div>
 							);
 						}
@@ -386,10 +390,10 @@ export default function EditConversionModalComponent(props: EditConversionModalC
 
 		// Update groups
 		for (const groupId of groupsWithLostDefault) {
-			const groupEditPayload: GroupPayloadForGroupAPI = { ...groupDataById[groupId], defaultGraphicUnit: -99 };
-			// The GroupsAPI expect only 10 properties, and does not expect deepMeters, so this is my way of removing it
-			delete (groupEditPayload as any).deepMeters;
-			await editGroup(groupEditPayload);
+			// The GroupsAPI expects only 10 properties, so omit deepMeters
+			const groupData = groupDataById[groupId];
+			const groupPayload = omit(groupData, ['deepMeters']);
+			await editGroup(groupPayload);
 		}
 
 		// Delete the conversion

@@ -64,16 +64,16 @@ mocha.describe('readings API', () => {
 
 						// 3) Load the expected series for a 61-day window (daily points expected)
 						const expected = await parseExpectedCsv(
-						'src/server/test/web/readingsData/expected_line_range_ri_15_mu_kWh_gu_kWh_st_2022-08-25%00#00#00_et_2022-10-25%00#00#00.csv',
+							'src/server/test/web/readingsData/expected_line_range_ri_15_mu_kWh_gu_kWh_st_2022-08-25%00#00#00_et_2022-10-25%00#00#00.csv',
 						);
 
 						// 4) Hit the API for the same window & unit
 						const res = await chai
-						.request(app)
-						.get(`/api/unitReadings/line/meters/${METER_ID}`)
-						.query({
-							timeInterval: createTimeString('2022-08-25', '00:00:00', '2022-10-25', '00:00:00'),
-							graphicUnitId: unitId,
+							.request(app)
+							.get(`/api/unitReadings/line/meters/${METER_ID}`)
+							.query({
+								timeInterval: createTimeString('2022-08-25', '00:00:00', '2022-10-25', '00:00:00'),
+								graphicUnitId: unitId,
 						});
 
 						// 5) Assert the API response matches the expected CSV (shape + values)

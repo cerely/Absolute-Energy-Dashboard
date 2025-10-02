@@ -44,7 +44,7 @@ interface EditUnitModalComponentProps {
 export default function EditUnitModalComponent(props: EditUnitModalComponentProps) {
 	const translate = useTranslate();
 
-	// boolean that updates if any change is made to any meter modal
+	// boolean that updates if any change is made to any unit modal
 	const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 	const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
 
@@ -55,7 +55,8 @@ export default function EditUnitModalComponent(props: EditUnitModalComponentProp
 			setShowUnsavedWarning(true);
 		}
 		else {
-			handleClose(); // Proceed to close the modal
+			// Proceed to close the modal
+			handleClose();
 		}
 	};
 

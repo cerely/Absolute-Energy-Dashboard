@@ -328,7 +328,7 @@ mocha.describe('readings API', () => {
                             suffix: '',
                             displayable: Unit.displayableType.ALL,
                             preferredDisplay: true,
-                            notes: 'kilowatts',
+                            note: 'kilowatts',
                         },
 
                         {
@@ -342,7 +342,7 @@ mocha.describe('readings API', () => {
                             suffix: '',
                             displayable: Unit.displayableType.NONE,
                             preferredDisplay: false,
-                            notes: 'special unit'
+                            note: 'special unit'
 
                         }
                     ];
@@ -352,7 +352,7 @@ mocha.describe('readings API', () => {
                             // c4
                             sourceName: 'Electric',
                             destinationName: 'kW',
-                            bydirectional: false,
+                            bidirectional: false,
                             slope: 1,
                             intercept: 0,
                             note: 'Electric → kW'

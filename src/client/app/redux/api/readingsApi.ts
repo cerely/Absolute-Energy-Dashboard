@@ -94,6 +94,7 @@ export const readingsApi = baseApi.injectEndpoints({
 		}),
 		bar: builder.query<BarReadings, BarReadingApiArgs>({
 			// Refer to line endpoint for detailed explanation as the logic is identical
+			keepUnusedDataFor: 30,
 			serializeQueryArgs: ({ queryArgs }) => omit(queryArgs, 'ids'),
 			merge: (currentCacheData, responseData) => { Object.assign(currentCacheData, responseData); },
 			forceRefetch: ({ currentArg, endpointState }) => {

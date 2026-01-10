@@ -32,8 +32,8 @@ export function lineUnitLabel(selectUnitState: UnitData, currentSelectedRate: Li
 		// Thus, OED will show kW and not allow other rates. To make it consistent, kWh cannot
 		// be shown in another rate. Thus, there is no need to scale.
 		// TODO This isn't a general solution. For example, Wh or W would not be fixed.
-		// The y-axis label is the kW.
-		unitLabel = 'kW';
+		// The y-axis label is the unit identifier.
+		unitLabel = selectUnitState.identifier;
 	} else if (selectUnitState.unitRepresent == UnitRepresentType.raw) {
 		// A raw unit just uses the identifier.
 		// The y-axis label is the same as the identifier.

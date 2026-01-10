@@ -12,8 +12,8 @@ mix case and if statements.
 /*
 Rounds a timestamp up to the next interval
  */
-CREATE OR REPLACE FUNCTION date_trunc_up(interval_precision TEXT, ts TIMESTAMP)
-	RETURNS TIMESTAMP LANGUAGE SQL
+CREATE OR REPLACE FUNCTION date_trunc_up(interval_precision TEXT, ts TIMESTAMP WITH TIME ZONE)
+	RETURNS TIMESTAMP WITH TIME ZONE LANGUAGE SQL
 IMMUTABLE
 AS $$
 SELECT CASE
@@ -320,7 +320,7 @@ hourly_readings_unit
 				)
 			) / (
 				extract(EPOCH FROM -- The number of seconds that the reading shares with the interval
-					least(r.end_timestamp, gen.interval_start + '1 day'::INTERVAL)
+					least(r.end_timestamp, gen.interval_start + '1 hour'::INTERVAL)
 					-
 					greatest(r.start_timestamp, gen.interval_start)
 				)
@@ -448,13 +448,11 @@ DECLARE
 			RETURN QUERY
 				SELECT r.meter_id as meter_id,
 				CASE WHEN u.unit_represent = 'quantity'::unit_represent_type THEN
-					-- If it is quantity readings then need to convert to rate per hour by dividing by the time length where
-					-- the 3600 is needed since EPOCH is in seconds.
-					((r.reading / (extract(EPOCH FROM (r.end_timestamp - r.start_timestamp)) / 3600)) * c.slope + c.intercept) 
+					-- Apply slope and intercept conversion without rate conversion
+					(r.reading * c.slope + c.intercept)
 				WHEN (u.unit_represent = 'flow'::unit_represent_type OR u.unit_represent = 'raw'::unit_represent_type) THEN
-					-- If it is flow or raw readings then it is already a rate so just convert it but also need to normalize
-					-- to per hour.
-					((r.reading * 3600 / u.sec_in_rate) * c.slope + c.intercept)
+					-- Apply slope and intercept conversion for flow/raw readings
+					(r.reading * c.slope + c.intercept)
 				END AS reading_rate,
 				-- There is no range of values on raw/meter data so return NaN to indicate that.
 				-- The route will return this as null when it shows up in Redux state.

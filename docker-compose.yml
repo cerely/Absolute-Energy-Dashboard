@@ -14,6 +14,7 @@ services:
             # Custom PGDATA per recommendations from official Docker page
             - PGDATA=/var/lib/postgresql/data/pgdata
             - POSTGRES_PASSWORD=pleaseChange # default postgres password that should be changed for security.
+            - TZ=Asia/Kolkata
         volumes:
             - ./postgres-data:/var/lib/postgresql/data/pgdata
         healthcheck:
@@ -21,8 +22,8 @@ services:
             interval: 10s
             timeout: 10s
             retries: 3
-        # ports:
-        #    - "5432:5432"
+        ports:
+            - "5433:5432"
         # Uncomment the above lines to enable access to the PostgreSQL server
         # from the host machine.
         # Web service runs Node
@@ -36,7 +37,7 @@ services:
             - OED_DB_TEST_DATABASE=oed_testing
             - OED_DB_PASSWORD=opened
             - OED_DB_HOST=database # Docker will set this hostname
-            - OED_DB_PORT=5432
+            - OED_DB_PORT=5432  
             - OED_TOKEN_SECRET=?
             - OED_LOG_FILE=log.txt
             - OED_MAIL_METHOD=none # Method of sending mail. Supports "secure-smtp", "none". Case insensitive.
@@ -50,7 +51,7 @@ services:
             # Changing this value does not impact what OED displays.
             # What it will change is the date/time stamp on logs, notes and change dates that place the current date/time.
             # It can also impact the interpretation of readings sent to OED such as Unix timestamps.
-            - TZ=Etc/UTC # Set the timezone of the Docker container where OED runs the web services.
+            - TZ=Asia/Kolkata # Set the timezone of the Docker container where OED runs the web services.
             # If in a subdirectory, set it here
             # - OED_SUBDIR=/subdir/
             # Set the correct build environment.

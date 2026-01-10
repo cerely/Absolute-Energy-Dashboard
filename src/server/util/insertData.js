@@ -200,8 +200,19 @@ async function insertConversions(conversionsToInsert, conn) {
 				}
 			})
 			if (ok) {
-				const sourceName = (await Unit.getByName(conversionData.sourceName, conn)).id;
-				const destinationName = (await Unit.getByName(conversionData.destinationName, conn)).id;
+				// Skip identity conversions (source==destination) because table enforces source_id != destination_id
+				if (conversionData.sourceName === conversionData.destinationName) {
+					console.log(`******** Conversion skipped: identity conversion for unit '${conversionData.sourceName}' at index ${index}`);
+					return;
+				}
+				const sourceUnit = await Unit.getByName(conversionData.sourceName, conn);
+				const destinationUnit = await Unit.getByName(conversionData.destinationName, conn);
+				if (!sourceUnit || !destinationUnit) {
+					console.log(`******** Conversion skipped: unit not found for conversion number ${index}:`, conversionData);
+					return;
+				}
+				const sourceName = sourceUnit.id;
+				const destinationName = destinationUnit.id;
 				if (await Conversion.getBySourceDestination(sourceName, destinationName, conn) === null) {
 					await new Conversion(sourceName, destinationName, conversionData.bidirectional, conversionData.slope, conversionData.intercept, conversionData.note).insert(conn);
 				}

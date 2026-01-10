@@ -24,6 +24,12 @@ patchPointType(pgp);
  * @returns {pgPromise.IDatabase}
  */
 function getDB(connectionParameters) {
+	// Ensure the password is a string when provided; pg's SCRAM implementation
+	// requires `password` to be a string or it errors with "client password must be a string".
+	if (connectionParameters && connectionParameters.password !== undefined && connectionParameters.password !== null) {
+		// clone to avoid mutating caller object
+		connectionParameters = Object.assign({}, connectionParameters, { password: String(connectionParameters.password) });
+	}
 	return pgp(connectionParameters);
 }
 

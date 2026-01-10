@@ -6,6 +6,7 @@ const database = require('./database');
 const { mapToObject, threeDHoleAlgorithm } = require('../util');
 const determineMaxPoints = require('../util/determineMaxPoints');
 const log = require('../log');
+const { all } = require('axios');
 
 const sqlFile = database.sqlFile;
 
@@ -252,8 +253,9 @@ class Reading {
 		 * @type {array<{meter_id: int, reading_rate: Number, max_rate: Number, min_rate: Number, start_timestamp: Moment, end_timestamp: Moment}>}
 		 */
 		const allMeterLineReadings = await conn.func('meter_line_readings_unit',
-			[meterIDs, graphicUnitId, fromTimestamp || '-infinity', toTimestamp || 'infinity', 'auto', maxRawPoints, maxHourlyPoints]
+			[meterIDs, graphicUnitId, fromTimestamp || '-infinity', toTimestamp || 'infinity', 'raw', maxRawPoints, maxHourlyPoints]
 		);
+		console.log(allMeterLineReadings);
 		const readingsByMeterID = mapToObject(meterIDs, () => []);
 		for (const row of allMeterLineReadings) {
 			readingsByMeterID[row.meter_id].push(

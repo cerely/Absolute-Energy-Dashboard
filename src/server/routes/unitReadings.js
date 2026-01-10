@@ -76,6 +76,7 @@ function formatReadingRow(readingRow) {
  */
 async function meterLineReadings(meterIDs, graphicUnitId, timeInterval) {
 	const conn = getConnection();
+	console.log(meterIDs);
 	const rawReadings = await Reading.getMeterLineReadings(meterIDs, graphicUnitId, timeInterval.startTimestamp, timeInterval.endTimestamp, conn);
 	return mapValues(rawReadings, readingsForMeter => readingsForMeter.map(formatReadingRow));
 }

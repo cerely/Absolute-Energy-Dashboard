@@ -16,24 +16,20 @@ const { pathConversion } = require('./pathConversion');
  */
 async function createCikArray(graph, conn) {
 	// Get the vertices associated with the sources (meters) and destinations (units, suffix).
-	// In principle we could just get units associated with meters that have a visible meter since only
-	// those can be used. However, this means we would need to update Cik if an admin updates the visibility of
-	// a meter or adds a new meter that is visible and associated with a meter unit that was not in Cik.
-	// To avoid having to redo Cik for any meter update, all meter units are included. Note it is less likely
-	// that there is an unused meter unit.
-	// For units of type unit or suffix, we could exclude any that no user can see. While this might eliminate
-	// some units, the number that are not visible to an admin is likely to be small. As with meter units, OED
-	// would need to update Cik if any unit has its visible status changed. Not doing this avoids having to update
-	// Cik on unit changes (only on conversion change because adding a new unit that has no conversion means
-	// all its values in Cik would indicate no conversion). Note we do exclude if displayable is none
-	// since those cannot be graphed. The original unit with a suffix string is excluded by OED during
-	// processing of suffix units.
-	// The final consideration is how much including the extra items will cost. The larger array should not impact
-	// the speed of looking up an item in Cik. Sending Cik to the client will be larger but note that if
-	// there are 30 meter units and 100 unit/suffix units then Cik has 3000 items. This will
-	// not be large, esp. compared to the rest of the startup payload of code. Thus, including all the
-	// units should still be very efficient and the bytes saved by doing all the extra work above will be small.
-	const sources = await Unit.getTypeMeter(conn);
+	// We get ALL units that are actually used by meters (regardless of their type_of_unit classification)
+	// to ensure we include units like kWh that are used as meter units but classified as type='unit'
+	const meterUnitRows = await conn.any(
+		`SELECT DISTINCT u.id, u.name, u.unit_represent, u.displayable 
+		 FROM units u 
+		 WHERE u.id IN (SELECT DISTINCT unit_id FROM meters)`
+	);
+	const sources = meterUnitRows.map(row => ({
+		id: row.id,
+		name: row.name,
+		unitRepresent: row.unit_represent,
+		displayable: row.displayable
+	}));
+	
 	// This excludes units that have displayable none since cannot be graphed.
 	const destinations = (await Unit.getTypeUnit(conn)).concat(await Unit.getTypeSuffix(conn));
 	// Size of each of these.
@@ -47,7 +43,6 @@ async function createCikArray(graph, conn) {
 			// The shortest path from source to destination.
 			const path = getPath(graph, sourceId, destinationId);
 			// Check if the path exists.
-			// If not, we will do nothing since the array has been initialized with [Nan, Nan, ''].
 			if (path !== null) {
 				const [slope, intercept] = await pathConversion(path, conn);
 				// All suffix units were dealt in src/server/services/graph/handleSuffixUnits.js
@@ -56,6 +51,10 @@ async function createCikArray(graph, conn) {
 				// The name of any unit associated with a suffix was already set correctly.
 				// Thus, we can just use the destination identifier as the unit name.
 				c.push({ source: sourceId, destination: destinationId, slope: slope, intercept: intercept });
+			} else if (sourceId === destinationId) {
+				// Add identity conversion (meter unit to itself) when no conversion path exists
+				// This is critical for graphs to render when selecting the native meter unit
+				c.push({ source: sourceId, destination: destinationId, slope: 1, intercept: 0 });
 			}
 		}
 	}

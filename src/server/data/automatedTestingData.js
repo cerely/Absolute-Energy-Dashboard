@@ -17,11 +17,11 @@ const fs = require('fs').promises;
 // Define the start and end date for data generation.
 const DEFAULT_OPTIONS = {
 	// First day to generate data is Jan. 1, 2020.
-	startDate: '2020-01-01 00:00:00',
+	startDate: '2024-01-01 00:00:00',
 	// Last day to generate data for 1 year is Dec. 31, 2020.
-	endDateOneYr: '2020-12-31 23:59:59',
+	endDateOneYr: '2025-12-31 23:59:59',
 	// Last day to generate data  for 2 years is Dec. 31, 2021.
-	endDateTwoYr: '2021-12-31 23:59:59',
+	endDateTwoYr: '2026-12-31 23:59:59',
 	// Wave period set to 45 days so every 45 days goes though a complete period of sine or cosine.
 	// Use days instead of 1.5 months because moment changes number of days depending on length
 	// of the month.
@@ -888,6 +888,15 @@ const specialConversionsGeneral = [
 async function insertSpecialConversions(conn) {
 	// Combine the general special conversions with ones only for dev.
 	const specialConversionsDev = specialConversionsGeneral.concat([
+		// Identity conversions for graphic units (unit to itself)
+		{
+			sourceName: 'kWh',
+			destinationName: 'kWh',
+			bidirectional: false,
+			slope: 1,
+			intercept: 0,
+			note: 'kWh → kWh (identity)'
+		},
 		{
 			sourceName: 'kWh',
 			destinationName: '100 w bulb',

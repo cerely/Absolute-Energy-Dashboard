@@ -155,4 +155,18 @@ app.use((req, res) => {
 	res.status(404).send('<h1>404 Not Found</h1>');
 });
 
+// Initialize conversions on app startup to ensure they persist across restarts
+const { getConnection } = require('./db');
+const { ensureConversionsExist } = require('./services/graph/initializeConversions');
+
+(async () => {
+	try {
+		const conn = getConnection();
+		await ensureConversionsExist(conn);
+	} catch (error) {
+		log.error('Error initializing conversions on startup:', error);
+		// Don't crash the app if this fails
+	}
+})();
+
 module.exports = app;

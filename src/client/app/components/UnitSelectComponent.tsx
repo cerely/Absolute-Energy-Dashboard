@@ -27,19 +27,27 @@ export default function UnitSelectComponent() {
 	const unitsByID = useAppSelector(selectUnitDataById);
 
 	const { isFetching: unitsIsFetching } = unitsApi.endpoints.getUnitsDetails.useQueryState();
-	let selectedUnitOption: SelectOption | null = null;
-
-	// Only use if valid/selected unit which means it is not -99.
-	if (selectedUnitID !== -99) {
-		selectedUnitOption = {
-			// Units use the identifier to display.
-			label: unitsByID[selectedUnitID]?.identifier,
+	
+	// Build the selected option based on current Redux state
+	const selectedUnitOption: SelectOption | null = (selectedUnitID !== -99 && unitsByID[selectedUnitID]) 
+		? {
+			label: unitsByID[selectedUnitID].identifier,
 			value: selectedUnitID,
 			isDisabled: false
-		} as SelectOption;
-	}
+		}
+		: null;
 
-	const onChange = (newValue: SelectOption) => dispatch(graphSlice.actions.updateSelectedUnit(newValue?.value));
+	const onChange = (newValue: SelectOption | null) => {
+		if (newValue && newValue.value !== undefined) {
+			console.log('Unit onChange fired - new value:', newValue.value);
+			dispatch(graphSlice.actions.updateSelectedUnit(newValue.value as number));
+		} else {
+			console.log('Unit cleared');
+			dispatch(graphSlice.actions.updateSelectedUnit(undefined as any));
+		}
+	};
+
+	console.log('UnitSelectComponent render - options count:', Object.keys(unitSelectOptions || {}).length, 'selectedUnitID:', selectedUnitID, 'selectedOption:', selectedUnitOption);
 
 	return (
 		<div style={divBottomPadding}>
@@ -48,6 +56,7 @@ export default function UnitSelectComponent() {
 				<TooltipMarkerComponent page='home' helpTextId='help.home.select.units' />
 			</p>
 			<Select<SelectOption, false, GroupedOption>
+				inputId="unit-select"
 				value={selectedUnitOption}
 				options={unitSelectOptions}
 				placeholder={translate('select.unit')}
@@ -55,10 +64,12 @@ export default function UnitSelectComponent() {
 				formatGroupLabel={formatGroupLabel}
 				isClearable
 				isLoading={unitsIsFetching}
+				menuPlacement="auto"
 			/>
 		</div>
 	);
 }
+
 const groupStyles: React.CSSProperties = {
 	display: 'flex',
 	alignItems: 'center',

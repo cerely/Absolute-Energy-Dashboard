@@ -12,8 +12,8 @@ mix case and if statements.
 /*
 Rounds a timestamp up to the next interval
  */
-CREATE OR REPLACE FUNCTION date_trunc_up(interval_precision TEXT, ts TIMESTAMP WITH TIME ZONE)
-	RETURNS TIMESTAMP WITH TIME ZONE LANGUAGE SQL
+CREATE OR REPLACE FUNCTION date_trunc_up(interval_precision TEXT, ts TIMESTAMP)
+	RETURNS TIMESTAMP LANGUAGE SQL
 IMMUTABLE
 AS $$
 SELECT CASE

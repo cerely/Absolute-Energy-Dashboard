@@ -466,6 +466,36 @@ export default function ReportsPage() {
 		}
 	};
 
+	const handleDownloadReport = async () => {
+		if (!reportData) return;
+		setSaving(true);
+		setSavedMsg('Generating PDF for download...');
+		try {
+			const element = document.getElementById('bill-print-area');
+			if (!element) throw new Error('Report element not found');
+
+			const canvas = await html2canvas(element, { 
+				scale: 2,
+				useCORS: true,
+				logging: false,
+				backgroundColor: '#ffffff'
+			});
+			const imgData = canvas.toDataURL('image/png');
+			const pdf = new jsPDF('p', 'mm', 'a4');
+			const pdfWidth = pdf.internal.pageSize.getWidth();
+			const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+			
+			pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+			const fileName = `Bill_Report_${reportData.billMonth.replace(/\s+/g, '_')}_${reportData.meterName.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+			pdf.save(fileName);
+			setSavedMsg(`✅ Report downloaded: ${fileName}`);
+		} catch (e: any) {
+			setSavedMsg(`❌ Download failed: ${e.message}`);
+		} finally {
+			setSaving(false);
+		}
+	};
+
 
 	return (
 		<div className="reports-page-container" style={{ padding: '24px', height: '100%', overflowY: 'auto', background: isDarkMode ? '#0d1117' : '#ffffff' }}>
@@ -927,9 +957,14 @@ export default function ReportsPage() {
 
 					<div className="no-print mt-4 pb-4 px-4" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
 						<div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-							<button className="btn btn-dark" onClick={() => window.print()} style={{ minWidth: '180px' }}>
-								<span className="material-symbols-rounded align-middle me-2">print</span>
-								Print Report
+							<button 
+								className="btn btn-dark" 
+								onClick={handleDownloadReport} 
+								disabled={saving}
+								style={{ minWidth: '180px' }}
+							>
+								<span className="material-symbols-rounded align-middle me-2">{(saving && savedMsg.includes('download')) ? 'hourglass_top' : 'download'}</span>
+								{(saving && savedMsg.includes('download')) ? 'Generating...' : 'Download PDF'}
 							</button>
 							<button
 								className="btn btn-success"
@@ -937,8 +972,8 @@ export default function ReportsPage() {
 								disabled={saving}
 								style={{ minWidth: '180px' }}
 							>
-								<span className="material-symbols-rounded align-middle me-2">{saving ? 'hourglass_top' : 'save'}</span>
-								{saving ? 'Saving...' : 'Save Report'}
+								<span className="material-symbols-rounded align-middle me-2">{(saving && !savedMsg.includes('download')) ? 'hourglass_top' : 'save'}</span>
+								{(saving && !savedMsg.includes('download')) ? 'Saving...' : 'Save Report'}
 							</button>
 						</div>
 						{savedMsg && (

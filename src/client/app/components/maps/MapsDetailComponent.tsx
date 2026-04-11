@@ -48,12 +48,6 @@ export default class MapsDetailComponent extends React.Component<MapsDetailProps
 				{/* <UnsavedWarningContainer /> */}
 				<TooltipHelpComponent page='maps' />
 				<div className='container-fluid'>
-					<h2 style={titleStyle}>
-						<FormattedMessage id='maps' />
-						<div style={tooltipBaseStyle}>
-							<TooltipMarkerComponent page='maps' helpTextId='help.admin.mapview' />
-						</div>
-					</h2>
 					<div style={tableStyle}>
 						<Table striped bordered hover>
 							<thead>

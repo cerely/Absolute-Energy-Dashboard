@@ -18,7 +18,7 @@ import { selectLineUnitLabel } from '../redux/selectors/plotlyDataSelectors';
 import { selectSelectedLanguage, selectTheme } from '../redux/slices/appStateSlice';
 import Locales from '../types/locales';
 import { useTranslate } from '../redux/componentHooks';
-import { setInitialXAxisRange, selectSliderRangeInterval, selectYMin, selectYMax, setYMin, setYMax } from '../redux/slices/graphSlice';
+import { setInitialXAxisRange, selectSliderRangeInterval, selectYMin, selectYMax, setYMin, setYMax, selectQueryTimeInterval } from '../redux/slices/graphSlice';
 
 
 /**
@@ -36,6 +36,7 @@ export default function LineChartComponent() {
 	const sliderRangeInterval = useAppSelector(selectSliderRangeInterval);
 	const yMin = useAppSelector(selectYMin);
 	const yMax = useAppSelector(selectYMax);
+	const queryTimeInterval = useAppSelector(selectQueryTimeInterval);
 
 	// Fetch data, and derive plotly points
 	const { data: meterPlotlyData, isFetching: meterIsFetching } = readingsApi.useLineQuery(meterArgs,
@@ -91,7 +92,8 @@ export default function LineChartComponent() {
 				mode: 'lines',
 				type: 'scatter',
 				line: {
-					shape: 'linear',
+					shape: 'spline',
+					smoothing: 1,
 					width: 2,          // uniform thin lines
 					color: color,
 					dash: 'solid'      // no dashed/dotted lines
@@ -144,7 +146,8 @@ export default function LineChartComponent() {
 				type: 'scatter',
 				mode: 'lines',
 				line: {
-					shape: 'linear',
+					shape: 'spline',
+					smoothing: 1.2,
 					width: 2,
 					color: '#6B7280',
 					dash: 'dash'
@@ -275,32 +278,29 @@ export default function LineChartComponent() {
 		const xRange: [string, string] = sliderRange ?? [minDate, maxDate];
 
 		let yRange: [number, number] | undefined = undefined;
-		if (yMin !== undefined || yMax !== undefined) {
-			let calcMin = Number.MAX_VALUE;
-			let calcMax = -Number.MAX_VALUE; // Initialize with a very small number
+		let calcMin = Number.MAX_VALUE;
+		let calcMax = -Number.MAX_VALUE;
+		let hasData = false;
 
-			// Only calculate if we need one of the bounds
-			if (yMin === undefined || yMax === undefined) {
-				for (const trace of data) {
-					if (trace.y) {
-						// Ensure y is treated as array of numbers. Flatten if needed.
-						const yArr = (Array.isArray(trace.y[0]) ? (trace.y as any[]).flat() : trace.y) as number[];
-						for (const val of yArr) {
-							if (typeof val === 'number') {
-								if (val < calcMin) calcMin = val;
-								if (val > calcMax) calcMax = val;
-							}
-						}
+		for (const trace of data) {
+			if (trace.y) {
+				const yArr = (Array.isArray(trace.y[0]) ? (trace.y as any[]).flat() : trace.y) as number[];
+				for (const val of yArr) {
+					if (typeof val === 'number') {
+						if (val < calcMin) calcMin = val;
+						if (val > calcMax) calcMax = val;
+						hasData = true;
 					}
 				}
-				// Fallbacks if no data found
-				if (calcMin === Number.MAX_VALUE) calcMin = 0;
-				if (calcMax === -Number.MAX_VALUE) calcMax = 10;
 			}
+		}
 
+		if (hasData) {
+			const range = calcMax - calcMin;
+			const padding = range === 0 ? 1 : range * 0.1;
 			yRange = [
-				yMin !== undefined ? yMin : calcMin,
-				yMax !== undefined ? yMax : calcMax
+				yMin !== undefined ? yMin : calcMin - padding,
+				yMax !== undefined ? yMax : calcMax + padding
 			];
 		}
 
@@ -310,7 +310,7 @@ export default function LineChartComponent() {
 				data={data}
 				style={{ width: '100%', height: '100%' }}
 				layout={{
-					font: { family: 'Inter, sans-serif', color: isDarkMode ? '#8b949e' : '#6B7280' },
+					font: { family: 'Inter, sans-serif', color: isDarkMode ? '#FFFFFF' : '#111111' },
 					paper_bgcolor: 'transparent',
 					plot_bgcolor: 'transparent',
 					margin: { t: 30, b: 40, r: 20, l: 40 },
@@ -320,15 +320,15 @@ export default function LineChartComponent() {
 						x: 0,
 						y: 1.1,
 						orientation: 'h',
-						font: { size: 12, color: isDarkMode ? '#e6edf3' : '#374151' }
+						font: { size: 12, color: isDarkMode ? '#FFFFFF' : '#374151' }
 					},
 					modebar: { orientation: 'v' },
 					yaxis: {
-						title: { text: unitLabel, font: { size: 12, color: isDarkMode ? '#8b949e' : '#4B5563' } },
+						title: { text: unitLabel, font: { size: 12, color: isDarkMode ? '#FFFFFF' : '#111111' } },
 						gridcolor: isDarkMode ? '#21262d' : '#F3F4F6',
 						fixedrange: false,
 						zeroline: false,
-						tickfont: { color: isDarkMode ? '#8b949e' : '#9CA3AF', size: 11 },
+						tickfont: { color: isDarkMode ? 'white' : '#111111', size: 11 },
 						range: yRange,
 						autorange: !yRange
 					},
@@ -337,14 +337,14 @@ export default function LineChartComponent() {
 					range: xRange,
 					showgrid: false,
 					gridcolor: isDarkMode ? '#21262d' : '#F3F4F6',
-					tickfont: { color: isDarkMode ? '#8b949e' : '#9CA3AF', size: 11 },
+					tickfont: { color: isDarkMode ? 'white' : '#111111', size: 11 },
 					zeroline: false
 				},
 					hovermode: 'x unified',
 					hoverlabel: {
 						bgcolor: isDarkMode ? '#161b22' : '#FFFFFF',
 						bordercolor: isDarkMode ? '#30363d' : 'transparent',
-						font: { family: 'Inter', size: 13, color: isDarkMode ? '#e6edf3' : '#111111' },
+						font: { family: 'Inter', size: 13, color: isDarkMode ? 'white' : '#111111' },
 						namelength: -1
 					}
 				}}

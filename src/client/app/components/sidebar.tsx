@@ -6,10 +6,10 @@ import { useAppDispatch, useAppSelector } from '../redux/reduxHooks';
 import { selectCurrentUserProfile, selectHasRolePermissions, selectIsAdmin, selectIsLoggedIn } from '../redux/slices/currentUserSlice';
 import { appStateSlice } from '../redux/slices/appStateSlice';
 import { UserRole } from '../types/items';
-import LoginComponent from './LoginComponent';
 import pfp from './assets/pfp.jpg';
 import absLogoFallback from './assets/abs-logo.png';
 import './dashboard.css';
+import { useNavigate } from 'react-router-dom';
 
 export default function Sidebar() {
 	const location = useLocation();
@@ -20,8 +20,8 @@ export default function Sidebar() {
 	const csvPermission = useAppSelector(state => selectHasRolePermissions(state, UserRole.CSV));
 	const collapsed = useAppSelector(state => state.appState.sidebarCollapsed);
 	const dispatch = useAppDispatch();
+	const navigate = useNavigate();
 
-	const [showLoginModal, setShowLoginModal] = useState(false);
 	const [logoSrc, setLogoSrc] = useState<string>(absLogoFallback);
 
 	// Fetch custom logo from database on mount
@@ -182,19 +182,12 @@ export default function Sidebar() {
 						{!collapsed && <span>Logout</span>}
 					</div>
 				) : (
-					<div className="footer-item-simple" onClick={() => setShowLoginModal(true)} style={{ cursor: 'pointer' }} title="Login">
+					<div className="footer-item-simple" onClick={() => navigate('/login')} style={{ cursor: 'pointer' }} title="Login">
 						<span className="material-symbols-rounded">login</span>
 						{!collapsed && <span>Login</span>}
 					</div>
 				)}
 			</div>
-
-			<Modal isOpen={showLoginModal} toggle={() => setShowLoginModal(false)}>
-				<ModalHeader toggle={() => setShowLoginModal(false)}>Login</ModalHeader>
-				<ModalBody>
-					<LoginComponent handleClose={() => setShowLoginModal(false)} />
-				</ModalBody>
-			</Modal>
 		</div>
 	);
 }

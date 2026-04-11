@@ -284,7 +284,7 @@ export default function RadarChartComponent() {
 			});
 
 			layout = {
-				font: { family: 'Inter, sans-serif', color: isDarkMode ? '#8b949e' : '#6B7280' },
+				font: { family: 'Inter, sans-serif', color: isDarkMode ? 'white' : '#111111' },
 				paper_bgcolor: 'transparent',
 				plot_bgcolor: 'transparent',
 				autosize: true,
@@ -293,25 +293,25 @@ export default function RadarChartComponent() {
 					x: 0,
 					y: 1.1,
 					orientation: 'h',
-					font: { size: 12, color: isDarkMode ? '#e6edf3' : '#374151' }
+					font: { size: 12, color: isDarkMode ? '#FFFFFF' : '#374151' }
 				},
 				polar: {
 					bgcolor: isDarkMode ? '#161b22' : '#FFFFFF',
 					radialaxis: {
-						title: { text: unitLabel, font: { size: 12, color: isDarkMode ? '#8b949e' : '#4B5563' } },
+						title: { text: unitLabel, font: { size: 12, color: isDarkMode ? 'white' : '#111111' } },
 						showgrid: true,
-						gridcolor: isDarkMode ? '#21262d' : '#F3F4F6',
-						linecolor: isDarkMode ? '#21262d' : '#E5E7EB',
-						tickfont: { color: isDarkMode ? '#8b949e' : '#9CA3AF', size: 11 },
+						gridcolor: isDarkMode ? '#334155' : '#D1D5DB',
+						linecolor: isDarkMode ? '#475569' : '#9CA3AF',
+						tickfont: { color: isDarkMode ? 'white' : '#111111', size: 11 },
 						range: yRange,
 						autorange: !yRange
 					},
 					angularaxis: {
 						direction: 'clockwise',
 						showgrid: true,
-						gridcolor: isDarkMode ? '#21262d' : '#F3F4F6',
-						linecolor: isDarkMode ? '#21262d' : '#E5E7EB',
-						tickfont: { color: isDarkMode ? '#8b949e' : '#9CA3AF', size: 11 },
+						gridcolor: isDarkMode ? '#334155' : '#D1D5DB',
+						linecolor: isDarkMode ? '#475569' : '#9CA3AF',
+						tickfont: { color: isDarkMode ? 'white' : '#111111', size: 11 },
 						nticks: maxTicks,
 						categoryorder: 'array',
 						categoryarray: sortedCategories,

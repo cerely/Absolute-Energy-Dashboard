@@ -27,6 +27,7 @@ export interface AppState {
 	refreshingReadings: boolean;
 	theme: 'light' | 'dark';
 	sidebarCollapsed: boolean;
+	selectedDeviceId: string | null;
 }
 
 const defaultState: AppState = {
@@ -37,7 +38,8 @@ const defaultState: AppState = {
 	languageManuallySet: false,
 	refreshingReadings: false,
 	theme: 'light',
-	sidebarCollapsed: false
+	sidebarCollapsed: false,
+	selectedDeviceId: null
 };
 
 export const appStateSlice = createThunkSlice({
@@ -72,6 +74,9 @@ export const appStateSlice = createThunkSlice({
 		}),
 		toggleSidebar: create.reducer(state => {
 			state.sidebarCollapsed = !state.sidebarCollapsed;
+		}),
+		setSelectedDeviceId: create.reducer<string | null>((state, action) => {
+			state.selectedDeviceId = action.payload;
 		}),
 		initApp: create.asyncThunk(
 			// Thunk initiates many data fetching calls on startup before react begins to render
@@ -112,8 +117,12 @@ export const appStateSlice = createThunkSlice({
 
 				}
 				// Request meter/group/details post-auth
-				dispatch(metersApi.endpoints.getMeters.initiate());
+				// pollingInterval keeps newly MQTT-registered meters appearing without a page reload
+				dispatch(metersApi.endpoints.getMeters.initiate(undefined, { subscriptionOptions: { pollingInterval: 30000 } }));
 				dispatch(groupsApi.endpoints.getGroups.initiate());
+				// Subscribe to active MQTT source on startup so meter filtering works immediately
+				dispatch(metersApi.endpoints.getActiveMqttSource.initiate());
+
 			},
 			{
 				settled: state => {
@@ -144,7 +153,8 @@ export const appStateSlice = createThunkSlice({
 		selectChartLinkHideOptions: state => state.chartLinkHideOptions,
 		selectRefreshingReadings: state => state.refreshingReadings,
 		selectTheme: state => state.theme,
-		selectSidebarCollapsed: state => state.sidebarCollapsed
+		selectSidebarCollapsed: state => state.sidebarCollapsed,
+		selectSelectedDeviceId: state => state.selectedDeviceId
 	}
 });
 
@@ -157,7 +167,8 @@ export const {
 	setChartLinkOptionsVisibility,
 	setRefresingReadings,
 	toggleTheme,
-	toggleSidebar
+	toggleSidebar,
+	setSelectedDeviceId
 } = appStateSlice.actions;
 
 export const {
@@ -167,5 +178,6 @@ export const {
 	selectChartLinkHideOptions,
 	selectRefreshingReadings,
 	selectTheme,
-	selectSidebarCollapsed
+	selectSidebarCollapsed,
+	selectSelectedDeviceId
 } = appStateSlice.selectors;

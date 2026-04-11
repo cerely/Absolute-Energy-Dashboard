@@ -40,12 +40,7 @@ export default function UnitsDetailComponent() {
 					<TooltipHelpComponent page='units' />
 
 					<div className='container-fluid'>
-						<h2 style={titleStyle}>
-							<FormattedMessage id='units' />
-							<div style={tooltipStyle}>
-								<TooltipMarkerComponent page='units' helpTextId={tooltipStyle.tooltipUnitView} />
-							</div>
-						</h2>
+
 						<div className="edit-btn">
 							{/* The actual button for create is inside this component. */}
 							< CreateUnitModalComponent />

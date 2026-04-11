@@ -69,8 +69,8 @@ router.get('/line/raw/meter/:meter_id', optionalAuthMiddleware, async (req, res)
 		maxProperties: 1,
 		required: ['meter_id'],
 		properties: {
-			meter_ids: {
-				type: 'integer'
+			meter_id: {
+				type: 'string'
 			}
 		}
 	};

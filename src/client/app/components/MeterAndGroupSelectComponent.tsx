@@ -22,10 +22,11 @@ import { ChartTypes, MeterOrGroup } from '../types/redux/graph';
 import { useTranslate } from '../redux/componentHooks';
 import TooltipMarkerComponent from './TooltipMarkerComponent';
 import { selectAnythingFetching } from '../redux/selectors/apiSelectors';
-import { selectAllMeters } from '../redux/api/metersApi';
+import { selectActiveSourceMeters, useGetActiveMqttSourceQuery } from '../redux/api/metersApi';
 
 
 import { getDeviceFromIdentifier } from '../utils/meterUtils';
+
 
 interface DeviceOption {
 	label: string;
@@ -43,34 +44,44 @@ export default function MeterAndGroupSelectComponent() {
 	const { meterGroupedOptions, groupsGroupedOptions, allSelectedMeterValues, allSelectedGroupValues } = useAppSelector(selectMeterGroupSelectData);
 	const selectedUnit = useAppSelector(selectSelectedUnit);
 	const somethingIsFetching = useAppSelector(selectAnythingFetching);
-	const allMeters = useAppSelector(selectAllMeters);
+	// Use active-source-filtered meters so device dropdown only shows devices for the active MQTT topic
+	const activeSourceMeters = useAppSelector(selectActiveSourceMeters);
+
+	// Subscribe to active MQTT source so filtering updates when the topic is switched
+	const { data: activeMqttSource } = useGetActiveMqttSourceQuery();
 
 	// Track selected device(s)
 	const [selectedDevices, setSelectedDevices] = React.useState<string[]>([]);
 
-	// Build device options from all meter identifiers
+	// Clear device selection when the active MQTT topic changes (context switch)
+	React.useEffect(() => {
+		setSelectedDevices([]);
+	}, [activeMqttSource?.id]);
+
+	// Build device options from active-source meter identifiers only
 	const deviceOptions = React.useMemo<DeviceOption[]>(() => {
 		const deviceSet = new Set<string>();
-		allMeters.forEach(meter => {
+		activeSourceMeters.forEach(meter => {
 			const device = getDeviceFromIdentifier(meter.identifier);
 			deviceSet.add(device);
 		});
 		return Array.from(deviceSet)
 			.sort((a, b) => a.localeCompare(b))
 			.map(device => ({ label: device, value: device }));
-	}, [allMeters]);
+	}, [activeSourceMeters]);
 
 	// Filter meter options based on selected device(s)
 	const filterOptionsByDevice = React.useCallback((options: SelectOption[]): SelectOption[] => {
 		if (selectedDevices.length === 0) return options;
 		return options.filter(option => {
 			// Find the meter data to get the identifier
-			const meter = allMeters.find(m => m.id === option.value);
+			const meter = activeSourceMeters.find(m => m.id === option.value);
 			if (!meter) return true; // Keep if we can't find the meter (e.g., it's a group)
 			const device = getDeviceFromIdentifier(meter.identifier);
 			return selectedDevices.includes(device);
 		});
-	}, [selectedDevices, allMeters]);
+	}, [selectedDevices, activeSourceMeters]);
+
 
 	// Merge meterGroupedOptions and groupsGroupedOptions into a single list with two categories
 	// Apply device filter to meter options
@@ -171,10 +182,11 @@ export default function MeterAndGroupSelectComponent() {
 					{/* Telemetry Selection Dropdown */}
 					<Select<SelectOption, true, GroupedOption>
 						isMulti
+						isSearchable={true}
 						placeholder={
 							selectedDevices.length === 0
-								? translate('select.meter.group')
-								: `Select telemetry for ${selectedDevices.join(', ')}...`
+								? translate('select.meter.group') + ' (Type to search)'
+								: `Search or select telemetry for ${selectedDevices.join(', ')}...`
 						}
 						options={combinedOptions}
 						value={combinedValue}

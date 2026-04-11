@@ -44,11 +44,9 @@ body {
 .dashboard-header {
     margin-left: 0;
     /* 200px width + 12px left + 16px gap */
-    padding: 18px 32px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: rgba(255, 255, 255, 0.4);
     backdrop-filter: blur(10px);
     color: #2B3674;
     border-radius: 16px;
@@ -67,7 +65,6 @@ body {
     margin-top: 20px;
     padding: 24px;
     background: transparent;
-    height: calc(100vh - 40px);
     overflow-y: auto;
     border: none;
     border-radius: 20px;
@@ -178,7 +175,7 @@ body {
 	display: flex;
 	flex-direction: column;
     position: fixed;
-    padding: 16px 12px;
+    padding: 10px 12px;
     color: #6B7280;
     height: 96vh;
     top: 2vh;
@@ -193,7 +190,7 @@ body {
 
 .sidebar.collapsed {
 	width: 70px;
-    padding: 16px 8px;
+    padding: 10px 8px;
 }
 
 .collapse-btn {
@@ -380,7 +377,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding: 16px;
+    padding: 10px;
     margin: 0 -8px;
     background: linear-gradient(135deg, #1E3A5F 0%, #2D4A6F 100%);
     border-radius: 16px;
@@ -492,6 +489,7 @@ nav {
     display: flex;
     flex-direction: row;
     gap: 40px;
+    padding: 20px;
 }
 
 nav h1 {
@@ -564,6 +562,7 @@ nav .nav-greetings {
 .nav-right {
     display: flex;
     gap: 20px;
+    padding-right: 20px;
 }
 
 .theme-mode {
@@ -607,6 +606,20 @@ nav .nav-greetings {
     background-color: #f1f5f9;
 }
 
+.industry-label {
+    color: #64748b;
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #e2e8f0;
+    font-size: 14px;
+    font-weight: 500;
+    background: #ffffff;
+}
+
 main {
     margin-top: -15px;
     /* margin-left: 220px; Removed to fix double indentation in AppLayout */
@@ -621,10 +634,11 @@ main {
     display: grid;
     gap: 24px;
     grid-template-columns: repeat(3, minmax(0, 1fr)) 280px;
+    grid-template-rows: 115px 115px 360px;
     grid-template-areas: 
-        "total load energy meter"
-        "peak load energy meter"
-        "graph graph graph meter"
+        "total load energy filter"
+        "peak load energy filter"
+        "consumption consumption consumption meter";
 }
 
 .meter-head {
@@ -649,9 +663,37 @@ main {
 .total-head-1 {
     gap: 8px;
     display: flex;
-    justify-content: space-between;
-    /* padding: 10px; */
+    flex-direction: row;
+    justify-content: flex-start;
     align-items: center;
+}
+
+.card-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.card-icon .material-symbols-rounded {
+    font-size: 18px !important;
+    color: white !important;
+}
+
+.card-icon.green { background-color: #84CC44; }
+.card-icon.purple { background-color: var(--load-util-color); }
+.card-icon.blue { background-color: var(--energy-budget-color); }
+.card-icon.light-blue { background-color: #00A3FF; }
+.card-icon.orange { background-color: #F59E0B; }
+
+.card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #6B7280;
+    margin: 0;
 }
 
 .readin-headin {
@@ -709,11 +751,19 @@ main {
     color: rgb(17, 17, 95);
 }
 
+body.dark-mode .total-status {
+    background-color: rgba(0, 242, 234, 0.15);
+    color: #00F2EA;
+}
+
+body.dark-mode .total-status span {
+    color: #00F2EA;
+}
+
 .readin-total {
     display: flex;
     flex-direction: column;
     gap: 0;
-    margin-top: -5px;
     padding: 0;
 }
 
@@ -731,7 +781,7 @@ main {
     gap: 10px;
     color: #6B7280;
     font-weight: 500;
-    font-size: 14px;
+    font-size: 16px;
     margin-top: 8px;
     display: flex;
     padding: 0%;
@@ -739,7 +789,7 @@ main {
 }
 
 .total-date {
-    font-size: 12px;
+    font-size: 16px;
     margin-top: -5px;
     /* margin-top: 15px; */
 }
@@ -767,12 +817,8 @@ main {
 
 .load-icon {
     display: flex;
-}
-
-.load-icon h1 {
-    margin: 3px;
-    font-size: 16px;
-    font-weight: 600;
+    align-items: center;
+    gap: 8px;
 }
 
 .load-status {
@@ -812,7 +858,7 @@ main {
     justify-content: center;
     align-items: center;
     color: #606060;
-    /* margin-top: -10px; */
+    margin-top: 6px;
 }
 
 /* ENERGY BUDGET */
@@ -839,17 +885,8 @@ main {
 
 .energy-icon {
     display: flex;
-}
-
-.energy-icon h1 {
-    margin: 3px;
-    font-size: 16px;
-    font-weight: 600;
-}
-
-.energy-head {
-    font-size: 16px;
-    font-weight: 600;
+    align-items: center;
+    gap: 8px;
 }
 
 .energy-status {
@@ -887,7 +924,7 @@ main {
     justify-content: center;
     align-items: center;
     color: #606060;
-    /* margin-top: -10px; */
+    margin-top: 6px;
 }
 
 /* METER STATUS */
@@ -928,7 +965,7 @@ main {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px;
+    padding: 10px;
     border-bottom: 1px solid #f1f5f9;
     flex-shrink: 0;
 }
@@ -984,7 +1021,7 @@ main {
     color: #3b5bfe;
     background-color: #eef2ff;
     padding: 6px;
-    border-radius: 8px;
+    border-radius: 11px;
 }
 
 .device-name {
@@ -1495,13 +1532,12 @@ body.dark-mode .device-count {
     display: grid;
     gap: 18px;
     padding-bottom: 24px;
-    grid-template-columns: 20% 23% 23% 29%;
-    height: calc(100vh - 120px);
-    grid-template-rows: 120px 120px 1fr;
+    grid-template-columns: 20% 24% 24% 28%;
+    grid-template-rows: 115px 115px 360px;
     grid-template-areas:
-        "total load energy meter"
-        "peak  load energy meter"
-        "consumption consumption consumption meter"
+        "total load energy filter"
+        "peak load energy filter"
+        "consumption consumption consumption meter";
 }
 
 @media (max-width: 1400px) {
@@ -1739,7 +1775,6 @@ body.dark-mode .recent-activity {
 }
 
 /* Typography in widgets */
-body.dark-mode .total-topic h1,
 body.dark-mode .yesterday-total,
 body.dark-mode .load-text,
 body.dark-mode .energy-text,
@@ -1750,17 +1785,12 @@ body.dark-mode .activity-time {
     color: #8b949e !important;
 }
 
-body.dark-mode .today-total,
 body.dark-mode .peak-read-value,
 body.dark-mode .device-name,
 body.dark-mode .stat-heading h1 {
     color: #ffffff !important;
 }
 
-/* Pink accent for main dashboard value text in dark mode */
-body.dark-mode p.today-total {
-    color: #FF007F !important;
-}
 
 /* Specific Accent colors from palette */
 body.dark-mode .device-icon {
@@ -1813,8 +1843,21 @@ body.dark-mode svg.main-svg {
     background: transparent !important;
 }
 
-body.dark-mode text {
-    fill: #8b949e !important;
+body.dark-mode .telemetry-bar-chart text,
+body.dark-mode .telemetry-bar-chart text tspan {
+    fill: #ffffff !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+}
+
+body.dark-mode text, 
+body.dark-mode text tspan,
+body.dark-mode .xtick text,
+body.dark-mode .ytick text {
+    fill: #ffffff !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+    font-weight: 500 !important;
 }
 
 body.dark-mode .g-xtitle,
@@ -2374,17 +2417,14 @@ body.dark-mode {
     color: #e6edf3 !important;
 }
 
-/* ---- Dashboard Specific Dark Mode Fixes ---- */
-body.dark-mode .today-total {
-    color: #ffffff !important;
-}
+
 
 body.dark-mode .device-name {
     color: #e6edf3 !important;
 }
 
 body.dark-mode .total-status span {
-    color: #3b82f6 !important;
+    color: #00F2EA !important;
 }
 
 body.dark-mode .total-head, 
@@ -2397,9 +2437,7 @@ body.dark-mode .peak-demand {
     box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
 } 
 
-body.dark-mode .total-head-1 .material-symbols-rounded { 
-    color: #8b949e !important; 
-} 
+
 
 body.dark-mode .total-topic h1 { 
     color: #8b949e !important; 
@@ -2457,4 +2495,29 @@ body.dark-mode .polar > .polarlayer > .bg {
 }
 body.dark-mode .polar > .polarlayer > .draglayer {
     fill: transparent !important;
+}
+
+/* Radar Axis Lines and Labels */
+body.dark-mode .polarlayer .angularaxis line,
+body.dark-mode .polarlayer .radialaxis line {
+    stroke: #cbd5e1 !important;
+    stroke-width: 1px !important;
+    opacity: 0.8 !important;
+}
+
+body.dark-mode .polarlayer .angularaxis path,
+body.dark-mode .polarlayer .radialaxis path {
+    stroke: #94a3b8 !important;
+    stroke-width: 1.5px !important;
+}
+
+body.dark-mode .polarlayer .gridlayer path {
+    stroke: #475569 !important;
+    stroke-width: 1px !important;
+}
+
+body.dark-mode .polarlayer text {
+    fill: #ffffff !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
 }

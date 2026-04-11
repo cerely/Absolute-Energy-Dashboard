@@ -5,6 +5,21 @@ const router = express.Router();
 router.get('/stats', async (req, res) => {
     try {
         const db = getConnection();
+
+        // ── Determine which MQTT source to filter by ──
+        let sourceFilter = '';
+        const sourceId = parseInt(req.query.sourceId, 10);
+        if (!isNaN(sourceId) && sourceId > 0) {
+            sourceFilter = `AND m.mqtt_source_id = ${sourceId}`;
+        } else {
+            // Fallback: check active source from global_settings
+            const activeRow = await db.oneOrNone(
+                `SELECT value FROM global_settings WHERE key = 'active_mqtt_source_id'`
+            );
+            if (activeRow && activeRow.value) {
+                sourceFilter = `AND m.mqtt_source_id = ${parseInt(activeRow.value, 10)}`;
+            }
+        }
         
         // Total kWh: Sum of the latest reading for any meter that is a kWh meter
         let kwhQuery = `
@@ -14,12 +29,12 @@ router.get('/stats', async (req, res) => {
                 FROM readings r
                 JOIN meters m ON r.meter_id = m.id
                 JOIN units u ON m.unit_id = u.id
-                WHERE u.name ILIKE '%kwh%' {METER_FILTER}
+                WHERE u.name ILIKE '%kwh%' {METER_FILTER} ${sourceFilter}
                 ORDER BY r.meter_id, r.start_timestamp DESC
             ) latest;
         `;
         
-        let meterFilter = '';
+        let meterFilter = 'AND 1=0'; // Default to nothing unless meters are specified
         if (req.query.meters) {
             const meterIds = req.query.meters.split(',').map(id => parseInt(id, 10)).filter(id => !isNaN(id));
             if (meterIds.length > 0) {
@@ -28,8 +43,9 @@ router.get('/stats', async (req, res) => {
         }
         kwhQuery = kwhQuery.replace('{METER_FILTER}', meterFilter);
 
+
         // Separate filter for demand calculation (if provided)
-        let demandMeterFilter = meterFilter;
+        let demandMeterFilter = 'AND 1=0'; // Default to nothing
         if (req.query.demandMeters) {
             const dMeterIds = req.query.demandMeters.split(',').map(id => parseInt(id, 10)).filter(id => !isNaN(id));
             if (dMeterIds.length > 0) {
@@ -51,8 +67,35 @@ router.get('/stats', async (req, res) => {
         const totalKvahRow = await db.oneOrNone(kvahQuery);
         const totalKvah = totalKvahRow && totalKvahRow.total ? parseFloat(totalKvahRow.total) : 0;
 
-        // Power Factor (PF) = Total kWh / Total kVAh (Cumulative)
-        const powerFactor = (totalKvah > 0 && totalKwh > 0) ? Math.min(1.0, totalKwh / totalKvah) : 1.0;
+        // Power Factor (PF) Calculation
+        let powerFactor = 1.0;
+        let pfMeterFilter = 'AND 1=0';
+        if (req.query.powerFactorMeters) {
+            const pfMeterIds = req.query.powerFactorMeters.split(',').map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+            if (pfMeterIds.length > 0) {
+                pfMeterFilter = `AND r.meter_id IN (${pfMeterIds.join(',')})`;
+                
+                const directPfRow = await db.oneOrNone(`
+                    SELECT AVG(latest.reading) as avg_pf
+                    FROM (
+                        SELECT DISTINCT ON (r.meter_id) r.reading
+                        FROM readings r
+                        JOIN meters m ON r.meter_id = m.id
+                        WHERE 1=1 AND r.reading IS NOT NULL ${pfMeterFilter} ${sourceFilter}
+                        ORDER BY r.meter_id, r.start_timestamp DESC
+                    ) latest;
+                `);
+                
+                if (directPfRow && directPfRow.avg_pf !== null) {
+                    powerFactor = parseFloat(directPfRow.avg_pf);
+                }
+            }
+        } 
+        
+        if (!pfMeterFilter) {
+            // Fallback: Power Factor (PF) = Total kWh / Total kVAh (Cumulative)
+            powerFactor = (totalKvah > 0 && totalKwh > 0) ? Math.min(1.0, totalKwh / totalKvah) : 1.0;
+        }
 
         // Peak Demand (kW) = ΔEnergy (kWh) / Time (hours)
         // Uses LAG() to diff consecutive readings, handling cumulative meter readings correctly.
@@ -79,7 +122,7 @@ router.get('/stats', async (req, res) => {
                 FROM readings r
                 JOIN meters m ON r.meter_id = m.id
                 JOIN units u ON m.unit_id = u.id
-                WHERE (u.name ILIKE '%kwh%' OR u.name ILIKE '%kw%') ${demandMeterFilter}
+                WHERE (u.name ILIKE '%kwh%' OR u.name ILIKE '%kw%') ${demandMeterFilter} ${sourceFilter}
                   AND r.start_timestamp IS NOT NULL
             )
             SELECT 
@@ -117,6 +160,15 @@ router.get('/stats', async (req, res) => {
         startOfMonth.setUTCHours(0, 0, 0, 0);
         const startOfMonthISO = startOfMonth.toISOString();
 
+        // ── Budget Meter Filter ──
+        let budgetMeterFilter = meterFilter;
+        if (req.query.budgetMeters) {
+            const bMeterIds = req.query.budgetMeters.split(',').map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+            if (bMeterIds.length > 0) {
+                budgetMeterFilter = `AND r.meter_id IN (${bMeterIds.join(',')})`;
+            }
+        }
+
         const consumptionQuery = `
             SELECT SUM(latest.reading - first.reading) as total
             FROM (
@@ -124,7 +176,7 @@ router.get('/stats', async (req, res) => {
                 FROM readings r
                 JOIN meters m ON r.meter_id = m.id
                 JOIN units u ON m.unit_id = u.id
-                WHERE u.name ILIKE '%kwh%' ${meterFilter}
+                WHERE u.name ILIKE '%kwh%' ${budgetMeterFilter} ${sourceFilter}
                   AND r.start_timestamp >= '${startOfMonthISO}'
                 ORDER BY r.meter_id, r.start_timestamp ASC
             ) first
@@ -133,17 +185,19 @@ router.get('/stats', async (req, res) => {
                 FROM readings r
                 JOIN meters m ON r.meter_id = m.id
                 JOIN units u ON m.unit_id = u.id
-                WHERE u.name ILIKE '%kwh%' ${meterFilter}
+                WHERE u.name ILIKE '%kwh%' ${budgetMeterFilter} ${sourceFilter}
                 ORDER BY r.meter_id, r.start_timestamp DESC
             ) latest ON first.meter_id = latest.meter_id;
         `;
         const consumptionRow = await db.oneOrNone(consumptionQuery);
         const monthlyConsumption = consumptionRow && consumptionRow.total ? parseFloat(consumptionRow.total) : 0;
 
-        // Energy budget = (Monthly consumption / Monthly budget kWh) × 100
+        const energyRate = parseFloat(req.query.energyRate) || 0;
+
+        // Energy budget = ((Monthly consumption * rate) / Monthly budget limit) × 100
         const energyBudget = energyBudgetKwh > 0
-            ? Math.min(100, (monthlyConsumption / energyBudgetKwh) * 100)
-            : loadUtil;
+            ? Math.min(100, ((monthlyConsumption * energyRate) / energyBudgetKwh) * 100)
+            : 0;
         
         res.json({
             totalKwh: totalKwh.toFixed(2),
@@ -151,7 +205,8 @@ router.get('/stats', async (req, res) => {
             demandTrend: demandTrend, // 'up' or 'down'
             loadUtil: loadUtil.toFixed(1),
             energyBudget: energyBudget.toFixed(1),
-            powerFactor: powerFactor.toFixed(3)
+            powerFactor: powerFactor.toFixed(3),
+            latestTs: demandRow ? demandRow.latest_ts : null
         });
     } catch (e) {
         console.error("Dashboard stats error: ", e);
@@ -188,6 +243,63 @@ router.post('/set-logo', async (req, res) => {
         res.json({ success: true });
     } catch (e) {
         console.error("Error saving logo: ", e);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+/* ─────────────────────────────────────────────
+   GET /api/dashboard/active-meter-ids
+   Returns meter IDs belonging to the active MQTT source
+   ───────────────────────────────────────────── */
+router.get('/active-meter-ids', async (req, res) => {
+    try {
+        const db = getConnection();
+        const activeRow = await db.oneOrNone(
+            `SELECT value FROM global_settings WHERE key = 'active_mqtt_source_id'`
+        );
+        if (!activeRow || !activeRow.value) {
+            return res.json({ sourceId: null, meterIds: [] });
+        }
+        const sourceId = parseInt(activeRow.value, 10);
+        const rows = await db.any(
+            `SELECT id FROM meters WHERE mqtt_source_id = $1 AND enabled = true`,
+            [sourceId]
+        );
+        res.json({
+            sourceId,
+            meterIds: rows.map(r => r.id)
+        });
+    } catch (e) {
+        console.error('Error fetching active meter ids:', e);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+router.get('/settings', async (req, res) => {
+    try {
+        const db = getConnection();
+        const row = await db.oneOrNone('SELECT value FROM global_settings WHERE key = $1', ['dashboard_settings']);
+        if (row && row.value) {
+            return res.json(JSON.parse(row.value));
+        }
+        res.json({});
+    } catch (e) {
+        console.error("Error fetching dashboard settings: ", e);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+router.post('/settings', async (req, res) => {
+    try {
+        const db = getConnection();
+        const settings = req.body;
+        await db.none(`
+            INSERT INTO global_settings (key, value) VALUES ($1, $2)
+            ON CONFLICT (key) DO UPDATE SET value = $2
+        `, ['dashboard_settings', JSON.stringify(settings)]);
+        res.json({ success: true });
+    } catch (e) {
+        console.error("Error saving dashboard settings: ", e);
         res.status(500).json({ error: 'Database error' });
     }
 });

@@ -3,13 +3,15 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import * as React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Slide, ToastContainer } from 'react-toastify';
 import { useAppSelector } from '../redux/reduxHooks';
+import { selectIsLoggedIn } from '../redux/slices/currentUserSlice';
 import 'react-toastify/dist/ReactToastify.css';
 // import FooterComponent from './FooterComponent';
 // import HeaderComponent from './HeaderComponent';
 import Sidebar from './sidebar';
+import Nav from './Nav';
 
 interface LayoutProps {
 	children?: React.ReactNode | undefined
@@ -23,6 +25,15 @@ export default function AppLayout(props: LayoutProps) {
 	// const isDashboard = location.pathname === '/';
 	const theme = useAppSelector(state => state.appState.theme);
 	const collapsed = useAppSelector(state => state.appState.sidebarCollapsed);
+	const isLoggedIn = useAppSelector(selectIsLoggedIn);
+	const navigate = useNavigate();
+	const location = useLocation();
+
+	React.useEffect(() => {
+		if (!isLoggedIn) {
+			navigate('/login', { state: { from: location } });
+		}
+	}, [isLoggedIn, navigate, location]);
 
 	React.useEffect(() => {
 		if (theme === 'dark') {
@@ -38,7 +49,7 @@ export default function AppLayout(props: LayoutProps) {
 	return (
 		<>
 			<ToastContainer transition={Slide} />
-			<div style={{ display: 'flex', width: '100%', height: 'calc(100vh - 10px)', padding: '16px' }}>
+			<div style={{ display: 'flex', width: '100%', height: '100vh', padding: '10px' }}>
 				{/* Main Navigation Sidebar */}
 				<div style={{ flexShrink: 0 }}>
 					<Sidebar />
@@ -61,6 +72,7 @@ export default function AppLayout(props: LayoutProps) {
 						overflowX: 'hidden',
 						height: '100%'
 					}}>
+						<Nav style={{ marginBottom: '16px' }} />
 						{
 							// For the vast majority of cases we utilize react-router's outlet here.
 							// However we can use app layout with children.

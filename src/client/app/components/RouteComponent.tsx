@@ -34,6 +34,7 @@ import StatsDashboard from './StatsDashboard';
 import ReportsPage from './admin/reports/ReportsPage';
 import ReportLogPage from './admin/reports/ReportLogPage';
 import MqttComponent from './admin/mqtt/MqttComponent';
+import AuthPage from './auth/AuthPage';
 
 /**
  * @returns the router component Responsible for client side routing.
@@ -50,6 +51,8 @@ export default function RouteComponent() {
 
 // Router Responsible for client side routing.
 const router = createBrowserRouter([
+	{ path: '/login', element: <AuthPage mode="login" /> },
+	{ path: '/signup', element: <AuthPage mode="signup" /> },
 	{ path: '/simple-line-only', element: <SimpleLinePage /> },
 	{ path: '/main-dashboard-front', element: <MainDashboard /> },
 	{ path: '/mdash-display', element: <MDashDisplay /> },

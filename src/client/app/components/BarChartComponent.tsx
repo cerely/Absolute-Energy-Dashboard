@@ -90,10 +90,16 @@ export default function BarChartComponent() {
 						width: 0
 					}
 				},
-				hoverinfo: 'text'
+				hoverinfo: 'text',
+				textfont: {
+					color: isDarkMode ? 'white' : '#111111'
+				},
+				insidetextfont: {
+					color: isDarkMode ? 'white' : '#111111'
+				}
 			} as Partial<Plotly.PlotData>;
 		});
-	}, [meterReadings, groupData, isDarkMode]);
+	}, [meterReadings, groupData, isDarkMode, themeColors]);
 
 	// Persistent Data Buffer to prevent flashing
 	const [displayedData, setDisplayedData] = React.useState<Partial<Plotly.PlotData>[]>([]);
@@ -142,14 +148,11 @@ export default function BarChartComponent() {
 		} else if (minX && maxX) {
 			dispatch(setInitialXAxisRange(new TimeInterval(minX, maxX)));
 		}
-	}, [minX, maxX, queryTimeInterval]);
+	}, [minX, maxX, queryTimeInterval, dispatch]);
 
 	// Assign all the parameters required to create the Plotly object (data, layout, config) to the variable props, returned by mapStateToProps
 	// The Plotly toolbar is displayed if displayModeBar is set to true (not for bar charts)
 
-	if (raw) {
-		return <h1><b>{translate('bar.raw')}</b></h1>;
-	}
 	// At least one viable dataset.
 	const enoughData = datasets.find(dataset => dataset.x && dataset.x.length >= 1);
 
@@ -183,7 +186,9 @@ export default function BarChartComponent() {
 		}, 500, { leading: false, trailing: true }
 	), [dispatch]);
 
-	if (datasets.length === 0 && displayedData.length === 0) {
+	if (raw) {
+		return <h1><b>{translate('bar.raw')}</b></h1>;
+	} else if (datasets.length === 0 && displayedData.length === 0) {
 		return <h1>
 			{`${translate('select.meter.group')}`}
 		</h1>;
@@ -241,11 +246,12 @@ export default function BarChartComponent() {
 
 		return (
 			<Plot
+				className="telemetry-bar-chart"
 				useResizeHandler={true}
 				data={datasets}
 				style={{ width: '100%', height: '100%' }}
 				layout={{
-					font: { family: 'Inter, sans-serif', color: isDarkMode ? '#8b949e' : '#6B7280' },
+					font: { family: 'Inter, sans-serif', color: isDarkMode ? 'white' : '#111111' },
 					paper_bgcolor: 'transparent',
 					plot_bgcolor: 'transparent',
 					margin: { t: 30, b: 40, r: 20, l: 40 },
@@ -257,17 +263,23 @@ export default function BarChartComponent() {
 						x: 0,
 						y: 1.1,
 						orientation: 'h',
-						font: { size: 12, color: isDarkMode ? '#e6edf3' : '#374151' }
+						font: { size: 12, color: isDarkMode ? '#FFFFFF' : '#374151' }
 					},
 					yaxis: {
-						title: { text: unitLabel, font: { size: 12, color: isDarkMode ? '#8b949e' : '#4B5563' } },
+						title: { text: unitLabel, font: { size: 12, color: isDarkMode ? '#FFFFFF' : '#111111' } },
 						showgrid: true,
 						gridcolor: isDarkMode ? '#21262d' : '#F3F4F6',
 						fixedrange: false,
 						zeroline: false,
-						tickfont: { color: isDarkMode ? '#8b949e' : '#9CA3AF', size: 11 },
+						tickfont: { color: isDarkMode ? 'white' : '#111111', size: 11 },
 						range: yRange,
 						autorange: !yRange
+					},
+					hoverlabel: {
+						bgcolor: isDarkMode ? '#161b22' : '#FFFFFF',
+						bordercolor: isDarkMode ? '#30363d' : 'transparent',
+						font: { family: 'Inter', size: 13, color: isDarkMode ? 'white' : '#111111' },
+						namelength: -1
 					},
 					xaxis: {
 						type: "date",
@@ -280,7 +292,7 @@ export default function BarChartComponent() {
 						},
 						showgrid: false,
 						gridcolor: isDarkMode ? '#21262d' : '#F3F4F6',
-						tickfont: { color: isDarkMode ? '#8b949e' : '#9CA3AF', size: 11 },
+						tickfont: { color: isDarkMode ? 'white' : '#111111', size: 11 },
 						zeroline: false
 					}
 				}}

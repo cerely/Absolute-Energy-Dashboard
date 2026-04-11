@@ -32,12 +32,7 @@ export default function VisualUnitDetailComponent() {
 			<TooltipHelpComponent page='visual-unit' />
 
 			<div className='container-fluid'>
-				<h1 style={titleStyle}>
-					<FormattedMessage id='units.conversion.page.title' />
-					<div style={tooltipStyle}>
-						<TooltipMarkerComponent page='visual-unit' helpTextId={tooltipStyle.tooltipVisualUnitView} />
-					</div>
-				</h1>
+
 
 				<h2 style={titleStyle}>
 					<FormattedMessage id='visual.input.units.graphic' />

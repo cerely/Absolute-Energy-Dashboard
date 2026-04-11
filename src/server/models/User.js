@@ -77,7 +77,7 @@ class User {
 	 */
 	static async getAll(conn) {
 		const rows = await conn.any(sqlFile('user/get_all_users.sql'));
-		return rows.map(row => new User(row.id, row.username, undefined, row.role, row.note, row.image, row.email, row.mobile_no));
+		return rows.map(row => new User(row.id, row.username, undefined, row.role, row.note, row.image, row.email, row.mobile_no, row.is_verified, row.verification_token));
 	}
 
 	/**

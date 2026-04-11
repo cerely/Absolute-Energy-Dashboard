@@ -17,9 +17,9 @@ interface LogoProps {
  */
 function LogoComponent(props: LogoProps) {
 	const imgStyle: React.CSSProperties = {
-		maxWidth: '100%',
-		height: 'auto',
-		paddingTop: '10px'
+		// maxWidth: '100%',
+		// height: '45%',
+		// paddingTop: '10px'
 	};
 	const messages = defineMessages({
 		oed: { id: 'oed' },

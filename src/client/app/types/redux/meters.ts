@@ -58,6 +58,7 @@ export interface MeterData {
 	maxDate: string;
 	maxError: number;
 	disableChecks: DisableChecksType;
+	mqttSourceId: number | null;
 }
 
 export interface MeterDataByID extends Record<number, MeterData> { }

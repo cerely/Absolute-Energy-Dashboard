@@ -343,12 +343,6 @@ export default function ReadingsCSVUploadComponent() {
 						<Row className="justify-content-md-center">
 							<Col md='auto'>
 								<div className="text-center">
-									<h2>
-										{translate('csv.upload.readings')}
-										<div style={tooltipStyle}>
-											<TooltipMarkerComponent page='help.csv.readings' helpTextId={tooltipStyle.tooltipReadings} />
-										</div>
-									</h2>
 								</div>
 								<Label for='meterIdentifier'>
 									<div className='pb-1'>

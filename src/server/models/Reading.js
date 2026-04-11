@@ -78,8 +78,9 @@ class Reading {
 	 */
 	static refreshDailyReadings(conn) {
 		// This can't be a function because you can't call REFRESH inside a function
-		return conn.none('REFRESH MATERIALIZED VIEW daily_readings_unit');
+		return conn.none('REFRESH MATERIALIZED VIEW CONCURRENTLY daily_readings_unit');
 	}
+
 
 	/**
 	 * Refreshes the hourly readings view.
@@ -94,7 +95,7 @@ class Reading {
 	static refreshHourlyReadings(conn) {
 		// This can't be a function because you can't call REFRESH inside a function
 		// TODO This will be removed once we completely transition to the unit version.
-		return conn.none('REFRESH MATERIALIZED VIEW hourly_readings_unit');
+		return conn.none('REFRESH MATERIALIZED VIEW CONCURRENTLY hourly_readings_unit');
 	}
 
 	/**
@@ -238,6 +239,31 @@ class Reading {
 		return conn.none(sqlFile('reading/insert_or_ignore_reading.sql'), this);
 	}
 
+	static async getLinkedMeterIDs(meterIDs, conn) {
+		if (!meterIDs || meterIDs.length === 0) return { map: {}, all: [], reverseMap: {} };
+		const rows = await conn.any(`
+			SELECT r.id as requested, l.id as linked
+			FROM meters r
+			JOIN meters l 
+			  ON COALESCE(r.logical_meter_id, r.identifier) = COALESCE(l.logical_meter_id, l.identifier)
+			WHERE r.id IN ($1:csv)
+		`, [meterIDs]);
+
+		const map = {};
+		const reverseMap = {};
+		for (const id of meterIDs) map[String(id)] = [];
+		for (const row of rows) {
+			const req = String(row.requested);
+			const link = row.linked;
+			if (!map[req]) map[req] = [];
+			map[req].push(link);
+			if (!reverseMap[link]) reverseMap[link] = [];
+			if (!reverseMap[link].includes(req)) reverseMap[link].push(req);
+		}
+		const all = [...new Set(rows.map(r => r.linked))];
+		return { map, all: all.length ? all : meterIDs, reverseMap };
+	}
+
 	/**
 	 * Gets line readings for meters for the given time range
 	 * @param meterIDs The meter IDs to get readings for
@@ -279,13 +305,22 @@ class Reading {
 		// which incorrectly inflate cumulative meter readings by treating them as
 		// interval quantities (multiplying by 3600/interval_seconds).
 		// Raw mode returns actual reading values with just the CIK conversion applied.
-		const allMeterLineReadings = await conn.func('meter_line_readings_unit', [meterIDs, graphicUnitId, from, to, 'raw', 2000, 1440]);
+
+		const linked = await Reading.getLinkedMeterIDs(meterIDs, conn);
+		const allMeterLineReadings = await conn.func('meter_line_readings_unit', [linked.all, graphicUnitId, from, to, 'raw', 2000, 1440]);
 
 		const readingsByMeterID = Object.fromEntries(meterIDs.map(id => [String(id), []]));
 		for (const row of allMeterLineReadings) {
-			const key = String(row.meter_id);
-			readingsByMeterID[key].push({ reading_rate: row.reading_rate, min_rate: row.min_rate, max_rate: row.max_rate, start_timestamp: row.start_timestamp, end_timestamp: row.end_timestamp });
+			for (const req of (linked.reverseMap[row.meter_id] || [])) {
+				readingsByMeterID[req].push({ reading_rate: row.reading_rate, min_rate: row.min_rate, max_rate: row.max_rate, start_timestamp: row.start_timestamp, end_timestamp: row.end_timestamp });
+			}
 		}
+		
+		// Sort readings to avoid timeline looping if multiple meters overlap
+		for (const id in readingsByMeterID) {
+			readingsByMeterID[id].sort((a, b) => new Date(a.start_timestamp) - new Date(b.start_timestamp));
+		}
+		
 		return readingsByMeterID;
 	}
 
@@ -361,12 +396,18 @@ class Reading {
 			if (toTimestamp && typeof toTimestamp.toISOString === 'function') to = toTimestamp.toISOString();
 		}
 
-		const allBarReadings = await conn.func('meter_bar_readings_unit', [meterIDs, graphicUnitId, barWidthDays, from, to]);
+		const linked = await Reading.getLinkedMeterIDs(meterIDs, conn);
+		const allBarReadings = await conn.func('meter_bar_readings_unit', [linked.all, graphicUnitId, barWidthDays, from, to]);
 		const barReadingsByMeterID = mapToObject(meterIDs, () => []);
 		for (const row of allBarReadings) {
-			barReadingsByMeterID[row.meter_id].push(
-				{ reading: row.reading, start_timestamp: row.start_timestamp, end_timestamp: row.end_timestamp }
-			);
+			for (const req of (linked.reverseMap[row.meter_id] || [])) {
+				barReadingsByMeterID[req].push(
+					{ reading: row.reading, start_timestamp: row.start_timestamp, end_timestamp: row.end_timestamp }
+				);
+			}
+		}
+		for (const id in barReadingsByMeterID) {
+			barReadingsByMeterID[id].sort((a, b) => new Date(a.start_timestamp) - new Date(b.start_timestamp));
 		}
 		return barReadingsByMeterID;
 	}
@@ -434,15 +475,19 @@ class Reading {
 	 * @returns {Promise<void>}
 	 */
 	static async getMeterCompareReadings(meterIDs, graphicUnitId, currStartTimestamp, currEndTimestamp, compareShift, conn) {
+		const linked = await Reading.getLinkedMeterIDs(meterIDs, conn);
 		const allCompareReadings = await conn.func(
 			'meter_compare_readings_unit',
-			[meterIDs, graphicUnitId, currStartTimestamp, currEndTimestamp, compareShift.toISOString()]);
+			[linked.all, graphicUnitId, currStartTimestamp, currEndTimestamp, compareShift.toISOString()]);
 		const compareReadingsByMeterID = {};
 		for (const row of allCompareReadings) {
-			compareReadingsByMeterID[row.meter_id] = {
-				curr_use: row.curr_use,
-				prev_use: row.prev_use
-			};
+			for (const req of (linked.reverseMap[row.meter_id] || [])) {
+				if (!compareReadingsByMeterID[req]) {
+					compareReadingsByMeterID[req] = { curr_use: 0, prev_use: 0 };
+				}
+				compareReadingsByMeterID[req].curr_use += (row.curr_use || 0);
+				compareReadingsByMeterID[req].prev_use += (row.prev_use || 0);
+			}
 		}
 		return compareReadingsByMeterID;
 	}
@@ -485,15 +530,21 @@ class Reading {
 		/**
 		 * @type {array<{meter_id: int, reading_rate: Number, max_rate: Number, min_rate: Number, start_timestamp: Moment, end_timestamp: Moment}>}
 		 */
+		const linked = await Reading.getLinkedMeterIDs(meterIDs, conn);
 		//Using the same data from meter line readings because they are identical to radar readings.
 		const allMeterRadarReadings = await conn.func('meter_line_readings_unit',
-			[meterIDs, graphicUnitId, fromTimestamp || '-infinity', toTimestamp || 'infinity', 'auto', maxRawPoints, maxHourlyPoints]
+			[linked.all, graphicUnitId, fromTimestamp || '-infinity', toTimestamp || 'infinity', 'auto', maxRawPoints, maxHourlyPoints]
 		);
 		const radarReadingsByMeterID = mapToObject(meterIDs, () => []);
 		for (const row of allMeterRadarReadings) {
-			radarReadingsByMeterID[row.meter_id].push(
-				{ reading_rate: row.reading_rate, start_timestamp: row.start_timestamp, end_timestamp: row.end_timestamp }
-			);
+			for (const req of (linked.reverseMap[row.meter_id] || [])) {
+				radarReadingsByMeterID[req].push(
+					{ reading_rate: row.reading_rate, start_timestamp: row.start_timestamp, end_timestamp: row.end_timestamp }
+				);
+			}
+		}
+		for (const id in radarReadingsByMeterID) {
+			radarReadingsByMeterID[id].sort((a, b) => new Date(a.start_timestamp) - new Date(b.start_timestamp));
 		}
 		return radarReadingsByMeterID;
 	}
@@ -541,8 +592,23 @@ class Reading {
 		/**
 		 * @type {array<{meter_id: int, reading_rate: Number, start_timestamp: Moment, end_timestamp: Moment}>}
 		*/
-		const allMeterThreeDReadings = await conn.func('meter_3d_readings_unit', [meterIDs, graphicUnitId, fromTimestamp, toTimestamp, readingInterval]);
-		const meterThreeDData = threeDHoleAlgorithm(allMeterThreeDReadings, fromTimestamp, toTimestamp);
+		const linked = await Reading.getLinkedMeterIDs(meterIDs, conn);
+		const allMeterThreeDReadings = await conn.func('meter_3d_readings_unit', [linked.all, graphicUnitId, fromTimestamp, toTimestamp, readingInterval]);
+		
+		const mergedThreeD = [];
+		for (const row of allMeterThreeDReadings) {
+			for (const req of (linked.reverseMap[row.meter_id] || [])) {
+				mergedThreeD.push({
+					meter_id: Number(req),
+					reading_rate: row.reading_rate,
+					start_timestamp: row.start_timestamp,
+					end_timestamp: row.end_timestamp
+				});
+			}
+		}
+
+		mergedThreeD.sort((a, b) => new Date(a.start_timestamp) - new Date(b.start_timestamp));
+		const meterThreeDData = threeDHoleAlgorithm(mergedThreeD, fromTimestamp, toTimestamp);
 		return meterThreeDData;
 	}
 

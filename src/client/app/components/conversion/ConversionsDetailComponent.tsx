@@ -51,12 +51,7 @@ export default function ConversionsDetailComponent() {
 					<TooltipHelpComponent page='conversions' />
 
 					<div className='container-fluid'>
-						<h2 style={titleStyle}>
-							<FormattedMessage id='conversions' />
-							<div style={tooltipStyle}>
-								<TooltipMarkerComponent page='conversions' helpTextId={tooltipStyle.tooltipConversionView} />
-							</div>
-						</h2>
+
 						<div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
 							<CreateConversionModalComponent />
 						</div>

@@ -17,12 +17,7 @@ export default function AdminComponent() {
 	return (
 		<div>
 			<TooltipHelpComponent page='admin' />
-			<h2 style={titleStyle}>
-				<FormattedMessage id='admin.settings' />
-				<div style={tooltipBaseStyle}>
-					<TooltipMarkerComponent page='admin' helpTextId='help.admin.header' />
-				</div>
-			</h2>
+
 			<div className='container-fluid'>
 				<div className='d-inline-flex flex-column align-items-center justify-content-center w-100'>
 					<div className='col-12 col-lg-10'>

@@ -23,8 +23,11 @@ const defaultState: GraphState = {
 	selectedAreaUnit: AreaUnitType.none,
 	lastAddedMeterOrGroup: undefined,
 	initialXAxisRange: TimeInterval.unbounded(),
-	// Default to today (from start of day to now)
-	queryTimeInterval: new TimeInterval(moment.utc().startOf('day'), moment.utc()),
+	// Default to today. Crucially, OED's DatePicker library strips UTC offsets using a custom `toUTC` offset.
+	// We MUST initialize with exactly the string representation of Local Today injected into UTC,
+	// so that when the library runs `toISOString().slice(0, -1)` it extracts the unadulterated "YYYY-MM-DD".
+	// Evaluating `.utc()` prior to stripping time can cause international dateline drift backwards to "yesterday".
+	queryTimeInterval: new TimeInterval(moment.utc(moment().format('YYYY-MM-DD')), moment.utc()),
 	rangeSliderInterval: TimeInterval.unbounded(),
 	duration: moment.duration(1, 'day'),
 	comparePeriod: ComparePeriod.Week,

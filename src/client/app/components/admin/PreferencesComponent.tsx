@@ -109,7 +109,7 @@ export default function PreferencesComponent() {
 							</Label>
 							<div className="d-flex align-items-center flex-wrap">
 								{Object.values(ChartTypes)
-									.filter(chartType => ![ChartTypes.compare, ChartTypes.threeD, ChartTypes.compareLine].includes(chartType))
+									.filter(chartType => ![ChartTypes.compare, ChartTypes.threeD, ChartTypes.compareLine, ChartTypes.map].includes(chartType))
 									.map(chartType => (
 										<div key={chartType} style={{ marginRight: '20px' }} className="d-flex align-items-center">
 											<Input
@@ -672,26 +672,11 @@ function DashboardSettingsSection() {
 	}, [allMeters]);
 
 	// Current  selected values for dropdowns
-	const dashboardMeterValues = React.useMemo(() =>
-		meterOptions.filter(o => settings.dashboardMeterIds.includes(o.value)),
-		[meterOptions, settings.dashboardMeterIds]
-	);
-
 	const meterStatusValues = React.useMemo(() =>
 		meterOptions.filter(o => settings.meterStatusMeterIds.includes(o.value)),
 		[meterOptions, settings.meterStatusMeterIds]
 	);
 	
-	const totalKwhValues = React.useMemo(() =>
-		meterOptions.filter(o => settings.totalKwhMeterIds && settings.totalKwhMeterIds.includes(o.value)),
-		[meterOptions, settings.totalKwhMeterIds]
-	);
-	
-	const currentDemandValues = React.useMemo(() =>
-		meterOptions.filter(o => settings.currentDemandMeterIds && settings.currentDemandMeterIds.includes(o.value)),
-		[meterOptions, settings.currentDemandMeterIds]
-	);
-
 	const deviceValues = React.useMemo(() =>
 		deviceOptions.filter(o => selectedDevices.includes(o.value)),
 		[deviceOptions, selectedDevices]
@@ -702,23 +687,8 @@ function DashboardSettingsSection() {
 		[meterOptions, settings.reportMeterId]
 	);
 
-	const onDashboardMetersChange = (newValue: MultiValue<MeterOption>) => {
-		updateSettings({ dashboardMeterIds: newValue.map(v => v.value) });
-		setSaved(false);
-	};
-
 	const onMeterStatusChange = (newValue: MultiValue<MeterOption>) => {
 		updateSettings({ meterStatusMeterIds: newValue.map(v => v.value) });
-		setSaved(false);
-	};
-
-	const onTotalKwhChange = (newValue: MultiValue<MeterOption>) => {
-		updateSettings({ totalKwhMeterIds: newValue.map(v => v.value) });
-		setSaved(false);
-	};
-	
-	const onCurrentDemandChange = (newValue: MultiValue<MeterOption>) => {
-		updateSettings({ currentDemandMeterIds: newValue.map(v => v.value) });
 		setSaved(false);
 	};
 
@@ -808,72 +778,6 @@ function DashboardSettingsSection() {
 				</div>
 			</FormGroup>
 
-			<FormGroup style={formGroupStyle}>
-				<Label style={labelStyleNew}>
-					Default Dashboard Meters (Energy Consumption Graph)
-				</Label>
-				<p style={{ fontSize: '12px', color: '#9CA3AF', marginBottom: '8px', marginTop: 0 }}>
-					Select meters to display in the Energy Consumption graph on the main dashboard.
-					If none are selected, the graph will show hardcoded default meters.
-				</p>
-				<Select<MeterOption, true>
-					isMulti
-					placeholder="Select meters for the dashboard chart..."
-					options={meterOptions}
-					value={dashboardMeterValues}
-					onChange={onDashboardMetersChange}
-					closeMenuOnSelect={false}
-					styles={dashboardSelectStyles}
-					menuPortalTarget={document.body}
-					menuPosition="fixed"
-					isClearable
-					noOptionsMessage={() => 'No meters found'}
-				/>
-			</FormGroup>
-
-			<FormGroup style={formGroupStyle}>
-				<Label style={labelStyleNew}>
-					Dashboard Page Default Setting - Total kWh Usage
-				</Label>
-				<p style={{ fontSize: '12px', color: '#9CA3AF', marginBottom: '8px', marginTop: 0 }}>
-					Select the meters to evaluate for the Total kWh Usage card. Leave empty to use all meters.
-				</p>
-				<Select<MeterOption, true>
-					isMulti
-					placeholder="Select meters for Total kWh calculation..."
-					options={meterOptions}
-					value={totalKwhValues}
-					onChange={onTotalKwhChange}
-					closeMenuOnSelect={false}
-					styles={dashboardSelectStyles}
-					menuPortalTarget={document.body}
-					menuPosition="fixed"
-					isClearable
-					noOptionsMessage={() => 'No meters found'}
-				/>
-			</FormGroup>
-
-			<FormGroup style={formGroupStyle}>
-				<Label style={labelStyleNew}>
-					Dashboard Page Default Setting - Peak/Current Demand
-				</Label>
-				<p style={{ fontSize: '12px', color: '#9CA3AF', marginBottom: '8px', marginTop: 0 }}>
-					Select the meters to evaluate for the Current Demand card and peak demand track.
-				</p>
-				<Select<MeterOption, true>
-					isMulti
-					placeholder="Select meters for Current Demand calculation..."
-					options={meterOptions}
-					value={currentDemandValues}
-					onChange={onCurrentDemandChange}
-					closeMenuOnSelect={false}
-					styles={dashboardSelectStyles}
-					menuPortalTarget={document.body}
-					menuPosition="fixed"
-					isClearable
-					noOptionsMessage={() => 'No meters found'}
-				/>
-			</FormGroup>
 
 			<FormGroup style={formGroupStyle}>
 				<Label style={labelStyleNew}>Dashboard Page Default Setting - Graph Days</Label>
@@ -891,10 +795,10 @@ function DashboardSettingsSection() {
 			</FormGroup>
 
 			<FormGroup style={formGroupStyle}>
-				<Label style={labelStyleNew}>Dashboard Page — Monthly Energy Budget (kWh)</Label>
+				<Label style={labelStyleNew}>Dashboard Page — Monthly Energy Budget (Limit)</Label>
 				<p style={{ fontSize: '12px', color: '#9CA3AF', marginBottom: '8px', marginTop: 0 }}>
-					Set the monthly energy budget in kWh for the Energy Budget gauge. The gauge shows total kWh consumed as a percentage of this limit.
-					Set to <strong>0</strong> to disable (gauge will mirror Load Utilization instead).
+					Set the monthly energy budget limit. The gauge shows total monetary cost ((reading - start of month) × rate) as a percentage of this limit.
+					Set to <strong>0</strong> to disable.
 				</p>
 				<Input
 					type='number'
@@ -1068,6 +972,194 @@ function DashboardSettingsSection() {
 						</div>
 					</div>
 				))}
+			</div>
+
+			<hr style={{ margin: '32px 0', borderColor: 'var(--divider-color, #e5e7eb)' }} />
+
+			<h5 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '16px', color: 'var(--text-value, #111827)' }}>Dashboard Display Config</h5>
+			<p style={{ fontSize: '12px', color: 'var(--text-label, #6B7280)', marginBottom: '16px' }}>
+				Configure the meters/devices that will be available in the dashboard filters card. If none are added, it will fallback to auto-detecting devices.
+			</p>
+
+			<div style={{ marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+				{(settings.customDashboardDevices || []).map((device, index) => {
+					// Filter meter options to only show telemetries for the selected device
+					const deviceMeterOptions = device.name && device.name !== 'New Device'
+						? meterOptions.filter(o => {
+							const meterDevice = getDevice(o.label);
+							return meterDevice === device.name;
+						})
+						: meterOptions;
+
+					return (
+					<div key={device.id || index} style={{ padding: '16px', border: '1px solid var(--card-border, #E5E7EB)', borderRadius: '8px', background: 'var(--card-bg, #F9FAFB)' }}>
+						<div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+							<strong style={{ color: 'var(--text-value, #333)' }}>Device: {device.name || 'Unnamed'}</strong>
+							<Button size="sm" color="danger" outline onClick={() => {
+								const newDevices = [...(settings.customDashboardDevices || [])];
+								newDevices.splice(index, 1);
+								updateSettings({ customDashboardDevices: newDevices });
+								setSaved(false);
+							}}>Remove</Button>
+						</div>
+						<div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
+							<div>
+								<Label style={{ fontSize: '11px', color: 'var(--text-label, #6B7280)', marginBottom: '4px' }}>Select Device (from topic)</Label>
+								<Select<DeviceOpt, false>
+									placeholder="Select a device..."
+									options={deviceOptions}
+									value={deviceOptions.find(o => o.value === device.name) || null}
+									onChange={v => {
+										const newDevices = [...(settings.customDashboardDevices || [])];
+										const newName = v ? v.value : '';
+										// When device changes, clear existing meter selections since they belong to old device
+										newDevices[index] = {
+											...newDevices[index],
+											name: newName,
+											totalKwhMeterId: null,
+											peakDemandMeterId: null,
+											powerFactorMeterId: null,
+											energyMeterId: null,
+											energyConsumptionMeterIds: []
+										};
+										updateSettings({ customDashboardDevices: newDevices });
+										setSaved(false);
+									}}
+									styles={dashboardSelectStyles as unknown as StylesConfig<DeviceOpt, false>}
+									menuPortalTarget={document.body}
+									menuPosition="fixed"
+									isClearable
+									noOptionsMessage={() => 'No devices found'}
+								/>
+							</div>
+							<div>
+								<Label style={{ fontSize: '11px', color: 'var(--text-label, #6B7280)', marginBottom: '4px' }}>Display Label (shown on dashboard)</Label>
+								<Input type="text" bsSize="sm" placeholder="e.g. Main Panel, Floor 2 Meter" value={device.label || ''} onChange={e => {
+									const newDevices = [...(settings.customDashboardDevices || [])];
+									newDevices[index] = { ...newDevices[index], label: e.target.value };
+									updateSettings({ customDashboardDevices: newDevices });
+									setSaved(false);
+								}} />
+							</div>
+							<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '12px' }}>
+								<div>
+									<Label style={{ fontSize: '11px', color: 'var(--text-label, #6B7280)', marginBottom: '4px' }}>Total kWh Usage Meter</Label>
+									<Select<MeterOption, false>
+										placeholder="Select meter..."
+										options={deviceMeterOptions}
+										value={meterOptions.find(o => o.value === device.totalKwhMeterId) || null}
+										onChange={v => {
+											const newDevices = [...(settings.customDashboardDevices || [])];
+											newDevices[index] = { ...newDevices[index], totalKwhMeterId: v ? v.value : null };
+											updateSettings({ customDashboardDevices: newDevices });
+											setSaved(false);
+										}}
+										styles={dashboardSelectStyles as any}
+										menuPortalTarget={document.body}
+										menuPosition="fixed"
+										isClearable
+										noOptionsMessage={() => device.name ? `No meters for ${device.name}` : 'Select a device first'}
+									/>
+								</div>
+								<div>
+									<Label style={{ fontSize: '11px', color: 'var(--text-label, #6B7280)', marginBottom: '4px' }}>Peak Demand Meter</Label>
+									<Select<MeterOption, false>
+										placeholder="Select meter..."
+										options={deviceMeterOptions}
+										value={meterOptions.find(o => o.value === device.peakDemandMeterId) || null}
+										onChange={v => {
+											const newDevices = [...(settings.customDashboardDevices || [])];
+											newDevices[index] = { ...newDevices[index], peakDemandMeterId: v ? v.value : null };
+											updateSettings({ customDashboardDevices: newDevices });
+											setSaved(false);
+										}}
+										styles={dashboardSelectStyles as any}
+										menuPortalTarget={document.body}
+										menuPosition="fixed"
+										isClearable
+										noOptionsMessage={() => device.name ? `No meters for ${device.name}` : 'Select a device first'}
+									/>
+								</div>
+								<div>
+									<Label style={{ fontSize: '11px', color: 'var(--text-label, #6B7280)', marginBottom: '4px' }}>Power Factor Meter</Label>
+									<Select<MeterOption, false>
+										placeholder="Select meter..."
+										options={deviceMeterOptions}
+										value={meterOptions.find(o => o.value === device.powerFactorMeterId) || null}
+										onChange={v => {
+											const newDevices = [...(settings.customDashboardDevices || [])];
+											newDevices[index] = { ...newDevices[index], powerFactorMeterId: v ? v.value : null };
+											updateSettings({ customDashboardDevices: newDevices });
+											setSaved(false);
+										}}
+										styles={dashboardSelectStyles as any}
+										menuPortalTarget={document.body}
+										menuPosition="fixed"
+										isClearable
+										noOptionsMessage={() => device.name ? `No meters for ${device.name}` : 'Select a device first'}
+									/>
+								</div>
+								<div>
+									<Label style={{ fontSize: '11px', color: 'var(--text-label, #6B7280)', marginBottom: '4px' }}>Energy Meter</Label>
+									<Select<MeterOption, false>
+										placeholder="Select meter..."
+										options={deviceMeterOptions}
+										value={meterOptions.find(o => o.value === device.energyMeterId) || null}
+										onChange={v => {
+											const newDevices = [...(settings.customDashboardDevices || [])];
+											newDevices[index] = { ...newDevices[index], energyMeterId: v ? v.value : null };
+											updateSettings({ customDashboardDevices: newDevices });
+											setSaved(false);
+										}}
+										styles={dashboardSelectStyles as any}
+										menuPortalTarget={document.body}
+										menuPosition="fixed"
+										isClearable
+										noOptionsMessage={() => device.name ? `No meters for ${device.name}` : 'Select a device first'}
+									/>
+								</div>
+								<div>
+									<Label style={{ fontSize: '11px', color: 'var(--text-label, #6B7280)', marginBottom: '4px' }}>Energy Consumption Meter</Label>
+									<Select<MeterOption, true>
+										isMulti
+										placeholder="Select meters..."
+										options={deviceMeterOptions}
+										value={meterOptions.filter(o => (device.energyConsumptionMeterIds || []).includes(o.value))}
+										onChange={v => {
+											const newDevices = [...(settings.customDashboardDevices || [])];
+											newDevices[index] = { ...newDevices[index], energyConsumptionMeterIds: v ? v.map(opt => opt.value) : [] };
+											updateSettings({ customDashboardDevices: newDevices });
+											setSaved(false);
+										}}
+										styles={dashboardSelectStyles as any}
+										menuPortalTarget={document.body}
+										menuPosition="fixed"
+										isClearable
+										noOptionsMessage={() => device.name ? `No meters for ${device.name}` : 'Select a device first'}
+									/>
+								</div>
+							</div>
+						</div>
+					</div>
+					);
+				})}
+
+				<Button color="secondary" outline size="sm" style={{ alignSelf: 'flex-start' }} onClick={() => {
+					updateSettings({
+						customDashboardDevices: [...(settings.customDashboardDevices || []), {
+							id: Date.now().toString(),
+							name: '',
+							totalKwhMeterId: null,
+							peakDemandMeterId: null,
+							powerFactorMeterId: null,
+							energyMeterId: null,
+							energyConsumptionMeterIds: []
+						}]
+					});
+					setSaved(false);
+				}}>
+					+ Add Custom Meter/Device
+				</Button>
 			</div>
 
 			<hr style={{ margin: '32px 0', borderColor: 'var(--divider-color, #e5e7eb)' }} />

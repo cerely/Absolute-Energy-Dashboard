@@ -89,61 +89,60 @@ fi
 if [ "$skip_db_initialize" == "yes" ]; then
 	printf "\n%s\n\n" "skipping database initialization as requested"
 else
-	create_error=0 # Boolean
-
+	# Try to wait for database to be ready before proceeding
 	tries=0
-	max_tries=10
-
-	# Try to create the schema until it succeeds
-	while [ $create_error == 0 ]; do
-		# See if exceed allowed number of tries and stop install if you have.
+	max_tries=60 # Giving it up to 3 minutes for really long recoveries
+	printf "%s\n" "Waiting for database to be ready..."
+	while [ $tries -lt $max_tries ]; do
+		node src/scripts/wait-for-db.js
+		db_ready=$?
+		if [ $db_ready -eq 0 ]; then
+			printf "%s\n" "  database is ready."
+			break
+		elif [ $db_ready -eq 1 ]; then
+			printf "%s\n" "  database system is starting or not accepting connections, will try again..."
+		else
+			printf "%s\n" "  unknown database error (exit code $db_ready), will try again..."
+		fi
+		sleep 3
+		((tries=tries+1))
 		if [ $tries -ge $max_tries ]; then
-			printf "%s\n" "FAILED! Too many tries. Try again but then check if your database at $OED_DB_HOST:$OED_DB_PORT is down."
+			printf "%s\n" "FAILED! Database at $OED_DB_HOST:$OED_DB_PORT did not become ready."
 			exit 1
 		fi
-		# Sleep to let PostgreSQL chill out
-		sleep 3
-		printf "%s\n" "Attempting to create database..."
-		# Redirect stderr to a file
-		npm run createdb |& tee /tmp/oed.error > /dev/null
-		createdb_code=${PIPESTATUS[0]}
-		# TODO: This should be moved to the error case below once issues with this process are under control.
-		# If all is well it could go inside the case where an unknown error occurred.
-		# Dump the output from the database creation attempt.
-		printf "\n%s\n" "-----start of npm run createdb output-----"
-		cat /tmp/oed.error
-		printf "%s\n\n" "-----end of npm run createdb output-----"
-		if [ $createdb_code -ne 0 ]; then
-			# An error occurred during createdb.
-			# search the file for the kind of error we can recover from
-			# This is not getting a DB connection or if the DB is not yet ready.
-			grep -q -e 'Error: connect ECONNREFUSED' -e 'error: the database system is starting up' /tmp/oed.error
-			known_error=$?
-			if [ $known_error -eq 0 ]; then
-				# There was an error in createdb but it is one we believe we can recover from.
-				create_error=0
-				printf "%s\n" "  known database issue occurred so will try again..."
-			else
-				# There was an error in createdb and we cannot recover.
-				create_error=1
-				if [ "$continue_on_db_error" = "no" ]; then
-					# We should stop the install process. This means it won't try to bring up the web service.
-					printf "%s\n" "FAILURE: creation of database failed so stopping install. Use --continue_on_db_error if you want install to continue"
-					exit 3
-				else
-					printf "\n%s\n" "WARNING: an unknown error occurred during database creation so stopping database creation."
-					printf "%s\n" "The validity of the database is uncertain."
-					printf "%s\n" "Install continuing because of flag --continue_on_db_error"
-				fi
-			fi
-		else
-			# There was no createdb error so assume database ready for use so stop process
-			create_error=1
-			printf "%s\n" "  database creation had no errors so assume schema creation worked."
-		fi
-		# Did one more attempt
-		((tries=tries+1))
 	done
+
+	# Now that we know DB is ready, do the initialization
+	printf "%s\n" "Attempting to create database..."
+	# Redirect stderr to a file
+	npm run createdb |& tee /tmp/oed.error > /dev/null
+	createdb_code=${PIPESTATUS[0]}
+	# Dump the output from the database creation attempt.
+	printf "\n%s\n" "-----start of npm run createdb output-----"
+	cat /tmp/oed.error
+	printf "%s\n\n" "-----end of npm run createdb output-----"
+	if [ $createdb_code -ne 0 ]; then
+		# If it failed, check for a recoverable error (just in case the flicker happened here)
+		grep -q -i -e 'Error: connect ECONNREFUSED' -e 'error: the database system' /tmp/oed.error
+		known_error=$?
+		if [ $known_error -eq 0 ]; then
+			printf "%s\n" "  temporary database issue occurred, but normally wait-for-db should have caught this. Re-running..."
+		fi
+		
+		# Allow schema creation failure if it's already there (idempotency fix)
+		grep -q -i -e 'already exists' /tmp/oed.error
+		already_there=$?
+		if [ $already_there -eq 0 ]; then
+			printf "%s\n" "  database schema already exists so assuming it is complete."
+		else
+			if [ "$continue_on_db_error" = "no" ]; then
+				printf "%s\n" "FAILURE: creation of database failed so stopping install. Use --continue_on_db_error if you want install to continue"
+				exit 3
+			fi
+		fi
+	else
+		printf "%s\n" "  database creation worked."
+	fi
 
 	# Create a user
 	set -e

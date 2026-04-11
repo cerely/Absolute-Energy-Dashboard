@@ -16,7 +16,6 @@ import UIOptionsComponent from './UIOptionsComponent';
 import PlotNavComponent from './PlotNavComponent';
 import CompareLineChartComponent from './CompareLineChartComponent';
 // import Sidebar from './sidebar';
-import Nav from './Nav';
 import './dashboard.css';
 
 /**
@@ -29,7 +28,6 @@ export default function DashboardComponent() {
 
 	return (
 		<>
-			<Nav style={{ marginBottom: '20px' }} />
 			{/* Options Panel (Chart Controls) - Now a Row on Top */}
 			{optionsVisibility && (
 				<div className="options-panel">

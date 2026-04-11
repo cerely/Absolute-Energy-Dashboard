@@ -515,10 +515,12 @@ export default function CreateGroupModalComponent() {
 										showWarnNotification(`${translate('group.create.nounit')} "${unitsDataById[dgu].identifier}"`);
 										dgu = -99;
 									}
-									// Update the deep meter, child meter & default graphic unit state based on the changes.
-									// Note could update child meters above to avoid updating state value for metersInChangedGroup but want
-									// to avoid too many state updates.
 									// It is possible the default graphic unit is unchanged but just do this.
+									// If adding first/new child and no unit selected, auto-assign default graphic unit
+									const lastAdded = newSelectedMeterOptions[newSelectedMeterOptions.length - 1];
+									if (lastAdded && dgu === -99 && lastAdded.defaultGraphicUnit && newAllowedDGU.has(lastAdded.defaultGraphicUnit)) {
+										dgu = lastAdded.defaultGraphicUnit;
+									}
 									setState({ ...state, deepMeters: newDeepMeters, childMeters: updatedChildMeters, defaultGraphicUnit: dgu });
 								}}
 							/>
@@ -551,10 +553,12 @@ export default function CreateGroupModalComponent() {
 									showWarnNotification(`${translate('group.create.nounit')} "${unitsDataById[dgu].identifier}"`);
 									dgu = -99;
 								}
-								// Update the deep meter, child meter & default graphic unit state based on the changes.
-								// Note could update child groups above to avoid updating state value for metersInChangedGroup but want
-								// to avoid too many state updates.
 								// It is possible the default graphic unit is unchanged but just do this.
+								// If adding first/new child and no unit selected, auto-assign default graphic unit
+								const lastAdded = newSelectedGroupOptions[newSelectedGroupOptions.length - 1];
+								if (lastAdded && dgu === -99 && lastAdded.defaultGraphicUnit && newAllowedDGU.has(lastAdded.defaultGraphicUnit)) {
+									dgu = lastAdded.defaultGraphicUnit;
+								}
 								setState({ ...state, deepMeters: newDeepMeters, childGroups: updatedChildGroups, defaultGraphicUnit: dgu });
 							}}
 						/>

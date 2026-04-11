@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { EntityState, createEntityAdapter } from '@reduxjs/toolkit';
+import { EntityState, createEntityAdapter, createSelector } from '@reduxjs/toolkit';
 import { NamedIDItem } from 'types/items';
 import { RawReadings } from 'types/readings';
 import { TimeInterval } from '../../../../common/TimeInterval';
@@ -19,6 +19,17 @@ export const meterAdapter = createEntityAdapter<MeterData>({
 export const metersInitialState = meterAdapter.getInitialState();
 export type MeterDataState = EntityState<MeterData, number>;
 
+// Type for the active MQTT source response
+interface ActiveMqttSource {
+	id: number;
+	broker_url: string;
+	topic: string;
+	client_id: string;
+	username: string;
+	password: string;
+	filters: string;
+}
+
 export const metersApi = baseApi.injectEndpoints({
 	endpoints: builder => ({
 		getMeters: builder.query<MeterDataState, void>({
@@ -33,6 +44,11 @@ export const metersApi = baseApi.injectEndpoints({
 			},
 			// Tags used for invalidation by mutation requests.
 			providesTags: ['MeterData']
+		}),
+		// Fetch the currently active MQTT source so the client can filter meters by topic
+		getActiveMqttSource: builder.query<ActiveMqttSource | null, void>({
+			query: () => 'api/mqtt/active',
+			providesTags: ['ActiveMqttSource']
 		}),
 		editMeter: builder.mutation<MeterData, { meterData: MeterData, shouldRefreshViews: boolean }>({
 			query: ({ meterData }) => ({
@@ -76,6 +92,12 @@ export const metersApi = baseApi.injectEndpoints({
 });
 
 
+// Export auto-generated RTK Query hooks
+export const {
+	useGetMetersQuery,
+	useGetActiveMqttSourceQuery
+} = metersApi;
+
 export const selectMeterDataResult = metersApi.endpoints.getMeters.select();
 
 export const {
@@ -85,6 +107,36 @@ export const {
 	selectIds: selectMeterIds,
 	selectEntities: selectMeterDataById
 } = meterAdapter.getSelectors((state: RootState) => selectMeterDataResult(state).data ?? metersInitialState);
+
+// Memoized selector: active MQTT source ID (null = no MQTT configured)
+// Uses createSelector so it only recomputes when the RTK Query cache changes.
+export const selectActiveMqttSourceId = createSelector(
+	(state: RootState) => metersApi.endpoints.getActiveMqttSource.select()(state).data,
+	(activeMqttSource) => activeMqttSource?.id ?? null
+);
+
+// Memoized selector: meters filtered to only those belonging to the active MQTT source.
+// - Returns ALL meters if no active source is known (MQTT not configured).
+// - Returns meters where mqttSourceId matches the active source, or is null (non-MQTT meters).
+// MUST be a memoized createSelector — plain functions calling .filter() return a new
+// array reference every render, which causes infinite re-render loops via reselect.
+export const selectActiveSourceMeters = createSelector(
+	selectAllMeters,
+	selectActiveMqttSourceId,
+	(allMeters, activeSourceId) => {
+		// Only consider meters that are enabled
+		const enabledMeters = allMeters.filter(m => m.enabled);
+		
+		// If there is no active MQTT source (either none configured or all disabled),
+		// we should only show manually created meters (mqttSourceId === null).
+		if (activeSourceId === null) {
+			return enabledMeters.filter(m => m.mqttSourceId === null);
+		}
+		
+		return enabledMeters.filter(m => m.mqttSourceId === null || m.mqttSourceId === activeSourceId);
+	}
+
+);
 
 /**
  * Selects the name of the meter associated with a given meter ID from the Redux state.

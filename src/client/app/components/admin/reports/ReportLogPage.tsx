@@ -106,11 +106,6 @@ export default function ReportLogPage() {
 		<div style={{ padding: '24px', minHeight: '100%', background: bg, color: textPrimary }}>
 			<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
 				<div>
-					<h2 style={{ fontSize: '20px', fontWeight: 700, margin: 0 }}>
-						<span className="material-symbols-rounded" style={{ verticalAlign: 'middle', marginRight: '8px', fontSize: '22px' }}>history</span>
-						Saved Report Log
-					</h2>
-					<p style={{ fontSize: '13px', color: textSub, margin: '4px 0 0' }}>All previously generated and saved billing reports</p>
 				</div>
 				<button
 					onClick={load}

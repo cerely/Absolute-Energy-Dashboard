@@ -868,6 +868,17 @@ export default function EditGroupModalComponent(props: EditGroupModalComponentPr
 		}
 		// If the admin wants to apply changes and allowed.
 		if (shouldUpdate) {
+			// If adding first/new child and no unit selected, auto-assign default graphic unit
+			const groupToUpdate = tempGroupsState[groupState.id];
+			if (groupToUpdate.defaultGraphicUnit === -99) {
+				const childEntity = childType === DataType.Meter ? meterDataById[childId] : groupDataById[childId];
+				const childDGU = childEntity?.defaultGraphicUnit;
+				const groupCompatibleUnits = unitsCompatibleWithMeters(new Set(groupToUpdate.deepMeters), meterDataById, globalCikState);
+				if (childDGU && childDGU !== -99 && groupCompatibleUnits.has(childDGU)) {
+					groupToUpdate.defaultGraphicUnit = childDGU!;
+				}
+			}
+
 			// Update the group. Now, the changes actually happen.
 			// Done by setting the edit state to the temp state so does not impact other groups
 			// and what is seen until the admin saves.

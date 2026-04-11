@@ -165,9 +165,6 @@ export default function LogMsgComponent() {
 	return (
 		<div className="container-fluid pf-5" style={{ fontFamily: 'Inter, sans-serif', padding: '20px' }}>
 			{/* Header */}
-			<div className="mb-4">
-				<h2 style={{ fontWeight: 'bold', fontSize: '24px', margin: 0 }}>Logs</h2>
-			</div>
 
 			{/* Filter Section Card */}
 			<div className="p-3 rounded mb-4" style={{ backgroundColor: 'var(--card-bg, #fff)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', border: '1px solid var(--card-border, #e9ecef)' }}>

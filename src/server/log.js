@@ -170,9 +170,7 @@ const defaultLogger = new Logger(logFile);
  * This helps with debugging, especially in tests.
  */
 process.on('unhandledRejection', (reason, p) => {
-	p.catch(e => {
-		defaultLogger.error(`Unhandled Promise Rejection: ${reason}`, e);
-	});
+	defaultLogger.error(`Unhandled Promise Rejection: ${reason}`, reason);
 });
 
 defaultLogger.logToDb = true;

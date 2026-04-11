@@ -34,12 +34,6 @@ export default function MetersDetailComponent() {
 			<TooltipHelpComponent page='meters' />
 
 			<div className='container-fluid'>
-				<h2 style={titleStyle}>
-					<FormattedMessage id='meters' />
-					<div style={tooltipBaseStyle}>
-						<TooltipMarkerComponent page='meters' helpTextId={getToolTipMessage(isAdmin)} />
-					</div>
-				</h2>
 				{isAdmin &&
 					<div className="edit-btn">
 						<CreateMeterModalComponent />

@@ -5,7 +5,6 @@
 // import { func } from 'prop-types';
 import MainDashboard from './MainDashboard';
 import Sidebar from './sidebar';
-import Nav from './Nav';
 
 interface MainDash {
 	children?: React.ReactNode | undefined
@@ -21,7 +20,6 @@ export default function MDashDisplay(props: MainDash) {
 		<>
 			<div style={{ padding: '20px' }}>   
                 <Sidebar />
-                <Nav />
                 <MainDashboard />
             </div>
 		</>

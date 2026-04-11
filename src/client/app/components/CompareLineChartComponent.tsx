@@ -114,11 +114,35 @@ export default function CompareLineChartComponent() {
 				checkReceivedData(foundOriginal.x, foundShifted.x);
 			}
 		}
+		// Calculate y-range for comparison
+		let calcMin = Number.MAX_VALUE;
+		let calcMax = -Number.MAX_VALUE;
+		let hasData = false;
+		[...data, ...dataNew].forEach(trace => {
+			if (trace.y) {
+				const yArr = (Array.isArray(trace.y[0]) ? (trace.y as any[]).flat() : trace.y) as number[];
+				yArr.forEach(val => {
+					if (typeof val === 'number') {
+						if (val < calcMin) calcMin = val;
+						if (val > calcMax) calcMax = val;
+						hasData = true;
+					}
+				});
+			}
+		});
+
+		let yRange: [number, number] | undefined = undefined;
+		if (hasData) {
+			const range = calcMax - calcMin;
+			const padding = range === 0 ? 1 : range * 0.1;
+			yRange = [calcMin - padding, calcMax + padding];
+		}
+
 		layout = {
 			autosize: true, showlegend: true,
 			legend: { x: 0, y: 1.1, orientation: 'h' },
 			// 'fixedrange' on the yAxis means that dragging is only allowed on the xAxis which we utilize for selecting dateRanges
-			yaxis: { title: unitLabel, gridcolor: '#ddd', fixedrange: true },
+			yaxis: { title: unitLabel, gridcolor: '#ddd', fixedrange: true, range: yRange },
 			xaxis: {
 				// Set range for x-axis based on timeIntervalStr so that current data and shifted data is aligned
 				range: timeInterval.getIsBounded()
@@ -144,7 +168,9 @@ export default function CompareLineChartComponent() {
 		...item,
 		line: {
 			...item.line,
-			shape: 'linear',
+			shape: 'spline',
+			smoothing: 1,
+			width: 2,
 			dash: dashStyles[i % dashStyles.length] as any
 		},
 		fill: 'tozeroy',
@@ -157,7 +183,9 @@ export default function CompareLineChartComponent() {
 		line: {
 			...item.line,
 			color: '#1AA5F0',
-			shape: 'linear',
+			shape: 'spline',
+			smoothing: 1,
+			width: 2,
 			dash: dashStyles[(i + 1) % dashStyles.length] as any // Offset dash for shifted
 		},
 		xaxis: 'x2',

@@ -36,6 +36,7 @@ const mqttRoutes = require('./routes/mqtt');
 const dbConfigRoutes = require('./routes/dbConfig');
 const savedReportsRoutes = require('./routes/savedReports');
 const dashboard = require('./routes/dashboard');
+const auth = require('./routes/auth');
 
 // Limit the rate of overall requests to OED
 // Note that the rate limit may make the automatic test return the value of 429. In that case, the limiters below need to be increased.
@@ -126,6 +127,7 @@ app.use('/api/meters', meters);
 app.use('/api/readings', readings);
 app.use('/api/preferences', preferences);
 app.use('/api/login', login);
+app.use('/api/auth', auth);
 app.use('/api/groups', groups);
 app.use('/api/verification', verification);
 app.use('/api/version', version);

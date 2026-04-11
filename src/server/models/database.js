@@ -7,7 +7,7 @@ const pgp = require('pg-promise')({
 	connect({ client, useCount }) {
 		// Only set the style on fresh connections
 		if (useCount === 0) {
-			client.query('SET intervalStyle = iso_8601');
+			return client.query('SET intervalStyle = iso_8601');
 		}
 	}
 });

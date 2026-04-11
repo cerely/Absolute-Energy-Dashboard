@@ -10,5 +10,7 @@ CREATE TABLE IF NOT EXISTS users(
   note TEXT DEFAULT '',
   image TEXT DEFAULT '',
   mobile_no VARCHAR(20),
-  email VARCHAR(254)
+  email VARCHAR(254),
+  is_verified BOOLEAN DEFAULT FALSE,
+  verification_token TEXT
 )

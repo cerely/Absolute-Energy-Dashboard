@@ -62,6 +62,7 @@ function formatMeterForResponse(meter, hasFullAccess) {
 		maxDate: null,
 		maxError: null,
 		disableChecks: null,
+		mqttSourceId: meter.mqttSourceId || null,
 	};
 
 	// Only logged in Admins can see url, types, timezones, and internal names

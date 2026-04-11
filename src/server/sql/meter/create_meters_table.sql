@@ -35,14 +35,14 @@ reading_frequency: The time between readings
 */
 CREATE TABLE IF NOT EXISTS meters (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(50) UNIQUE NOT NULL CHECK (char_length(name) >= 1),
+    name VARCHAR(50) NOT NULL CHECK (char_length(name) >= 1),
     url VARCHAR(400),
     enabled BOOLEAN NOT NULL,
     displayable BOOLEAN NOT NULL,
     meter_type meter_type NOT NULL,
     default_timezone_meter TEXT DEFAULT NULL CHECK (default_timezone_meter IS NULL OR check_timezone(default_timezone_meter::TEXT) = true),
     gps POINT DEFAULT NULL,
-    identifier TEXT UNIQUE NOT NULL CHECK (char_length(identifier) >= 1),
+    identifier TEXT NOT NULL CHECK (char_length(identifier) >= 1),
     note TEXT,
     area REAL NOT NULL DEFAULT 0 CHECK (area >= 0),
     cumulative BOOLEAN DEFAULT false,
@@ -70,5 +70,9 @@ CREATE TABLE IF NOT EXISTS meters (
     min_date TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00+00:00',
     max_date TIMESTAMP NOT NULL DEFAULT '6970-01-01 00:00:00+00:00',
     max_error INTEGER NOT NULL DEFAULT 75,
-    disable_checks disable_checks_type NOT NULL DEFAULT 'reject_all'
+    disable_checks disable_checks_type NOT NULL DEFAULT 'reject_all',
+    mqtt_source_id INTEGER REFERENCES mqtt_sources(id) ON DELETE SET NULL,
+    logical_meter_id TEXT,
+    CONSTRAINT meters_identifier_mqtt_source_key UNIQUE (identifier, mqtt_source_id),
+    CONSTRAINT meters_name_mqtt_source_key UNIQUE (name, mqtt_source_id)
 );

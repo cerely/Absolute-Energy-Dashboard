@@ -38,12 +38,6 @@ export default function GroupsDetailComponent() {
 			<TooltipHelpComponent page='groups' />
 
 			<div className='container-fluid'>
-				<h2 style={titleStyle}>
-					<FormattedMessage id='groups' />
-					<div style={tooltipStyle}>
-						<TooltipMarkerComponent page='groups' helpTextId={tooltipStyle.tooltipGroupView} />
-					</div>
-				</h2>
 				{isAdmin &&
 					<div className="edit-btn">
 						{/* The actual button for create is inside this component. */}

@@ -11,7 +11,7 @@
 # It starts the autorebuild in the background and then
 # runs the server.
 # Run the MQTT listener in the background
-node src/server/mqttKwhFiltered.js &
+
 
 npm run webpack:dev &
 npm run start:dev

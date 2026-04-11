@@ -152,6 +152,8 @@ class Meter {
 			row.min_val, row.max_val, row.min_date, row.max_date, row.max_error, row.disable_checks);
 		meter.unitId = Meter.convertUnitValue(meter.unitId);
 		meter.defaultGraphicUnit = Meter.convertUnitValue(meter.defaultGraphicUnit);
+		// Carry the mqtt_source_id so it can be exposed in API responses
+		meter.mqttSourceId = row.mqtt_source_id || null;
 		return meter;
 	}
 

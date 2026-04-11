@@ -49,9 +49,9 @@ export default function ChartSelectComponent() {
 					{
 						// Make items for dropdown from enum
 						Object.values(ChartTypes)
-							// filter out current chart, hide 3D option, and disable compare charts
+							// filter out current chart, hide 3D option, map option, and disable compare charts
 							.filter(chartType => chartType !== currentChartToRender && chartType !== ChartTypes.threeD
-								&& chartType !== ChartTypes.compare && chartType !== ChartTypes.compareLine)
+								&& chartType !== ChartTypes.compare && chartType !== ChartTypes.compareLine && chartType !== ChartTypes.map)
 							.sort()
 							// map to components
 							.map(chartType =>

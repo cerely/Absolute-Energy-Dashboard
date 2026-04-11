@@ -30,12 +30,7 @@ export default function UserDetailComponent() {
 		<div>
 			<TooltipHelpComponent page='users' />
 			<div className='container-fluid px-5'>
-				<h2 className='text-center'>
-					{translate('users')}
-					<div style={tooltipStyle}>
-						<TooltipMarkerComponent page='users' helpTextId={tooltipStyle.tooltipUsersView} />
-					</div>
-				</h2>
+
 				<div className='edit-btn' style={{ paddingRight: '24px' }}>
 					<CreateUserModalComponent />
 				</div>

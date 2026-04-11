@@ -159,7 +159,8 @@ export function getMeterMenuOptionsForGroup(
 			label: meter.identifier,
 			value: meter.id,
 			isDisabled: false,
-			style: {}
+			style: {},
+			defaultGraphicUnit: meter.defaultGraphicUnit
 		} as SelectOption;
 
 		const compatibilityChangeCase =
@@ -176,9 +177,9 @@ export function getMeterMenuOptionsForGroup(
 	});
 
 	// We want the options sorted by meter identifier.
-	// Had to make item.label? potentially undefined due to start up race conditions
-	return options.sort((itemA, itemB) => itemA.label.toLowerCase()?.
-		localeCompare(itemB.label.toLowerCase(), String(locale), { sensitivity: 'accent' }));
+	// Fallback to empty string if label is null or undefined
+	return options.sort((itemA, itemB) => (itemA.label || '').toLowerCase().
+		localeCompare((itemB.label || '').toLowerCase(), String(locale), { sensitivity: 'accent' }));
 }
 
 /**
@@ -218,7 +219,8 @@ export function getGroupMenuOptionsForGroup(
 				label: group.name,
 				value: group.id,
 				isDisabled: false,
-				style: {}
+				style: {},
+				defaultGraphicUnit: group.defaultGraphicUnit
 			} as SelectOption;
 
 			const compatibilityChangeCase =
@@ -234,9 +236,9 @@ export function getGroupMenuOptionsForGroup(
 	});
 
 	// We want the options sorted by group name.
-	// Had to make item.label? potentially undefined due to start up race conditions
-	return options.sort((itemA, itemB) => itemA.label.toLowerCase()?.
-		localeCompare(itemB.label.toLowerCase(), String(locale), { sensitivity: 'accent' }));
+	// Fallback to empty string if label is null or undefined
+	return options.sort((itemA, itemB) => (itemA.label || '').toLowerCase().
+		localeCompare((itemB.label || '').toLowerCase(), String(locale), { sensitivity: 'accent' }));
 
 }
 

@@ -116,12 +116,16 @@ class TimeInterval {
 	 * @returns {TimeInterval}
 	 */
 	static fromString(stringified) {
-		if (stringified === 'all') {
+		if (stringified === 'all' || !stringified) {
 			return TimeInterval.unbounded();
 		}
 		const [start, end] = stringified.split('_');
-		const startTimestamp = start ? moment(start) : undefined;
-		const endTimestamp = end ? moment(end) : undefined;
+		const startMoment = (start && start.length > 0) ? moment(start) : null;
+		const endMoment = (end && end.length > 0) ? moment(end) : null;
+		
+		const startTimestamp = (startMoment && startMoment.isValid()) ? startMoment : undefined;
+		const endTimestamp = (endMoment && endMoment.isValid()) ? endMoment : undefined;
+		
 		return new TimeInterval(startTimestamp, endTimestamp);
 	}
 }

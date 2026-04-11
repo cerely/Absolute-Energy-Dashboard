@@ -240,12 +240,6 @@ export default function MetersCSVUploadComponent() {
 						<Row className="justify-content-md-center">
 							<Col md='auto'>
 								<div className="text-center">
-									<h2>
-										{translate('csv.upload.meters')}
-										<div style={tooltipStyle}>
-											<TooltipMarkerComponent page='help.csv.meters' helpTextId={tooltipStyle.tooltipReadings} />
-										</div>
-									</h2>
 								</div>
 								<FormFileUploaderComponent
 									onFileChange={handleFileChange}

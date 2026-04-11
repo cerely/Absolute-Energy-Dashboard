@@ -24,6 +24,17 @@ export interface TariffRateConfig {
 	billedDemand: number;
 }
 
+export interface CustomDashboardDevice {
+	id: string;
+	name: string; // Device name from topic (e.g. "EM1")
+	label?: string; // Display label shown on the dashboard filter card
+	totalKwhMeterId?: number | null;
+	peakDemandMeterId?: number | null;
+	powerFactorMeterId?: number | null;
+	energyMeterId?: number | null;
+	energyConsumptionMeterIds?: number[];
+}
+
 /** Time-of-Day rate slots (Offset from base rate in ₹/kWh, can be negative) */
 export interface TodRates {
 	/** 22:00 – 06:00 (off-peak / night) */
@@ -43,6 +54,7 @@ export interface DashboardSettings {
 	meterStatusMeterIds: number[];
 	totalKwhMeterIds: number[];
 	currentDemandMeterIds: number[];
+	powerFactorMeterIds: number[];
 	defaultAddress?: string;
 	defaultActivity?: string;
 	reportMeterId?: number | null;
@@ -52,6 +64,7 @@ export interface DashboardSettings {
 	energyBudgetKwh?: number;
 	/** Time-of-Day energy rates (Offset from base rate in ₹/kWh) */
 	todRates?: TodRates;
+	customDashboardDevices?: CustomDashboardDevice[];
 }
 
 const defaultSettings: DashboardSettings = {
@@ -59,6 +72,7 @@ const defaultSettings: DashboardSettings = {
 	meterStatusMeterIds: [],
 	totalKwhMeterIds: [],
 	currentDemandMeterIds: [],
+	powerFactorMeterIds: [],
 	defaultAddress: '',
 	defaultActivity: '',
 	reportMeterId: null,
@@ -83,76 +97,90 @@ const defaultSettings: DashboardSettings = {
 		contractDemand: 100,
 		tariffCategory: 'Industrial (LT-V B II)',
 		billedDemand: 8
-	}]
+	}],
+	customDashboardDevices: []
 };
 
-function loadSettings(): DashboardSettings {
-	try {
-		const stored = localStorage.getItem(STORAGE_KEY);
-		if (stored) {
-			const parsed = JSON.parse(stored);
-			return {
-				dashboardMeterIds: parsed.dashboardMeterIds ?? [],
-				meterStatusMeterIds: parsed.meterStatusMeterIds ?? [],
-				totalKwhMeterIds: parsed.totalKwhMeterIds ?? [],
-				currentDemandMeterIds: parsed.currentDemandMeterIds ?? [],
-				defaultAddress: parsed.defaultAddress ?? '',
-				defaultActivity: parsed.defaultActivity ?? '',
-				reportMeterId: parsed.reportMeterId ?? null,
-				reportKvahMeterId: parsed.reportKvahMeterId ?? null,
-				dashboardGraphDays: parsed.dashboardGraphDays ?? 1,
-				energyBudgetKwh: parsed.energyBudgetKwh ?? 0,
-				todRates: parsed.todRates ?? defaultSettings.todRates,
-				rateHistory: parsed.rateHistory ?? defaultSettings.rateHistory
-			};
-		}
-	} catch {
-		// ignore parse errors
-	}
-	return { ...defaultSettings };
-}
-
-function saveSettings(settings: DashboardSettings): void {
-	try {
-		localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-	} catch {
-		// ignore storage errors
-	}
-}
-
 /**
- * Hook to read and write dashboard settings from localStorage.
- * Settings include which meters appear on the main dashboard chart
- * and which meters appear in the meter status widget.
+ * Hook to read and write dashboard settings from the backend database.
+ * Settings include which meters appear on the main dashboard chart,
+ * tariff rates, energy budget, and custom device mappings.
  */
 export function useDashboardSettings() {
-	const [settings, setSettings] = useState<DashboardSettings>(loadSettings);
+	const [settings, setSettings] = useState<DashboardSettings>(defaultSettings);
+	const [isLoaded, setIsLoaded] = useState(false);
 
-	// Sync state if another tab changes localStorage
+	// Initial load from backend
 	useEffect(() => {
-		const handler = (e: StorageEvent) => {
-			if (e.key === STORAGE_KEY) {
-				setSettings(loadSettings());
+		const fetchSettings = async () => {
+			try {
+				const res = await fetch('/api/dashboard/settings');
+				if (res.ok) {
+					const data = await res.json();
+					if (data && Object.keys(data).length > 0) {
+						// Merge default values for missing keys
+						setSettings({
+							...defaultSettings,
+							...data
+						});
+					} else {
+						// Fallback to localStorage if server has no data yet (migration)
+						const local = localStorage.getItem(STORAGE_KEY);
+						if (local) {
+							try {
+								const parsed = JSON.parse(local);
+								setSettings({ ...defaultSettings, ...parsed });
+								// Migration: Save to backend
+								fetch('/api/dashboard/settings', {
+									method: 'POST',
+									headers: { 'Content-Type': 'application/json' },
+									body: local
+								});
+							} catch (e) {}
+						}
+					}
+				}
+			} catch (err) {
+				console.error('Error fetching dashboard settings', err);
+			} finally {
+				setIsLoaded(true);
 			}
 		};
-		window.addEventListener('storage', handler);
-		return () => window.removeEventListener('storage', handler);
+		fetchSettings();
 	}, []);
 
 	const updateSettings = useCallback((partial: Partial<DashboardSettings>) => {
 		setSettings(prev => {
 			const next = { ...prev, ...partial };
-			saveSettings(next);
+			// Save to backend
+			fetch('/api/dashboard/settings', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(next)
+			}).catch(err => console.error('Error saving settings', err));
+			
+			// Also sync to localStorage as secondary backup
+			try {
+				localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+			} catch {}
+
 			return next;
 		});
 	}, []);
 
-	return { settings, updateSettings };
+	return { settings, updateSettings, isLoaded };
 }
 
 /**
- * Standalone getter for components that don't need reactivity (e.g., initial load in useEffect).
+ * Standalone getter - Note: This is now less useful as it doesn't wait for the server.
+ * Use useDashboardSettings hook wherever possible.
  */
 export function getDashboardSettings(): DashboardSettings {
-	return loadSettings();
+	const local = localStorage.getItem(STORAGE_KEY);
+	if (local) {
+		try {
+			return { ...defaultSettings, ...JSON.parse(local) };
+		} catch (e) {}
+	}
+	return defaultSettings;
 }

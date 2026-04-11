@@ -3,6 +3,7 @@ import * as React from 'react';
 import Plot from 'react-plotly.js';
 import 'plotly.js-dist-min';
 import { getDashboardSettings } from '../hooks/useDashboardSettings';
+import * as moment from 'moment';
 import { useAppSelector } from '../redux/reduxHooks';
 import { selectAllMeters } from '../redux/api/metersApi';
 import { selectTheme } from '../redux/slices/appStateSlice';
@@ -16,10 +17,14 @@ const FALLBACK_METERS = [
 
 const COLORS = ['#5E5CE6', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4'];
 
+interface SimpleLinePageProps {
+	selectedDeviceId?: string | null;
+}
+
 /**
  *
  */
-export default function SimpleLinePage() {
+export default function SimpleLinePage({ selectedDeviceId }: SimpleLinePageProps = {}) {
 	const [data, setData] = React.useState<Partial<Plotly.PlotData>[]>([]);
 	const [error, setError] = React.useState<string | null>(null);
 	const [loaded, setLoaded] = React.useState(false);
@@ -37,7 +42,19 @@ export default function SimpleLinePage() {
 	React.useEffect(() => {
 		let meters: { id: number; name: string }[];
 
-		if (settings.dashboardMeterIds.length > 0 && allMeters.length > 0) {
+		const customDevice = selectedDeviceId ? settings.customDashboardDevices?.find(d => d.id === selectedDeviceId) : null;
+
+		if (customDevice && customDevice.energyConsumptionMeterIds && customDevice.energyConsumptionMeterIds.length > 0) {
+			// Prefer custom device meters for the graph
+			const customIds = [...customDevice.energyConsumptionMeterIds].filter(id => id != null) as number[];
+			const idSet = new Set(customIds);
+			meters = allMeters
+				.filter(m => idSet.has(m.id))
+				.map(m => ({
+					id: m.id,
+					name: m.identifier || m.name || `Meter #${m.id}`
+				}));
+		} else if (settings.dashboardMeterIds.length > 0 && allMeters.length > 0) {
 			const idSet = new Set(settings.dashboardMeterIds);
 			meters = allMeters
 				.filter(m => idSet.has(m.id))
@@ -53,9 +70,13 @@ export default function SimpleLinePage() {
 
 		async function load() {
 			try {
+				const days = settings.dashboardGraphDays || 1;
+				const startTime = moment().subtract(days, 'days').format();
+				const timeInterval = `${startTime}_`;
+
 				const results = await Promise.allSettled(
 					meters.map(m =>
-						fetch(`/api/readings/line/raw/meter/${m.id}?timeInterval=all`).then(r => r.ok ? r.json() : null)
+						fetch(`/api/readings/line/raw/meter/${m.id}?timeInterval=${encodeURIComponent(timeInterval)}`).then(r => r.ok ? r.json() : null)
 					)
 				);
 
@@ -76,7 +97,7 @@ export default function SimpleLinePage() {
 		}
 
 		load();
-	}, [allMeters, settings.dashboardMeterIds]);
+	}, [allMeters, settings.dashboardMeterIds, selectedDeviceId, settings.customDashboardDevices]);
 
 	// Trace generation effect - responds immediately to theme changes
 	React.useEffect(() => {
@@ -108,10 +129,10 @@ export default function SimpleLinePage() {
 				type: 'scatter',
 				mode: 'lines',
 				line: {
-					shape: 'linear',
+					shape: 'spline',
+					smoothing: 1,
 					width: 2,
-					color: chartColors[i % chartColors.length],
-					dash: 'solid'
+					color: chartColors[i % chartColors.length]
 				},
 				fill: 'tozeroy',
 				fillcolor: chartColors[i % chartColors.length] + '1A',
@@ -121,6 +142,23 @@ export default function SimpleLinePage() {
 
 		setData(traces as Partial<Plotly.PlotData>[]);
 	}, [rawData, chartColors, settings.dashboardGraphDays]);
+
+	// Calculate y-axis range based on data for better comparison (avoids starting at 0)
+	const yRange = React.useMemo(() => {
+		if (data.length === 0) return undefined;
+		let min = Infinity;
+		let max = -Infinity;
+		data.forEach(t => {
+			(t.y as any[]).forEach(val => {
+				if (val < min) min = val;
+				if (val > max) max = val;
+			});
+		});
+		if (min === Infinity) return undefined;
+		const range = max - min;
+		const padding = range === 0 ? 1 : range * 0.1;
+		return [min - padding, max + padding];
+	}, [data]);
 
 	if (error) return <div>Error: {error}</div>;
 	if (!loaded) return <div>Loading…</div>;
@@ -144,6 +182,7 @@ export default function SimpleLinePage() {
 					tickfont: { color: isDarkMode ? '#8b949e' : '#9CA3AF', size: 12 }
 				},
 				yaxis: {
+					range: yRange,
 					automargin: true,
 					gridcolor: isDarkMode ? '#21262d' : '#F3F4F6',
 					zeroline: false,
@@ -163,7 +202,7 @@ export default function SimpleLinePage() {
 				}
 			}}
 			useResizeHandler
-			style={{ width: '100%', height: '350px' }}
+			style={{ width: '100%', height: '290px' }}
 			config={{ responsive: true, displayModeBar: 'hover', scrollZoom: true }}
 		/>
 	);

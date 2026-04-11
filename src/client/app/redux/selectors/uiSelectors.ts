@@ -23,14 +23,14 @@ import {
 	selectChartToRender, selectGraphAreaNormalization, selectGraphState,
 	selectSelectedGroups, selectSelectedMeters, selectSelectedUnit, selectSliderRangeInterval
 } from '../slices/graphSlice';
-import { selectVisibleMetersAndGroups, selectVisibleUnitOrSuffixState } from './authVisibilitySelectors';
+import { selectVisibleUnitOrSuffixState, selectDisplayableMetersAndGroups } from './authVisibilitySelectors';
 import { selectDefaultGraphicUnitFromEntity, selectMeterOrGroupFromEntity, selectNameFromEntity } from './entitySelectors';
 import { createAppSelector } from './selectors';
 import { selectCik } from '../api/conversionsApi';
 
 export const selectCurrentUnitCompatibility = createAppSelector(
 	[
-		selectVisibleMetersAndGroups,
+		selectDisplayableMetersAndGroups,
 		selectMeterDataById,
 		selectGroupDataById,
 		selectSelectedUnit,

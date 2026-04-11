@@ -12,8 +12,8 @@ mix case and if statements.
 /*
 Rounds a timestamp up to the next interval
  */
-CREATE OR REPLACE FUNCTION date_trunc_up(interval_precision TEXT, ts TIMESTAMP)
-	RETURNS TIMESTAMP LANGUAGE SQL
+CREATE OR REPLACE FUNCTION date_trunc_up(interval_precision TEXT, ts TIMESTAMP WITH TIME ZONE)
+	RETURNS TIMESTAMP WITH TIME ZONE LANGUAGE SQL
 IMMUTABLE
 AS $$
 SELECT CASE
@@ -343,12 +343,18 @@ hourly_readings_unit
 	ORDER BY gen.interval_start, r.meter_id;
 
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_hourly_readings_unit ON hourly_readings_unit (meter_id, time_interval);
+
+
+
 -- TODO Check if needed and when to use as not done for hourly.
 -- With the index added in 3D readings, this should be consider as part of the decision
 -- on if this is needed.
 CREATE EXTENSION IF NOT EXISTS btree_gist;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_daily_readings_unit ON daily_readings_unit (meter_id, time_interval);
 -- We need a gist index to support the @> operation.
 CREATE INDEX if not exists idx_daily_readings_unit ON daily_readings_unit USING GIST(time_interval, meter_id);
+
 
 
 /*

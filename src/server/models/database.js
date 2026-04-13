@@ -84,15 +84,20 @@ async function createSchema(conn) {
 	const Preferences = require('./Preferences');
 	const Configfile = require('./obvius/Configfile');
 	const Migration = require('./Migration');
-	const LogEmail = require('./LogEmail');
-	const LogMsg = require('./LogMsg');
 	const Baseline = require('./Baseline');
 	const { Map } = require('./Map');
+	const LogEmail = require('./LogEmail');
+	const LogMsg = require('./LogMsg');
 	const Unit = require('./Unit');
 	const Conversion = require('./Conversion');
 	const Cik = require('./Cik');
+	const MqttSource = require('./MqttSource');
+	const GlobalSettings = require('./GlobalSettings');
 
 	/* eslint-enable global-require */
+	await LogEmail.createTable(conn);
+	await LogMsg.createLogMsgTypeEnum(conn);
+	await LogMsg.createTable(conn);
 	await Unit.createUnitTypesEnum(conn);
 	await Unit.createAreaUnitTypesEnum(conn);
 	await Unit.createDisplayableTypesEnum(conn);
@@ -101,6 +106,8 @@ async function createSchema(conn) {
 	await Unit.createTable(conn);
 	await Conversion.createTable(conn);
 	await Cik.createTable(conn);
+	await GlobalSettings.createTable(conn);
+	await MqttSource.createTable(conn);
 	await Meter.createMeterTypesEnum(conn);
 	// This sql code creates a function to check meter's timezone.
 	// It needs to be called before meter table is created.
@@ -113,9 +120,6 @@ async function createSchema(conn) {
 	await Preferences.createTable(conn);
 	await Group.createTables(conn);
 	await Migration.createTable(conn);
-	await LogEmail.createTable(conn);
-	await LogMsg.createLogMsgTypeEnum(conn);
-	await LogMsg.createTable(conn);
 	await Reading.createReadingsMaterializedViews(conn);
 	await Reading.createCompareReadingsFunction(conn);
 	// For 3D reading

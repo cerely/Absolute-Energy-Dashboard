@@ -1042,10 +1042,11 @@ export default function EditGroupModalComponent(props: EditGroupModalComponentPr
 	function metersToSelectOptions(): SelectOption[] {
 		// In format for the display component for menu.
 		const selectedMetersUnsorted: SelectOption[] = [];
-		groupState.childMeters.forEach(groupId => {
+		groupState.childMeters.forEach(meterId => {
+			const meter = meterDataById[meterId];
 			selectedMetersUnsorted.push({
-				value: groupId,
-				label: meterDataById[groupId].identifier
+				value: meterId,
+				label: meter ? meter.identifier : `Meter ${meterId}`
 				// isDisabled not needed since only used for selected and not display.
 			} as SelectOption
 			);
@@ -1063,11 +1064,12 @@ export default function EditGroupModalComponent(props: EditGroupModalComponentPr
 		// In format for the display component for menu.
 		const selectedGroupsUnsorted: SelectOption[] = [];
 		groupState.childGroups.forEach(groupId => {
+			const group = groupDataById[groupId];
 			selectedGroupsUnsorted.push({
 				value: groupId,
 				// Use globalGroupsState so see edits in other groups. You would miss an update
 				// in this group but it cannot be on the menu so that is okay.
-				label: groupDataById[groupId].name
+				label: group ? group.name : `Group ${groupId}`
 				// isDisabled not needed since only used for selected and not display.
 			} as SelectOption
 			);
@@ -1088,7 +1090,8 @@ export default function EditGroupModalComponent(props: EditGroupModalComponentPr
 		// Tells if any meter is not visible to user.
 		let hasHidden = false;
 		groupState.childMeters.forEach(meterId => {
-			const meterIdentifier = meterDataById[meterId].identifier;
+			const meter = meterDataById[meterId];
+			const meterIdentifier = meter ? meter.identifier : null;
 			// The identifier is null if the meter is not visible to this user. If hidden then do
 			// not list and otherwise label.
 			if (meterIdentifier === null) {
@@ -1122,8 +1125,9 @@ export default function EditGroupModalComponent(props: EditGroupModalComponentPr
 			// control what is returned. This needs to be addressed.
 			// if (groupName !== null) {
 			// For now, check if the group is displayable.
-			if (editGroupsState[groupId].displayable) {
-				listedGroups.push(editGroupsState[groupId].name);
+			const group = editGroupsState[groupId];
+			if (group && group.displayable) {
+				listedGroups.push(group.name);
 			} else {
 				hasHidden = true;
 			}
@@ -1148,7 +1152,8 @@ export default function EditGroupModalComponent(props: EditGroupModalComponentPr
 		const listedDeepMeters: string[] = [];
 		let hasHidden = false;
 		groupState.deepMeters.forEach(meterId => {
-			const meterIdentifier = meterDataById[meterId].identifier;
+			const meter = meterDataById[meterId];
+			const meterIdentifier = meter ? meter.identifier : null;
 			if (meterIdentifier === null) {
 				// The identifier is null if the meter is not visible to this user.
 				hasHidden = true;

@@ -84,7 +84,7 @@ export default function CreateMeterModalComponent(props: CreateMeterModalProps):
 
 	// Reset default graphingUnit when selected is invalid with updated unitId.
 	React.useEffect(() => {
-		if (!defaultGraphicUnitIsValid) {
+		if (!defaultGraphicUnitIsValid && meterDetails.defaultGraphicUnit !== -999) {
 			setMeterDetails(details => ({ ...details, defaultGraphicUnit: -999 }));
 		}
 		// If adding/editing and no unit selected, auto-assign default graphic unit.
@@ -92,11 +92,11 @@ export default function CreateMeterModalComponent(props: CreateMeterModalProps):
 		if (meterDetails.unitId !== -999 && meterDetails.defaultGraphicUnit === -999 && compatibleGraphicUnits.size > 0) {
 			const compatibleUnitsArray = Array.from(compatibleGraphicUnits);
 			const autoUnit = compatibleUnitsArray.find(u => u.id === meterDetails.unitId) || compatibleUnitsArray[0];
-			if (autoUnit) {
+			if (autoUnit && autoUnit.id !== meterDetails.defaultGraphicUnit) {
 				setMeterDetails(details => ({ ...details, defaultGraphicUnit: autoUnit.id }));
 			}
 		}
-	}, [meterDetails.unitId, compatibleGraphicUnits, defaultGraphicUnitIsValid]);
+	}, [meterDetails.unitId, meterDetails.defaultGraphicUnit, compatibleGraphicUnits, defaultGraphicUnitIsValid]);
 
 	React.useEffect(() => {
 		if (meterDetails.cumulative === false) {

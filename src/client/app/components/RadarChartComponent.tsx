@@ -2,22 +2,22 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { values } from 'lodash';
+import { values, debounce } from 'lodash';
 import * as moment from 'moment';
 import * as React from 'react';
 import Plot from 'react-plotly.js';
-import { Icons } from 'plotly.js';
+import { Icons, PlotRelayoutEvent } from 'plotly.js';
 import { selectGroupDataById } from '../redux/api/groupsApi';
 import { selectMeterDataById } from '../redux/api/metersApi';
 import { readingsApi } from '../redux/api/readingsApi';
 import { selectUnitDataById } from '../redux/api/unitsApi';
-import { useAppSelector } from '../redux/reduxHooks';
+import { useAppDispatch, useAppSelector } from '../redux/reduxHooks';
 import { selectRadarChartQueryArgs } from '../redux/selectors/chartQuerySelectors';
 import { selectScalingFromEntity } from '../redux/selectors/entitySelectors';
 import {
 	selectAreaUnit, selectGraphAreaNormalization, selectLineGraphRate,
 	selectSelectedGroups, selectSelectedMeters, selectSelectedUnit,
-	selectYMin, selectYMax, selectChartRotation
+	selectYMin, selectYMax, selectChartRotation, setYMin, setYMax
 } from '../redux/slices/graphSlice';
 import { selectSelectedLanguage, selectTheme } from '../redux/slices/appStateSlice';
 import { DataType } from '../types/Datasources';
@@ -64,7 +64,21 @@ export default function RadarChartComponent() {
 	const isDarkMode = theme === 'dark';
 	const rotation = useAppSelector(selectChartRotation) ?? 0;
 	const selectedLanguage = useAppSelector(selectSelectedLanguage);
+	const dispatch = useAppDispatch();
 	const [listOfButtons, setListOfButtons] = React.useState(defaultButtons);
+
+	const handleRelayout = React.useMemo(() => debounce(
+		(e: PlotRelayoutEvent) => {
+			// Handle Radial Axis changes for polar charts
+			if (e['polar.radialaxis.range[0]'] !== undefined && e['polar.radialaxis.range[1]'] !== undefined) {
+				dispatch(setYMin(e['polar.radialaxis.range[0]'] as number));
+				dispatch(setYMax(e['polar.radialaxis.range[1]'] as number));
+			} else if (e['polar.radialaxis.autorange'] === true || (e as any)['autorange'] === true) {
+				dispatch(setYMin(undefined));
+				dispatch(setYMax(undefined));
+			}
+		}, 500, { leading: false, trailing: true }
+	), [dispatch]);
 	
 	const COLORS = ['#5E5CE6', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4'];
 	const chartColors = isDarkMode
@@ -244,31 +258,32 @@ export default function RadarChartComponent() {
 			// Maximum number of ticks, represents 12 months. Too many is cluttered so this seems good value.
 			// Plotly shows less if only a few points.
 
-			let yRange: [number, number] | undefined = undefined;
-			if (yMin !== undefined || yMax !== undefined) {
-				let calcMin = Number.MAX_VALUE;
-				let calcMax = -Number.MAX_VALUE;
-
-				// Only calculate if we need one of the bounds
-				if (yMin === undefined || yMax === undefined) {
-					for (const ds of datasets) {
-						if (ds.r) {
-							for (const val of ds.r) {
-								if (typeof val === 'number') {
-									if (val < calcMin) calcMin = val;
-									if (val > calcMax) calcMax = val;
-								}
+			const { calcMin, calcMax, hasData } = React.useMemo(() => {
+				let min = Number.MAX_VALUE;
+				let max = -Number.MAX_VALUE;
+				let found = false;
+				for (const ds of datasets) {
+					if (ds.r) {
+						for (const val of ds.r) {
+							if (typeof val === 'number') {
+								if (val < min) min = val;
+								if (val > max) max = val;
+								found = true;
 							}
 						}
 					}
-					// Fallbacks if no data found
-					if (calcMin === Number.MAX_VALUE) calcMin = 0;
-					if (calcMax === -Number.MAX_VALUE) calcMax = 10;
 				}
+				return { calcMin: min, calcMax: max, hasData: found };
+			}, [datasets]);
+
+			let yRange: [number, number] | undefined = undefined;
+			if (hasData) {
+				const range = calcMax - calcMin;
+				const padding = range === 0 ? 1 : range * 0.1;
 
 				yRange = [
-					yMin !== undefined ? yMin : calcMin,
-					yMax !== undefined ? yMax : calcMax
+					yMin !== undefined ? yMin : calcMin - padding,
+					yMax !== undefined ? yMax : calcMax + padding
 				];
 			}
 
@@ -304,7 +319,8 @@ export default function RadarChartComponent() {
 						linecolor: isDarkMode ? '#475569' : '#9CA3AF',
 						tickfont: { color: isDarkMode ? 'white' : '#111111', size: 11 },
 						range: yRange,
-						autorange: !yRange
+						autorange: !yRange,
+						zeroline: false
 					},
 					angularaxis: {
 						direction: 'clockwise',
@@ -376,6 +392,7 @@ export default function RadarChartComponent() {
 					locales: Locales // makes locales available for use
 				}}
 				layout={layout}
+				onRelayout={handleRelayout}
 			/>
 		</div>
 	);

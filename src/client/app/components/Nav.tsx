@@ -149,13 +149,6 @@ export default function Nav({ style }: { style?: React.CSSProperties }) {
 					<h2 style={{ fontSize: '26px', fontWeight: '700', color: theme === 'dark' ? '#00F2EA' : '#2B3674', margin: 0, lineHeight: 1.2 }}>{getPageTitle()}</h2>
 					<h1 style={{ fontSize: '16px', color: theme === 'dark' ? '#D1D5DB' : '#6B7280', margin: 0, marginTop: '4px', fontWeight: 400 }}>{currentDate}</h1>
 				</div>
-				{(location.pathname === '/') && getSelectedDeviceLabel() && (
-					<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
-						<span style={{ fontSize: '30px', fontWeight: '700', color: theme === 'dark' ? '#ffffff' : '#2B3674', letterSpacing: '-0.3px' }}>
-							{getSelectedDeviceLabel()}
-						</span>
-					</div>
-				)}
 
 			</div>
 

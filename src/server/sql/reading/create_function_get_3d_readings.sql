@@ -8,19 +8,23 @@
 CREATE INDEX IF NOT EXISTS idx_hourly_readings_unit_meter_time
 ON hourly_readings_unit (meter_id, lower(time_interval));
 
+DROP FUNCTION IF EXISTS shrink_tsrange_to_meter_readings_by_day(tstzrange, integer) CASCADE;
+DROP FUNCTION IF EXISTS meter_3d_readings_unit(integer[], integer, timestamptz, timestamptz, integer) CASCADE;
+DROP FUNCTION IF EXISTS group_3d_readings_unit(integer, integer, timestamptz, timestamptz, integer) CASCADE;
+
 /*
 This takes tsrange_to_shrink which is the requested time range to plot and makes sure it does
 not exceed the start/end times for the readings in the supplied meter. This can be an issue, in particular,
 because infinity is used to indicate to graph all readings. This version does it to the nearest
 day by using the day reading view and is used by 3D readings which only allow days and a single meter.
  */
-CREATE OR REPLACE FUNCTION shrink_tsrange_to_meter_readings_by_day(tsrange_to_shrink TSRANGE, meter_id_desired INTEGER)
-	RETURNS TSRANGE
+CREATE OR REPLACE FUNCTION shrink_tsrange_to_meter_readings_by_day(tsrange_to_shrink TSTZRANGE, meter_id_desired INTEGER)
+	RETURNS TSTZRANGE
 AS $$
 DECLARE
-	readings_max_tsrange TSRANGE;
+	readings_max_tsrange TSTZRANGE;
 BEGIN
-	SELECT tsrange(min(lower(time_interval)), max(upper(time_interval))) INTO readings_max_tsrange
+	SELECT tstzrange(min(lower(time_interval)), max(upper(time_interval))) INTO readings_max_tsrange
 	FROM daily_readings_unit
 	where meter_id = meter_id_desired;
 	RETURN tsrange_to_shrink * readings_max_tsrange;
@@ -37,16 +41,16 @@ CREATE OR REPLACE FUNCTION meter_3d_readings_unit (
     -- The desired graphic unit of the returned data
     graphic_unit_id INTEGER,
     -- The start/end time for the data to return
-    start_stamp TIMESTAMP,
-    end_stamp TIMESTAMP,
+    start_stamp TIMESTAMPTZ,
+    end_stamp TIMESTAMPTZ,
     -- The number of hours in each reading returned
     reading_length_hours INTEGER
 )
-    RETURNS TABLE(meter_id INTEGER, reading_rate FLOAT, start_timestamp TIMESTAMP, end_timestamp TIMESTAMP)
+    RETURNS TABLE(meter_id INTEGER, reading_rate FLOAT, start_timestamp TIMESTAMPTZ, end_timestamp TIMESTAMPTZ)
 AS $$
 DECLARE
     -- Holds the range of dates for returned data that fits the actual data.
-    requested_range TSRANGE;
+    requested_range TSTZRANGE;
     -- The slope of the conversion from meter to graphing units
     slope FLOAT;
    -- The intercept of the conversion from meter to graphing units
@@ -100,7 +104,7 @@ BEGIN
         ;
         -- Get the range of days requested by calling shrink_tsrange_to_meter_readings_by_day.
         -- First make requested range only be full days by dropping any partial days at start/end.
-        requested_range := shrink_tsrange_to_meter_readings_by_day(tsrange(date_trunc_up('day', start_stamp), date_trunc('day', end_stamp)), current_meter_id);
+        requested_range := shrink_tsrange_to_meter_readings_by_day(tstzrange(date_trunc_up('day', start_stamp), date_trunc('day', end_stamp)), current_meter_id);
 
         IF (reading_length_hours_use <= 12) THEN
             -- Need to generate_series to group the desired hours together
@@ -148,7 +152,7 @@ BEGIN
             -- The end time differs from the start time by the meter reading frequency or min one for groups.
             -- This means the meter reading frequency is too long for a 3D graphic.
             RETURN QUERY
-                SELECT -999, -999::FLOAT, '1900-01-01 00:00:00'::TIMESTAMP, '1900-01-01 00:00:00'::TIMESTAMP + reading_length_interval
+                SELECT -999, -999::FLOAT, '1900-01-01 00:00:00'::TIMESTAMPTZ, '1900-01-01 00:00:00'::TIMESTAMPTZ + reading_length_interval
             ;
         END IF;
 
@@ -168,12 +172,12 @@ CREATE OR REPLACE FUNCTION group_3d_readings_unit (
 	-- The desired graphic unit of the returned data
 	graphic_unit_id INTEGER,
 	-- The start and end time for the data to return
-	start_stamp TIMESTAMP,
-	end_stamp TIMESTAMP,
+	start_stamp TIMESTAMPTZ,
+	end_stamp TIMESTAMPTZ,
 	-- The number of hours in each reading returned
     reading_length_hours INTEGER
 )
-	RETURNS TABLE(reading_rate FLOAT, start_timestamp TIMESTAMP, end_timestamp TIMESTAMP)
+	RETURNS TABLE(reading_rate FLOAT, start_timestamp TIMESTAMPTZ, end_timestamp TIMESTAMPTZ)
 AS $$
 DECLARE
 	--Holds the desired meter IDs in order to call meter_3d_readings_unit in the query below. 

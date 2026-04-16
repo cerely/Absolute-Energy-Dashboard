@@ -65,14 +65,14 @@ class Cik {
 		await conn.none(sqlFile('cik/delete_all_conversions.sql'));
 
 		// Loop over all conversions in cik array and insert each in DB.
-		cik.forEach(async (conversion) => {
+		for (const conversion of cik) {
 			await conn.none(sqlFile('cik/insert_new_conversion.sql'), {
 				sourceId: conversion.source,
 				destinationId: conversion.destination,
 				slope: conversion.slope,
 				intercept: conversion.intercept
 			});
-		});
+		}
 	}
 }
 

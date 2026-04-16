@@ -892,6 +892,20 @@ function DashboardSettingsSection() {
 				/>
 			</FormGroup>
 
+			<FormGroup style={formGroupStyle}>
+				<Label style={labelStyleNew}>Report Settings — Monthly Bill Recipient Email</Label>
+				<p style={{ fontSize: '12px', color: '#9CA3AF', marginBottom: '8px', marginTop: 0 }}>
+					The address where the automated monthly electricity bill summary will be sent on the 1st of every month.
+				</p>
+				<Input
+					type='email'
+					placeholder="e.g. admin@example.com"
+					value={settings.reportRecipientEmail || ''}
+					onChange={e => { updateSettings({ reportRecipientEmail: e.target.value }); setSaved(false); }}
+					style={inputStyle}
+				/>
+			</FormGroup>
+
 			<hr style={{ margin: '32px 0', borderColor: 'var(--divider-color, #e5e7eb)' }} />
 
 			<h5 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px', color: 'var(--text-value, #111827)' }}>

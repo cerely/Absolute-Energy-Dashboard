@@ -171,6 +171,7 @@ else
 		# Create function to shift readings for compare - developer only
 		printf "%s\n" "Creating developer DB function"
 		npm run developerdb
+		
 	fi
 fi
 

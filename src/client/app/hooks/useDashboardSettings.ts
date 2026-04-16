@@ -65,6 +65,7 @@ export interface DashboardSettings {
 	/** Time-of-Day energy rates (Offset from base rate in ₹/kWh) */
 	todRates?: TodRates;
 	customDashboardDevices?: CustomDashboardDevice[];
+	reportRecipientEmail?: string;
 }
 
 const defaultSettings: DashboardSettings = {
@@ -98,8 +99,13 @@ const defaultSettings: DashboardSettings = {
 		tariffCategory: 'Industrial (LT-V B II)',
 		billedDemand: 8
 	}],
-	customDashboardDevices: []
+	customDashboardDevices: [],
+	reportRecipientEmail: ''
 };
+
+let globalSettings: DashboardSettings | null = null;
+let globalIsLoaded = false;
+let globalFetchPromise: Promise<DashboardSettings> | null = null;
 
 /**
  * Hook to read and write dashboard settings from the backend database.
@@ -107,51 +113,71 @@ const defaultSettings: DashboardSettings = {
  * tariff rates, energy budget, and custom device mappings.
  */
 export function useDashboardSettings() {
-	const [settings, setSettings] = useState<DashboardSettings>(defaultSettings);
-	const [isLoaded, setIsLoaded] = useState(false);
+	const [settings, setSettings] = useState<DashboardSettings>(globalSettings || defaultSettings);
+	const [isLoaded, setIsLoaded] = useState(globalIsLoaded);
 
-	// Initial load from backend
-	useEffect(() => {
-		const fetchSettings = async () => {
+	const fetchSettings = useCallback(async () => {
+		if (globalFetchPromise) return globalFetchPromise;
+		
+		globalFetchPromise = (async () => {
 			try {
 				const res = await fetch('/api/dashboard/settings');
 				if (res.ok) {
 					const data = await res.json();
-					if (data && Object.keys(data).length > 0) {
-						// Merge default values for missing keys
-						setSettings({
-							...defaultSettings,
-							...data
-						});
-					} else {
-						// Fallback to localStorage if server has no data yet (migration)
-						const local = localStorage.getItem(STORAGE_KEY);
-						if (local) {
-							try {
-								const parsed = JSON.parse(local);
-								setSettings({ ...defaultSettings, ...parsed });
-								// Migration: Save to backend
-								fetch('/api/dashboard/settings', {
-									method: 'POST',
-									headers: { 'Content-Type': 'application/json' },
-									body: local
-								});
-							} catch (e) {}
-						}
-					}
+					const merged = (data && Object.keys(data).length > 0)
+						? { ...defaultSettings, ...data }
+						: ((): DashboardSettings => {
+							const local = localStorage.getItem(STORAGE_KEY);
+							if (local) {
+								try {
+									const parsed = JSON.parse(local);
+									return { ...defaultSettings, ...parsed };
+								} catch (e) {}
+							}
+							return defaultSettings;
+						})();
+					
+					globalSettings = merged;
+					globalIsLoaded = true;
+					return merged;
 				}
 			} catch (err) {
 				console.error('Error fetching dashboard settings', err);
-			} finally {
+			}
+			return defaultSettings;
+		})();
+
+		return globalFetchPromise;
+	}, []);
+
+	useEffect(() => {
+		const sync = (e: any) => {
+			if (e.detail) {
+				setSettings(e.detail);
 				setIsLoaded(true);
 			}
 		};
-		fetchSettings();
-	}, []);
+		window.addEventListener('dashboard-settings-update', sync);
+
+		if (!globalIsLoaded) {
+			fetchSettings().then(data => {
+				setSettings(data);
+				setIsLoaded(true);
+				window.dispatchEvent(new CustomEvent('dashboard-settings-update', { detail: data }));
+			});
+		} else {
+			setSettings(globalSettings!);
+			setIsLoaded(true);
+		}
+
+		return () => window.removeEventListener('dashboard-settings-update', sync);
+	}, [fetchSettings]);
 
 	const updateSettings = useCallback((partial: Partial<DashboardSettings>) => {
 		setSettings(prev => {
 			const next = { ...prev, ...partial };
+			globalSettings = next;
+			
 			// Save to backend
 			fetch('/api/dashboard/settings', {
 				method: 'POST',
@@ -159,6 +185,9 @@ export function useDashboardSettings() {
 				body: JSON.stringify(next)
 			}).catch(err => console.error('Error saving settings', err));
 			
+			// Broadcast to other components
+			window.dispatchEvent(new CustomEvent('dashboard-settings-update', { detail: next }));
+
 			// Also sync to localStorage as secondary backup
 			try {
 				localStorage.setItem(STORAGE_KEY, JSON.stringify(next));

@@ -7,7 +7,6 @@ import { utc } from 'moment';
 import { PlotRelayoutEvent } from 'plotly.js';
 import * as React from 'react';
 import Plot from 'react-plotly.js';
-import { Icons } from 'plotly.js';
 import { TimeInterval } from '../../../common/TimeInterval';
 import { updateSliderRange } from '../redux/actions/extraActions';
 import { readingsApi, stableEmptyLineReadings } from '../redux/api/readingsApi';
@@ -64,14 +63,6 @@ export default function LineChartComponent() {
 
 	// Use Query Data to derive plotly datasets memoized selector
 	const unitLabel = useAppSelector(selectLineUnitLabel);
-
-	// Display Plotly Buttons Feature
-	// The number of items in defaultButtons and advancedButtons must differ as discussed below
-	const defaultButtons: Plotly.ModeBarDefaultButtons[] = ['zoom2d', 'pan2d', 'select2d', 'lasso2d', 'zoomIn2d',
-		'zoomOut2d', 'autoScale2d', 'resetScale2d'];
-	const advancedButtons: Plotly.ModeBarDefaultButtons[] = ['select2d', 'lasso2d', 'autoScale2d', 'resetScale2d'];
-	// Manage button states with useState
-	const [listOfButtons, setListOfButtons] = React.useState(defaultButtons);
 
 	const theme = useAppSelector(selectTheme);
 	const isDarkMode = theme === 'dark';
@@ -304,94 +295,189 @@ export default function LineChartComponent() {
 			];
 		}
 
+		// ── Max / Min dotted lines & Band ──
+		// Compute per-trace peak values (skip the Average trace)
+		let globalMax = -Number.MAX_VALUE;
+		let globalMin = Number.MAX_VALUE;
+		let maxTraceName = '';
+		let minTraceName = '';
+
+		for (const trace of data) {
+			if (!trace.y || !trace.name) continue;
+			// Skip the average line
+			if (typeof trace.name === 'string' && trace.name.startsWith('Average')) continue;
+			const yArr = (Array.isArray(trace.y[0]) ? (trace.y as any[]).flat() : trace.y) as number[];
+			for (const val of yArr) {
+				if (typeof val === 'number') {
+					if (val > globalMax) { globalMax = val; maxTraceName = String(trace.name); }
+					if (val < globalMin) { globalMin = val; minTraceName = String(trace.name); }
+				}
+			}
+		}
+
+		const bandValue = hasData && globalMax > -Number.MAX_VALUE ? globalMax - globalMin : 0;
+
+		// Plotly horizontal line shapes for max and min
+		const bandShapes: Partial<Plotly.Shape>[] = hasData && globalMax > -Number.MAX_VALUE ? [
+			{
+				type: 'line',
+				xref: 'paper',
+				yref: 'y',
+				x0: 0, x1: 1,
+				y0: globalMax, y1: globalMax,
+				line: { color: isDarkMode ? '#EF4444' : '#DC2626', width: 1.5, dash: 'dot' }
+			},
+			{
+				type: 'line',
+				xref: 'paper',
+				yref: 'y',
+				x0: 0, x1: 1,
+				y0: globalMin, y1: globalMin,
+				line: { color: isDarkMode ? '#3B82F6' : '#2563EB', width: 1.5, dash: 'dot' }
+			}
+		] : [];
+
+		// Annotations for max/min labels on the right edge
+		const bandAnnotations: Partial<Plotly.Annotations>[] = hasData && globalMax > -Number.MAX_VALUE ? [
+			{
+				xref: 'paper', yref: 'y',
+				x: 1.0, y: globalMax,
+				text: `Max: ${globalMax.toPrecision(5)}`,
+				showarrow: false,
+				font: { size: 10, color: isDarkMode ? '#EF4444' : '#DC2626' },
+				xanchor: 'right',
+				yshift: 10
+			},
+			{
+				xref: 'paper', yref: 'y',
+				x: 1.0, y: globalMin,
+				text: `Min: ${globalMin.toPrecision(5)}`,
+				showarrow: false,
+				font: { size: 10, color: isDarkMode ? '#3B82F6' : '#2563EB' },
+				xanchor: 'right',
+				yshift: -10
+			}
+		] : [];
+
 		return (
-			<Plot
-				useResizeHandler={true}
-				data={data}
-				style={{ width: '100%', height: '100%' }}
-				layout={{
-					font: { family: 'Inter, sans-serif', color: isDarkMode ? '#FFFFFF' : '#111111' },
-					paper_bgcolor: 'transparent',
-					plot_bgcolor: 'transparent',
-					margin: { t: 30, b: 40, r: 20, l: 40 },
-					autosize: true,
-					showlegend: true,
-					legend: {
-						x: 0,
-						y: 1.1,
-						orientation: 'h',
-						font: { size: 12, color: isDarkMode ? '#FFFFFF' : '#374151' }
-					},
-					modebar: { orientation: 'v' },
-					yaxis: {
-						title: { text: unitLabel, font: { size: 12, color: isDarkMode ? '#FFFFFF' : '#111111' } },
+			<div style={{ position: 'relative', width: '100%', height: '100%' }}>
+				{/* Band info box */}
+				{hasData && globalMax > -Number.MAX_VALUE && (
+					<div style={{
+						position: 'absolute',
+						top: '4px',
+						right: '60px',
+						zIndex: 10,
+						display: 'flex',
+						gap: '12px',
+						alignItems: 'center',
+						padding: '6px 14px',
+						borderRadius: '10px',
+						background: isDarkMode ? 'rgba(22,27,34,0.85)' : 'rgba(255,255,255,0.9)',
+						border: isDarkMode ? '1px solid #30363d' : '1px solid #E5E7EB',
+						backdropFilter: 'blur(6px)',
+						fontFamily: 'Inter, sans-serif',
+						fontSize: '10px'
+					}}>
+						<span style={{ color: isDarkMode ? '#EF4444' : '#DC2626', fontWeight: 600 }}>
+							▲ Max: {globalMax.toPrecision(5)}{maxTraceName ? ` (${maxTraceName})` : ''}
+						</span>
+						<span style={{ color: isDarkMode ? '#3B82F6' : '#2563EB', fontWeight: 600 }}>
+							▼ Min: {globalMin.toPrecision(5)}{minTraceName ? ` (${minTraceName})` : ''}
+						</span>
+						<span style={{
+							padding: '2px 8px',
+							borderRadius: '6px',
+							background: isDarkMode ? 'rgba(139,92,246,0.15)' : 'rgba(99,102,241,0.1)',
+							color: isDarkMode ? '#A78BFA' : '#6366F1',
+							fontWeight: 700
+						}}>
+							Band: {bandValue.toPrecision(5)}
+						</span>
+					</div>
+				)}
+				<Plot
+					useResizeHandler={true}
+					data={data}
+					style={{ width: '100%', height: '100%' }}
+					layout={{
+						font: { family: 'Inter, sans-serif', color: isDarkMode ? '#FFFFFF' : '#111111' },
+						paper_bgcolor: 'transparent',
+						plot_bgcolor: 'transparent',
+						margin: { t: 30, b: 40, r: 20, l: 40 },
+						autosize: true,
+						showlegend: true,
+						legend: {
+							x: 0,
+							y: 1.1,
+							orientation: 'h',
+							font: { size: 12, color: isDarkMode ? '#FFFFFF' : '#374151' }
+						},
+						modebar: { orientation: 'v' },
+						shapes: bandShapes as any,
+						annotations: bandAnnotations as any,
+						yaxis: {
+							title: { text: unitLabel, font: { size: 12, color: isDarkMode ? '#FFFFFF' : '#111111' } },
+							gridcolor: isDarkMode ? '#21262d' : '#F3F4F6',
+							fixedrange: false,
+							zeroline: false,
+							tickfont: { color: isDarkMode ? 'white' : '#111111', size: 11 },
+							range: yRange,
+							autorange: !yRange
+						},
+						xaxis: {
+						rangeslider: { visible: false },
+						range: xRange,
+						showgrid: false,
 						gridcolor: isDarkMode ? '#21262d' : '#F3F4F6',
-						fixedrange: false,
-						zeroline: false,
 						tickfont: { color: isDarkMode ? 'white' : '#111111', size: 11 },
-						range: yRange,
-						autorange: !yRange
+						zeroline: false
 					},
-					xaxis: {
-					rangeslider: { visible: false },
-					range: xRange,
-					showgrid: false,
-					gridcolor: isDarkMode ? '#21262d' : '#F3F4F6',
-					tickfont: { color: isDarkMode ? 'white' : '#111111', size: 11 },
-					zeroline: false
-				},
-					hovermode: 'x unified',
-					hoverlabel: {
-						bgcolor: isDarkMode ? '#161b22' : '#FFFFFF',
-						bordercolor: isDarkMode ? '#30363d' : 'transparent',
-						font: { family: 'Inter', size: 13, color: isDarkMode ? 'white' : '#111111' },
-						namelength: -1
-					}
-				}}
-				config={{
-					scrollZoom: true,
-					responsive: true,
-					displayModeBar: true,
-					modeBarButtonsToRemove: listOfButtons,
-					modeBarButtonsToAdd: [
-						{
-							name: 'fullscreen',
-							title: translate('fullscreen') || 'Toggle Full Screen',
-							icon: {
-								width: 24,
-								height: 24,
-								path: 'M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z'
-							},
-							click: function (gd: any) {
-								const elt = gd.parentElement; // Get Plotly container
-								if (!document.fullscreenElement) {
-									if (elt?.requestFullscreen) {
-										elt.requestFullscreen().catch((err: Error) => {
-											alert(`Error attempting to enable fullscreen mode: ${err.message}`);
-										});
-									}
-								} else {
-									if (document.exitFullscreen) {
-										document.exitFullscreen();
+						hovermode: 'x unified',
+						hoverlabel: {
+							bgcolor: isDarkMode ? '#161b22' : '#FFFFFF',
+							bordercolor: isDarkMode ? '#30363d' : 'transparent',
+							font: { family: 'Inter', size: 13, color: isDarkMode ? 'white' : '#111111' },
+							namelength: -1
+						}
+					}}
+					config={{
+						scrollZoom: true,
+						responsive: true,
+						displayModeBar: true,
+						displaylogo: false,
+						modeBarButtons: [[
+							{
+								name: 'fullscreen',
+								title: translate('fullscreen') || 'Toggle Full Screen',
+								icon: {
+									width: 24,
+									height: 24,
+									path: 'M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z'
+								},
+								click: function (gd: any) {
+									const elt = gd.parentElement; // Get Plotly container
+									if (!document.fullscreenElement) {
+										if (elt?.requestFullscreen) {
+											elt.requestFullscreen().catch((err: Error) => {
+												alert(`Error attempting to enable fullscreen mode: ${err.message}`);
+											});
+										}
+									} else {
+										if (document.exitFullscreen) {
+											document.exitFullscreen();
+										}
 									}
 								}
 							}
-						},
-						{
-							name: 'toggle-options',
-							title: translate('toggle.options'),
-							icon: Icons.pencil,
-							click: function () {
-								// # of items must differ so the length can tell which list of buttons is being set
-								setListOfButtons(listOfButtons.length === defaultButtons.length ? advancedButtons : defaultButtons); // Update the state
-							}
-						}],
-					locale,
-					// Available Locales
-					locales: Locales
-				}}
-				onRelayout={handleRelayout}
-			/>
+						]],
+						locale,
+						// Available Locales
+						locales: Locales
+					}}
+					onRelayout={handleRelayout}
+				/>
+			</div>
 		);
 	}
 }

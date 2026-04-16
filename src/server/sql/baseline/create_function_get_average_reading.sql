@@ -6,15 +6,16 @@
 	This function compresses the readings for an array of meters over a given date range to one point and
 	returns a query
  */
+DROP FUNCTION IF EXISTS get_average_reading(integer[], timestamptz, timestamptz) CASCADE;
 CREATE OR REPLACE FUNCTION get_average_reading(
 	meter_ids INTEGER[],
-	from_timestamp TIMESTAMP = '-infinity',
-	to_timestamp TIMESTAMP = 'infinity')
-	RETURNS TABLE(meter_ID INTEGER, reading_rate FLOAT, start_timestamp TIMESTAMP, end_timestamp TIMESTAMP) AS $$
+	from_timestamp TIMESTAMPTZ = '-infinity',
+	to_timestamp TIMESTAMPTZ = 'infinity')
+	RETURNS TABLE(meter_ID INTEGER, reading_rate FLOAT, start_timestamp TIMESTAMPTZ, end_timestamp TIMESTAMPTZ) AS $$
 DECLARE
 	point_width INTERVAL;
-	real_start_timestamp TIMESTAMP;
-	real_end_timestamp TIMESTAMP;
+	real_start_timestamp TIMESTAMPTZ;
+	real_end_timestamp TIMESTAMPTZ;
 BEGIN
 	/*
     Shrink our region so that it starts at either the beginning of the first eligible reading or from_timestamp's place

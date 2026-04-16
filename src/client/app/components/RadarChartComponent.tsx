@@ -69,11 +69,12 @@ export default function RadarChartComponent() {
 
 	const handleRelayout = React.useMemo(() => debounce(
 		(e: PlotRelayoutEvent) => {
+			const eventData = e as any;
 			// Handle Radial Axis changes for polar charts
-			if (e['polar.radialaxis.range[0]'] !== undefined && e['polar.radialaxis.range[1]'] !== undefined) {
-				dispatch(setYMin(e['polar.radialaxis.range[0]'] as number));
-				dispatch(setYMax(e['polar.radialaxis.range[1]'] as number));
-			} else if (e['polar.radialaxis.autorange'] === true || (e as any)['autorange'] === true) {
+			if (eventData['polar.radialaxis.range[0]'] !== undefined && eventData['polar.radialaxis.range[1]'] !== undefined) {
+				dispatch(setYMin(eventData['polar.radialaxis.range[0]'] as number));
+				dispatch(setYMax(eventData['polar.radialaxis.range[1]'] as number));
+			} else if (eventData['polar.radialaxis.autorange'] === true || eventData['autorange'] === true) {
 				dispatch(setYMin(undefined));
 				dispatch(setYMax(undefined));
 			}

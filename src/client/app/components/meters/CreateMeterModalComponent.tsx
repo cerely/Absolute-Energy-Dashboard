@@ -187,7 +187,7 @@ export default function CreateMeterModalComponent(props: CreateMeterModalProps):
 
 		if (inputOk) {
 			// The input passed validation.
-			const submitState = {
+			const  submitState = {
 				...meterDetails,
 				// GPS may have been updated so create updated state to submit.
 				gps: gps,
@@ -195,24 +195,21 @@ export default function CreateMeterModalComponent(props: CreateMeterModalProps):
 				identifier: !meterDetails.identifier || meterDetails.identifier.length === 0 ? meterDetails.name : meterDetails.identifier,
 				// The default value for timeZone is an empty string but that should be null for DB.
 				// See below for usage of timeZoneValue.
-				timeZone: (meterDetails.timeZone == '' ? null : meterDetails.timeZone)
+				timeZone: (meterDetails.timeZone == '' ? null : meterDetails.timeZone),
+				mqttSourceId: null
 			};
 			// Submit new meter if checks where ok.
 			// Attempt to add meter to database
-			submitAddMeter(submitState)
+			submitAddMeter(submitState as unknown as MeterData)
 				.unwrap()
-				.then(() => {
+				.then((data) => {
 					// if successful, the mutation will invalidate existing cache causing all meter details to be retrieved
 					showSuccessNotification(translate('meter.successfully.create.meter'));
 					resetState();
 					// if props exist, then return the identifier
 					//  or return the name if identifier is not set because the identifier will be set from the name
 					if (props.onCreateMeter) {
-						if (meterDetails.identifier === '') {
-							props.onCreateMeter(meterDetails.name);
-						} else {
-							props.onCreateMeter(meterDetails.identifier);
-						}
+						props.onCreateMeter(data.identifier);
 					}
 				})
 				.catch(err => {

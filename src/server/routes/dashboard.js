@@ -194,9 +194,12 @@ router.get('/stats', async (req, res) => {
 
         const energyRate = parseFloat(req.query.energyRate) || 0;
 
-        // Energy budget = ((Monthly consumption * rate) / Monthly budget limit) × 100
+        // Energy budget = (((Monthly consumption * rate) / Monthly budget limit) × 100)
+        // If energyRate is 0, we treat the budget limit as a kWh limit directly.
         const energyBudget = energyBudgetKwh > 0
-            ? Math.min(100, ((monthlyConsumption * energyRate) / energyBudgetKwh) * 100)
+            ? Math.min(100, (energyRate > 0 
+                ? ((monthlyConsumption * energyRate) / energyBudgetKwh) * 100
+                : (monthlyConsumption / energyBudgetKwh) * 100))
             : 0;
         
         res.json({
@@ -301,6 +304,18 @@ router.post('/settings', async (req, res) => {
     } catch (e) {
         console.error("Error saving dashboard settings: ", e);
         res.status(500).json({ error: 'Database error' });
+    }
+});
+
+router.post('/mail-monthly-bill', async (req, res) => {
+    try {
+        const { sendMonthlyBill } = require('../services/billMailer');
+        const { reportId } = req.body;
+        await sendMonthlyBill(reportId);
+        res.json({ success: true, message: 'Report email triggered successfully.' });
+    } catch (error) {
+        console.error('Error triggering manual bill email:', error);
+        res.status(500).json({ success: false, error: 'Failed to send report email.' });
     }
 });
 

@@ -124,7 +124,8 @@ export default function EditMeterModalComponent(props: EditMeterModalComponentPr
 			|| props.meter.maxDate !== localMeterEdits.maxDate
 			|| props.meter.minVal !== localMeterEdits.minVal
 			|| props.meter.maxVal !== localMeterEdits.maxVal
-			|| props.meter.disableChecks !== localMeterEdits.disableChecks;
+			|| props.meter.disableChecks !== localMeterEdits.disableChecks
+			|| props.meter.mqttSourceId !== localMeterEdits.mqttSourceId;
 		// Automatically checks for unsaved changes and addresses the issue
 		// of having to manually set the setHasUnsavedChanges
 		// If editMade is true, then hasUnsavedChanges will be set to true.

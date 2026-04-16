@@ -41,22 +41,24 @@ curr_start: When the current/this time period begins for the compare.
 curr_end: When the current/this time period ends for the compare.
 shift: How far back in time to shift the curr_start and curr_end date/time to get the previous
 	times to compare.
- */
+ */DROP FUNCTION IF EXISTS meter_compare_readings_unit(integer[], integer, timestamptz, timestamptz, interval) CASCADE;
+DROP FUNCTION IF EXISTS group_compare_readings_unit(integer[], integer, timestamptz, timestamptz, interval) CASCADE;
+
 CREATE OR REPLACE FUNCTION meter_compare_readings_unit (
 	meter_ids INTEGER[],
 	graphic_unit_id INTEGER,
-	curr_start TIMESTAMP,
-	curr_end TIMESTAMP,
+	curr_start TIMESTAMPTZ,
+	curr_end TIMESTAMPTZ,
 	shift INTERVAL
 )
 	RETURNS TABLE(meter_id INTEGER, curr_use FLOAT, prev_use FLOAT)
 AS $$
 DECLARE
-	curr_tsrange TSRANGE;
-	prev_tsrange TSRANGE;
+	curr_tsrange TSTZRANGE;
+	prev_tsrange TSTZRANGE;
 BEGIN
-	curr_tsrange := tsrange(curr_start, curr_end);
-	prev_tsrange := tsrange(curr_start - shift, curr_end - shift);
+	curr_tsrange := tstzrange(curr_start, curr_end);
+	prev_tsrange := tstzrange(curr_start - shift, curr_end - shift);
 
 	RETURN QUERY
 	WITH
@@ -120,8 +122,8 @@ shift: How far back in time to shift the curr_start and curr_end date/time to ge
 CREATE OR REPLACE FUNCTION group_compare_readings_unit (
 	group_ids INTEGER[],
 	graphic_unit_id INTEGER,
-	curr_start TIMESTAMP,
-	curr_end TIMESTAMP,
+	curr_start TIMESTAMPTZ,
+	curr_end TIMESTAMPTZ,
 	shift INTERVAL
 )
 	RETURNS TABLE(group_id INTEGER, curr_use FLOAT, prev_use FLOAT)

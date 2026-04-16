@@ -179,4 +179,20 @@ const { ensureConversionsExist } = require('./services/graph/initializeConversio
 	}
 })();
 
+// ── Monthly electricity bill email (1st of every month at midnight) ──
+try {
+	const cron = require('node-cron');
+	const { sendMonthlyBill } = require('./services/billMailer');
+	// Runs at 00:00 on the 1st day of every month
+	cron.schedule('0 0 1 * *', () => {
+		log.info('[Cron] Running monthly electricity bill mailer...');
+		sendMonthlyBill().catch(err => {
+			log.error('[Cron] Monthly bill error:', err);
+		});
+	});
+	log.info('[Cron] Monthly bill email scheduled for 1st of every month at midnight.');
+} catch (cronErr) {
+	log.warn('[Cron] node-cron not available — monthly bill email disabled. Install with: npm install node-cron');
+}
+
 module.exports = app;

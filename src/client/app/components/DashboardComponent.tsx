@@ -49,7 +49,7 @@ export default function DashboardComponent() {
 							width: 'auto',
 							padding: '10px'
 						}}>
-							<PlotNavComponent />
+							{chartToRender !== ChartTypes.line && <PlotNavComponent />}
 						</div>
 						{chartToRender === ChartTypes.line && <LineChartComponent />}
 						{chartToRender === ChartTypes.bar && <BarChartComponent />}

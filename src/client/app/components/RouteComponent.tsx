@@ -51,8 +51,8 @@ export default function RouteComponent() {
 
 // Router Responsible for client side routing.
 const router = createBrowserRouter([
-	{ path: '/login', element: <AuthPage mode="login" /> },
-	{ path: '/signup', element: <AuthPage mode="signup" /> },
+	{ path: '/login', element: <AuthPage initialMode="login" /> },
+	{ path: '/signup', element: <AuthPage initialMode="signup" /> },
 	{ path: '/simple-line-only', element: <SimpleLinePage /> },
 	{ path: '/main-dashboard-front', element: <MainDashboard /> },
 	{ path: '/mdash-display', element: <MDashDisplay /> },

@@ -44,6 +44,7 @@ router.post('/', credentialsRequestValidationMiddleware, async (req, res) => {
 	} else {
 		const conn = getConnection();
 		try {
+			log.info(`Attempting login for user: ${req.body.username}`);
 			const user = await User.getByUsername(req.body.username, conn);
 			let isValid;
 			if (user === null) {

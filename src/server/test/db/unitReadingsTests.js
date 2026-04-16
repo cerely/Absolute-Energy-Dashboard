@@ -65,7 +65,7 @@ mocha.describe('Line & bar Readings', () => {
 			], conn);
 			await Reading.refreshDailyReadings(conn);
 			const { meter_id, reading_rate } = await conn.one(
-				'SELECT * FROM daily_readings_unit WHERE time_interval && tsrange(${start_timestamp}, ${end_timestamp});',
+				'SELECT * FROM daily_readings_unit WHERE time_interval && tstzrange(${start_timestamp}, ${end_timestamp});',
 				{ start_timestamp: timestamp1, end_timestamp: timestamp2 });
 			expect(meter_id).to.equal(meter.id);
 			expect(reading_rate).to.equal((100 + 200 + 300 + 400) / 4);

@@ -13,10 +13,29 @@ export default function Nav({ style }: { style?: React.CSSProperties }) {
 	const location = useLocation();
 	const [currentDate, setCurrentDate] = useState('');
 	const [notificationOpen, setNotificationOpen] = useState(false);
+	const [notifications, setNotifications] = useState<any[]>([]);
+	const [notifLoading, setNotifLoading] = useState(false);
 	const siteTitle = useAppSelector(selectDisplayTitle);
 	const theme = useAppSelector(selectTheme);
 	const selectedDeviceId = useAppSelector(selectSelectedDeviceId);
 	const { settings } = useDashboardSettings();
+
+	// Fetch notifications when drawer opens
+	useEffect(() => {
+		if (notificationOpen) {
+			setNotifLoading(true);
+			fetch('/api/logs/logsmsg/getLogsByDateRangeAndType?timeInterval=all&logTypes=INFO,WARN,ERROR&logLimit=15')
+				.then(res => res.json())
+				.then(data => {
+					setNotifications(data);
+					setNotifLoading(false);
+				})
+				.catch(err => {
+					console.error('Failed to fetch notifications', err);
+					setNotifLoading(false);
+				});
+		}
+	}, [notificationOpen]);
 
 	// Get the selected device label for the header
 	const getSelectedDeviceLabel = (): string => {
@@ -70,6 +89,22 @@ export default function Nav({ style }: { style?: React.CSSProperties }) {
 		dispatch(toggleTheme());
 	};
 
+	const getLogIcon = (type: string) => {
+		switch (type) {
+			case 'ERROR': return 'error';
+			case 'WARN': return 'warning';
+			default: return 'info';
+		}
+	};
+
+	const getLogColor = (type: string) => {
+		switch (type) {
+			case 'ERROR': return '#ef4444';
+			case 'WARN': return '#f59e0b';
+			default: return '#3b5bfe';
+		}
+	};
+
 	return (
 		<div style={{ ...style, display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
 			{/* Top Header Box */}
@@ -81,21 +116,35 @@ export default function Nav({ style }: { style?: React.CSSProperties }) {
 						<h1 style={{ fontSize: '14px', color: theme === 'dark' ? '#8b949e' : '#1F2937', margin: 0, fontWeight: 500, paddingLeft: '2px' }}>-by Absolute Motion</h1>
 					</div>
 				</div>
-				<div className="nav-right" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+				<div className="nav-right" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
 					<button className="theme-mode" style={{ cursor: 'pointer', border: theme === 'dark' ? '1px solid #30363d' : '1px solid #E5E7EB', background: 'transparent' }} onClick={handleThemeToggle}>
 						<span className="material-symbols-rounded" style={{ fontSize: '20px' }}>
 							{theme === 'light' ? 'sunny' : 'dark_mode'}
 						</span>
 						<span>{theme === 'light' ? 'Light Mode' : 'Dark Mode'}</span>
 					</button>
-					<button className="notification" style={{ cursor: 'pointer', border: theme === 'dark' ? '1px solid #30363d' : '1px solid #E5E7EB', background: 'transparent' }} onClick={() => setNotificationOpen(true)}>
-						<span className="material-symbols-rounded">notifications</span>
-					</button>
+					
+					<div style={{ display: 'flex', alignItems: 'center', gap: '14px', paddingRight: '12px' }}>
+						<button className="notification" style={{ cursor: 'pointer', border: theme === 'dark' ? '1px solid #30363d' : '1px solid #E5E7EB', background: 'transparent' }} onClick={() => setNotificationOpen(true)}>
+							<span className="material-symbols-rounded">notifications</span>
+						</button>
+
+						<div style={{ 
+							display: 'flex', alignItems: 'center', gap: '6px', background: 'transparent'
+						}}>
+							<span className="material-symbols-rounded" style={{ fontSize: '20px', color: theme === 'dark' ? '#00f2ea' : '#5E5CE6' }}>
+								factory
+							</span>
+							<span style={{ fontSize: '15px', fontWeight: 600, color: theme === 'dark' ? '#e6edf3' : '#374151', letterSpacing: '-0.2px' }}>
+								Industry 4.0
+							</span>
+						</div>
+					</div>
 				</div>
 			</div>
 
 			{/* Sub-Header Row */}
-			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%', padding: '26px 8px 20px' }}>
+			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%', padding: '26px 8px 10px' }}>
 				<div className="nav-greetings" style={{ flexDirection: 'column', marginBottom: 0 }}>
 					<h2 style={{ fontSize: '26px', fontWeight: '700', color: theme === 'dark' ? '#00F2EA' : '#2B3674', margin: 0, lineHeight: 1.2 }}>{getPageTitle()}</h2>
 					<h1 style={{ fontSize: '16px', color: theme === 'dark' ? '#D1D5DB' : '#6B7280', margin: 0, marginTop: '4px', fontWeight: 400 }}>{currentDate}</h1>
@@ -107,9 +156,7 @@ export default function Nav({ style }: { style?: React.CSSProperties }) {
 						</span>
 					</div>
 				)}
-				<div style={{ fontSize: '24px', fontWeight: '700', color: theme === 'dark' ? '#D1D5DB' : '#2B3674', marginBottom: '8px' }}>
-					Industry 4.0
-				</div>
+
 			</div>
 
 			{/* Notification Side Menu Overlays */}
@@ -135,48 +182,56 @@ export default function Nav({ style }: { style?: React.CSSProperties }) {
 					right: notificationOpen ? 0 : '-400px',
 					width: '350px',
 					height: '100vh',
-					backgroundColor: 'var(--card-bg, #ffffff)',
-					boxShadow: '-4px 0 24px rgba(0,0,0,0.1)',
+					backgroundColor: theme === 'dark' ? '#0d1117' : '#ffffff',
+					boxShadow: '-4px 0 24px rgba(0,0,0,0.2)',
 					transition: 'right 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
 					zIndex: 9999,
 					padding: '24px',
 					display: 'flex',
-					flexDirection: 'column'
+					flexDirection: 'column',
+					borderLeft: theme === 'dark' ? '1px solid #30363d' : 'none'
 				}}
 			>
-				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid var(--divider-color, #e5e7eb)' }}>
-					<h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: 'var(--text-value, #111827)' }}>Notifications</h3>
-					<span className="material-symbols-rounded" style={{ cursor: 'pointer', color: 'var(--text-label, #6b7280)', padding: '4px', borderRadius: '50%' }} onClick={() => setNotificationOpen(false)}>close</span>
+				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', paddingBottom: '16px', borderBottom: theme === 'dark' ? '1px solid #30363d' : '1px solid #e5e7eb' }}>
+					<h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: theme === 'dark' ? '#ffffff' : '#111827' }}>System Notifications</h3>
+					<span className="material-symbols-rounded" style={{ cursor: 'pointer', color: theme === 'dark' ? '#8b949e' : '#6b7280', padding: '4px', borderRadius: '50%' }} onClick={() => setNotificationOpen(false)}>close</span>
 				</div>
 				
-				<div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-					{/* Example Notifications */}
-					<div style={{ padding: '10px', borderRadius: '12px', background: 'var(--card-border, #f9fafb)', border: '1px solid var(--divider-color, #e5e7eb)' }}>
-						<div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-							<span className="material-symbols-rounded" style={{ color: '#3b5bfe', fontSize: '20px' }}>login</span>
-							<p style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'var(--text-value, #111827)' }}>Admin Login</p>
+				<div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+					{notifLoading ? (
+						<div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
+							<span style={{ color: theme === 'dark' ? '#8b949e' : '#6b7280' }}>Loading...</span>
 						</div>
-						<p style={{ margin: '0 0 8px 0', fontSize: '13px', color: 'var(--text-label, #4b5563)', lineHeight: '1.4' }}>Admin user successfully logged into the system.</p>
-						<span style={{ fontSize: '11px', color: 'var(--text-label, #9ca3af)' }}>Just now</span>
-					</div>
-
-					<div style={{ padding: '10px', borderRadius: '12px', background: 'var(--card-border, #f9fafb)', border: '1px solid var(--divider-color, #e5e7eb)' }}>
-						<div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-							<span className="material-symbols-rounded" style={{ color: '#10b981', fontSize: '20px' }}>settings</span>
-							<p style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'var(--text-value, #111827)' }}>Settings Updated</p>
+					) : notifications.length === 0 ? (
+						<div style={{ textAlign: 'center', padding: '40px 20px', color: theme === 'dark' ? '#8b949e' : '#6b7280' }}>
+							<span className="material-symbols-rounded" style={{ fontSize: '48px', opacity: 0.5, marginBottom: '10px', display: 'block' }}>notifications_off</span>
+							<p>No new notifications</p>
 						</div>
-						<p style={{ margin: '0 0 8px 0', fontSize: '13px', color: 'var(--text-label, #4b5563)', lineHeight: '1.4' }}>Tariff rate configuration changes were saved.</p>
-						<span style={{ fontSize: '11px', color: 'var(--text-label, #9ca3af)' }}>2 hours ago</span>
-					</div>
-					
-					<div style={{ padding: '10px', borderRadius: '12px', background: 'var(--card-border, #f9fafb)', border: '1px solid var(--divider-color, #e5e7eb)' }}>
-						<div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-							<span className="material-symbols-rounded" style={{ color: '#f59e0b', fontSize: '20px' }}>device_hub</span>
-							<p style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'var(--text-value, #111827)' }}>MQTT Reconnected</p>
-						</div>
-						<p style={{ margin: '0 0 8px 0', fontSize: '13px', color: 'var(--text-label, #4b5563)', lineHeight: '1.4' }}>MQTT Broker connection established successfully.</p>
-						<span style={{ fontSize: '11px', color: 'var(--text-label, #9ca3af)' }}>Yesterday</span>
-					</div>
+					) : (
+						notifications.map((notif, idx) => (
+							<div key={idx} style={{ 
+								padding: '12px', 
+								borderRadius: '12px', 
+								background: theme === 'dark' ? '#161b22' : '#f9fafb', 
+								border: theme === 'dark' ? '1px solid #30363d' : '1px solid #e5e7eb' 
+							}}>
+								<div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+									<span className="material-symbols-rounded" style={{ color: getLogColor(notif.logType), fontSize: '18px' }}>
+										{getLogIcon(notif.logType)}
+									</span>
+									<p style={{ margin: 0, fontSize: '13px', fontWeight: 'bold', color: theme === 'dark' ? '#c9d1d9' : '#111827' }}>
+										{notif.logType}
+									</p>
+								</div>
+								<p style={{ margin: '0 0 6px 0', fontSize: '12px', color: theme === 'dark' ? '#8b949e' : '#4b5563', lineHeight: '1.4' }}>
+									{notif.logMessage}
+								</p>
+								<span style={{ fontSize: '10px', color: theme === 'dark' ? '#484f58' : '#9ca3af' }}>
+									{new Date(notif.logTime).toLocaleString()}
+								</span>
+							</div>
+						))
+					)}
 				</div>
 			</div>
 		</div>

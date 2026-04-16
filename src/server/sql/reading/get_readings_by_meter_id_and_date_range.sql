@@ -9,6 +9,6 @@ SELECT
   reading as r, start_timestamp as s, end_timestamp as e
 FROM readings
 WHERE meter_id = ${meterID}
-  AND start_timestamp >= COALESCE(${startDate}, '-infinity'::TIMESTAMP)
-	AND end_timestamp <= COALESCE(${endDate}, 'infinity'::TIMESTAMP)
+  AND start_timestamp >= COALESCE(${startDate}, '-infinity'::TIMESTAMPTZ)
+	AND end_timestamp <= COALESCE(${endDate}, 'infinity'::TIMESTAMPTZ)
 ORDER BY start_timestamp ASC;

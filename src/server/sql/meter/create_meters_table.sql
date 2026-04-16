@@ -35,7 +35,7 @@ reading_frequency: The time between readings
 */
 CREATE TABLE IF NOT EXISTS meters (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(50) NOT NULL CHECK (char_length(name) >= 1),
+    name TEXT NOT NULL CHECK (char_length(name) >= 1),
     url VARCHAR(400),
     enabled BOOLEAN NOT NULL,
     displayable BOOLEAN NOT NULL,

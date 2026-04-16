@@ -9,6 +9,21 @@ Trying to only use case statements led to issues so the following functions
 mix case and if statements.
 */
 
+DROP FUNCTION IF EXISTS date_trunc_up(text, timestamp) CASCADE;
+DROP FUNCTION IF EXISTS date_trunc_up(text, timestamptz) CASCADE;
+DROP FUNCTION IF EXISTS shrink_tsrange_to_real_readings(tsrange, integer[]) CASCADE;
+DROP FUNCTION IF EXISTS shrink_tsrange_to_real_readings(tstzrange, integer[]) CASCADE;
+DROP FUNCTION IF EXISTS shrink_tsrange_to_meters_by_day(tsrange, integer[]) CASCADE;
+DROP FUNCTION IF EXISTS shrink_tsrange_to_meters_by_day(tstzrange, integer[]) CASCADE;
+DROP FUNCTION IF EXISTS meter_line_readings_unit(integer[], integer, timestamp, timestamp, reading_line_accuracy, integer, integer) CASCADE;
+DROP FUNCTION IF EXISTS meter_line_readings_unit(integer[], integer, timestamptz, timestamptz, reading_line_accuracy, integer, integer) CASCADE;
+DROP FUNCTION IF EXISTS group_line_readings_unit(integer[], integer, timestamp, timestamp, reading_line_accuracy, integer) CASCADE;
+DROP FUNCTION IF EXISTS group_line_readings_unit(integer[], integer, timestamptz, timestamptz, reading_line_accuracy, integer) CASCADE;
+DROP FUNCTION IF EXISTS meter_bar_readings_unit(integer[], integer, integer, timestamp, timestamp) CASCADE;
+DROP FUNCTION IF EXISTS meter_bar_readings_unit(integer[], integer, integer, timestamptz, timestamptz) CASCADE;
+DROP FUNCTION IF EXISTS group_bar_readings_unit(integer[], integer, integer, timestamp, timestamp) CASCADE;
+DROP FUNCTION IF EXISTS group_bar_readings_unit(integer[], integer, integer, timestamptz, timestamptz) CASCADE;
+
 /*
 Rounds a timestamp up to the next interval
  */
@@ -27,13 +42,13 @@ This takes tsrange_to_shrink which is the requested time range to plot and makes
 not exceed the start/end times for the readings for the supplied meters. This can be an issue, in particular,
 because infinity is used to indicate to graph all readings.
  */
-CREATE OR REPLACE FUNCTION shrink_tsrange_to_real_readings(tsrange_to_shrink TSRANGE, meter_ids INTEGER[])
-	RETURNS TSRANGE
+CREATE OR REPLACE FUNCTION shrink_tsrange_to_real_readings(tsrange_to_shrink TSTZRANGE, meter_ids INTEGER[])
+	RETURNS TSTZRANGE
 AS $$
 DECLARE
-	readings_max_tsrange TSRANGE;
+	readings_max_tsrange TSTZRANGE;
 BEGIN
-	SELECT tsrange(min(start_timestamp), max(end_timestamp)) INTO readings_max_tsrange
+	SELECT tstzrange(min(start_timestamp), max(end_timestamp)) INTO readings_max_tsrange
 	FROM (readings r
 		INNER JOIN unnest(meter_ids) meters(id) ON r.meter_id = meters.id);
 	RETURN tsrange_to_shrink * readings_max_tsrange;
@@ -47,18 +62,18 @@ because infinity is used to indicate to graph all readings. This version does it
 day by using the day reading view since bars use to the nearest day and this should be faster.
 This should be fine since bar uses the same view to get data.
  */
-CREATE OR REPLACE FUNCTION shrink_tsrange_to_meters_by_day(tsrange_to_shrink TSRANGE, meter_ids INTEGER[])
-	RETURNS TSRANGE
+CREATE OR REPLACE FUNCTION shrink_tsrange_to_meters_by_day(tsrange_to_shrink TSTZRANGE, meter_ids INTEGER[])
+	RETURNS TSTZRANGE
 AS $$
 DECLARE
-	readings_max_tsrange TSRANGE;
+	readings_max_tsrange TSTZRANGE;
 BEGIN
-	SELECT tsrange(min(lower(time_interval)), max(upper(time_interval))) INTO readings_max_tsrange
+	SELECT tstzrange(min(lower(time_interval)), max(upper(time_interval))) INTO readings_max_tsrange
 	FROM daily_readings_unit dr
 	-- Get all the meter_ids in the passed array of meters.
 	INNER JOIN unnest(meter_ids) meters(id) ON dr.meter_id = meters.id;
 	-- Make the original range be to the day by dropping parts of days at start/end.
-	RETURN tsrange(date_trunc_up('day', lower(tsrange_to_shrink)), date_trunc('day', upper(tsrange_to_shrink))) * readings_max_tsrange;
+	RETURN tstzrange(date_trunc_up('day', lower(tsrange_to_shrink)), date_trunc('day', upper(tsrange_to_shrink))) * readings_max_tsrange;
 END;
 $$ LANGUAGE 'plpgsql';
 
@@ -202,7 +217,7 @@ daily_readings_unit
 			))) 
 		END as min_rate,
 		
-	tsrange(gen.interval_start, gen.interval_start + '1 day'::INTERVAL, '()') AS time_interval
+	tstzrange(gen.interval_start, gen.interval_start + '1 day'::INTERVAL, '()') AS time_interval
 	FROM ((readings r
 	-- This sequence of joins takes the meter id to its unit and a unit.
 	INNER JOIN meters m ON r.meter_id = m.id)
@@ -327,7 +342,7 @@ hourly_readings_unit
 			)))
 		END as min_rate,
 
-	tsrange(gen.interval_start, gen.interval_start + '1 hour'::INTERVAL, '()') AS time_interval
+	tstzrange(gen.interval_start, gen.interval_start + '1 hour'::INTERVAL, '()') AS time_interval
 	FROM ((readings r
 	-- This sequence of joins takes the meter id to its unit and a unit.
 	INNER JOIN meters m ON r.meter_id = m.id)
@@ -373,16 +388,16 @@ Details on how this function works can be found in the devDocs in the resource g
 CREATE OR REPLACE FUNCTION meter_line_readings_unit (
 	meter_ids INTEGER[],
 	graphic_unit_id INTEGER,
-	start_stamp TIMESTAMP,
-	end_stamp TIMESTAMP,
+	start_stamp TIMESTAMPTZ,
+	end_stamp TIMESTAMPTZ,
 	point_accuracy reading_line_accuracy,
 	max_raw_points INTEGER,
 	max_hour_points INTEGER
 )
-	RETURNS TABLE(meter_id INTEGER, reading_rate FLOAT, min_rate FLOAT, max_rate FLOAT, start_timestamp TIMESTAMP, end_timestamp TIMESTAMP)
+	RETURNS TABLE(meter_id INTEGER, reading_rate FLOAT, min_rate FLOAT, max_rate FLOAT, start_timestamp TIMESTAMPTZ, end_timestamp TIMESTAMPTZ)
 AS $$
 DECLARE
-	requested_range TSRANGE;
+	requested_range TSTZRANGE;
 	requested_interval INTERVAL;
 	requested_interval_seconds INTEGER;
 	frequency INTERVAL;
@@ -403,7 +418,7 @@ DECLARE
 		current_meter_id := meter_ids[current_meter_index];
 		-- Make sure the time range is within the reading values for this meter.
 		-- There may be a better way to create the array with one element as last argument.
-		requested_range := shrink_tsrange_to_real_readings(tsrange(start_stamp, end_stamp, '[]'), array_append(ARRAY[]::INTEGER[], current_meter_id));
+		requested_range := shrink_tsrange_to_real_readings(tstzrange(start_stamp, end_stamp, '[]'), array_append(ARRAY[]::INTEGER[], current_meter_id));
 		IF (current_point_accuracy = 'auto'::reading_line_accuracy) THEN
 			-- The request wants automatic calculation of the points returned.
 
@@ -540,16 +555,16 @@ in the meter function that is equivalent.
 CREATE OR REPLACE FUNCTION group_line_readings_unit (
 	group_ids INTEGER[],
 	graphic_unit_id INTEGER,
-	start_stamp TIMESTAMP,
-	end_stamp TIMESTAMP,
+	start_stamp TIMESTAMPTZ,
+	end_stamp TIMESTAMPTZ,
 	point_accuracy reading_line_accuracy,
 	max_hour_points INTEGER
 )
-	RETURNS TABLE(group_id INTEGER, reading_rate FLOAT, start_timestamp TIMESTAMP, end_timestamp TIMESTAMP)
+	RETURNS TABLE(group_id INTEGER, reading_rate FLOAT, start_timestamp TIMESTAMPTZ, end_timestamp TIMESTAMPTZ)
 AS $$
 DECLARE
 	meter_ids INTEGER[];
-	requested_range TSRANGE;
+	requested_range TSTZRANGE;
 	requested_interval INTERVAL;
 	requested_interval_seconds INTEGER;
 	meters_min_frequency INTERVAL;
@@ -566,7 +581,7 @@ BEGIN
 		-- The request needs automatic calculation of the points returned.
 
 		-- Make sure the time range is within the reading values for meters in this group.
-		requested_range := shrink_tsrange_to_real_readings(tsrange(start_stamp, end_stamp, '[]'), meter_ids);
+		requested_range := shrink_tsrange_to_real_readings(tstzrange(start_stamp, end_stamp, '[]'), meter_ids);
 		-- The request_range will still be infinity if there is no meter data. This causes the
 		-- auto calculation to fail because you cannot subtract them.
 		-- Just check the upper range since simpler.
@@ -637,14 +652,14 @@ start_timestamp: The start timestamp of the data to return.
 end_timestamp: The end timestamp of the data to return.
  */
 
-DROP FUNCTION IF EXISTS meter_bar_readings_unit(integer[], integer, integer, timestamp, timestamp) CASCADE;
-DROP FUNCTION IF EXISTS group_bar_readings_unit(integer[], integer, integer, timestamp, timestamp) CASCADE;
+DROP FUNCTION IF EXISTS meter_bar_readings_unit(integer[], integer, integer, timestamptz, timestamptz) CASCADE;
+DROP FUNCTION IF EXISTS group_bar_readings_unit(integer[], integer, integer, timestamptz, timestamptz) CASCADE;
 CREATE OR REPLACE FUNCTION meter_bar_readings_unit (
 	meter_ids INTEGER[],
 	graphic_unit_id INTEGER,
 	bar_width_minutes INTEGER,
-	start_stamp TIMESTAMP,
-	end_stamp TIMESTAMP
+	start_stamp TIMESTAMPTZ,
+	end_stamp TIMESTAMPTZ
 )
 RETURNS TABLE(
 	meter_id INTEGER,
@@ -655,7 +670,7 @@ RETURNS TABLE(
 AS $$
 DECLARE
 	bar_width INTERVAL;
-	real_tsrange TSRANGE;
+	real_tsrange TSTZRANGE;
 	real_start_stamp TIMESTAMP;
 	real_end_stamp TIMESTAMP;
 	num_bars INTEGER;
@@ -665,7 +680,7 @@ BEGIN
 
 	-- Clamp requested range to real reading bounds
 	real_tsrange := shrink_tsrange_to_real_readings(
-		tsrange(start_stamp, end_stamp, '[]'),
+		tstzrange(start_stamp, end_stamp, '[]'),
 		meter_ids
 	);
 
@@ -729,11 +744,11 @@ CREATE OR REPLACE FUNCTION group_bar_readings_unit (
 	start_stamp TIMESTAMP,
 	end_stamp TIMESTAMP
 )
-	RETURNS TABLE(group_id INTEGER, reading FLOAT, start_timestamp TIMESTAMP, end_timestamp TIMESTAMP)
+	RETURNS TABLE(group_id INTEGER, reading FLOAT, start_timestamp TIMESTAMPTZ, end_timestamp TIMESTAMPTZ)
 AS $$
 DECLARE
 	bar_width INTERVAL;
-	real_tsrange TSRANGE;
+	real_tsrange TSTZRANGE;
 	real_start_stamp TIMESTAMP;
 	real_end_stamp TIMESTAMP;
 	meter_ids INTEGER[];

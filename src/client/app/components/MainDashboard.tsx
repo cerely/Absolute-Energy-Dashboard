@@ -85,7 +85,7 @@ export default function DashboardComponents() {
 	metersApi.useGetMetersQuery();
 
 	const allMeters = useAppSelector(selectAllMeters);
-	const { settings } = useDashboardSettings();
+	const { settings, isLoaded } = useDashboardSettings();
 	const sidebarCollapsed = useAppSelector(state => state.appState.sidebarCollapsed);
 	const theme = useAppSelector(selectTheme);
 	const isDarkMode = theme === 'dark';
@@ -139,6 +139,7 @@ export default function DashboardComponents() {
 	const [lastDisplayed, setLastDisplayed] = React.useState<string>(new Date().toLocaleTimeString());
 
 	React.useEffect(() => {
+		if (!isLoaded) return;
 		const fetchStats = async () => {
 			try {
 				// Get the active tariff (latest entry by effectiveDate)
@@ -254,6 +255,48 @@ export default function DashboardComponents() {
 	}, [groupedMeters, selectedDevice, settings.customDashboardDevices]);
 
 	const customDevice = settings.customDashboardDevices?.find(d => d.id === selectedDevice);
+
+	// Derive graph label from loaded meter names
+	const graphLabel = React.useMemo(() => {
+		const cd = selectedDevice ? settings.customDashboardDevices?.find(d => d.id === selectedDevice) : null;
+		let meterIds: number[] = [];
+		if (cd?.energyConsumptionMeterIds && cd.energyConsumptionMeterIds.length > 0) {
+			meterIds = cd.energyConsumptionMeterIds.filter(id => id != null) as number[];
+		} else if (settings.dashboardMeterIds.length > 0) {
+			meterIds = settings.dashboardMeterIds;
+		}
+		if (meterIds.length === 0 || !allMeters || allMeters.length === 0) return 'Energy Consumption';
+
+		const idSet = new Set(meterIds);
+		const names = allMeters
+			.filter(m => idSet.has(m.id))
+			.map(m => (m.identifier || m.name || '').toLowerCase());
+		const combined = names.join(' ');
+
+		// Pattern-based detection from meter identifiers
+		// Note: \b doesn't work across underscores (e.g. _Voltage_), so we use [_/\s] or non-alpha boundaries
+		const hasVoltage = /(?:^|[_/\s])(?:v[123]n?|v[rsy]|voltage|volt|vll|vln)(?:$|[_/\s])/i.test(combined);
+		const hasCurrent = /(?:^|[_/\s])(?:i[123]|i[rsy]|current|amp)(?:$|[_/\s])/i.test(combined);
+		const hasPF = /(?:^|[_/\s])(?:pf|power[_\s]?factor)(?:$|[_/\s])/i.test(combined);
+		const hasFreq = /(?:^|[_/\s])(?:freq|hz)(?:$|[_/\s])/i.test(combined);
+		const hasKwh = /kwh/i.test(combined);
+		const hasKvah = /kvah/i.test(combined);
+		const hasKw = /(?:^|[_/\s])kw(?:$|[_/\s])/i.test(combined) && !hasKwh;
+		const hasKva = /(?:^|[_/\s])kva(?:$|[_/\s])/i.test(combined) && !hasKvah;
+		const hasKvar = /kvar/i.test(combined);
+
+		if (hasCurrent && !hasVoltage && !hasKwh && !hasPF) return 'Current';
+		if (hasVoltage && !hasCurrent && !hasKwh && !hasPF) return 'Voltage';
+		if (hasPF && !hasKwh && !hasVoltage && !hasCurrent) return 'Power Factor';
+		if (hasFreq && !hasKwh && !hasVoltage && !hasCurrent) return 'Frequency';
+		if (hasKvah) return 'Apparent Energy (kVAh)';
+		if (hasKwh) return 'Energy Consumption';
+		if (hasKva) return 'Apparent Power (kVA)';
+		if (hasKw) return 'Power';
+		if (hasKvar) return 'Reactive Power (kVAR)';
+
+		return 'Energy Consumption';
+	}, [selectedDevice, settings.customDashboardDevices, settings.dashboardMeterIds, allMeters]);
 
 	const isTotalKwhMapped = selectedDevice && (customDevice 
 		? !!customDevice.totalKwhMeterId 
@@ -475,10 +518,9 @@ export default function DashboardComponents() {
 							<div className="card-icon" style={{ backgroundColor: isDarkMode ? '#00F2EA' : '#84CC44' }}>
 								<span className="material-symbols-rounded">tune</span>
 							</div>
-							<h2 className="card-title" style={{ fontSize: '18px' }}>Filters</h2>
+							<h2 className="card-title" style={{ fontSize: '18px' }}>Selected Meter</h2>
 						</div>
 						<div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flexShrink: 0 }}>
-							<span style={{ fontSize: '12px', color: '#9CA3AF', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Selected Meter</span>
 							{(() => {
 								if (settings.customDashboardDevices && settings.customDashboardDevices.length > 0) {
 									const dev = settings.customDashboardDevices.find(d => d.id === selectedDevice);
@@ -486,7 +528,7 @@ export default function DashboardComponents() {
 									const deviceName = dev?.name || '';
 									return (
 										<>
-											<h1 style={{ fontSize: '22px', fontWeight: '700', margin: 0, color: isDarkMode ? '#ffffff' : '#000', letterSpacing: '-0.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+											<h1 style={{ fontSize: '28px', fontWeight: '700', margin: 0, color: isDarkMode ? '#ffffff' : '#000', letterSpacing: '-0.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
 												{displayLabel}
 											</h1>
 											{dev?.label && deviceName && (
@@ -498,7 +540,7 @@ export default function DashboardComponents() {
 									);
 								}
 								return (
-									<h1 style={{ fontSize: '22px', fontWeight: '700', margin: 0, color: isDarkMode ? '#ffffff' : '#000', letterSpacing: '-0.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+									<h1 style={{ fontSize: '28px', fontWeight: '700', margin: 0, color: isDarkMode ? '#ffffff' : '#000', letterSpacing: '-0.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
 										{selectedDevice || 'N/A'}
 									</h1>
 								);
@@ -579,7 +621,7 @@ export default function DashboardComponents() {
 											speed
 										</span>
 									</div>
-									<h1 className="card-title">Current Demand</h1>
+									<h1 className="card-title">Present Demand</h1>
 								</div>
 								<div className="total-status">
 									<div className="total-status-stat" style={{ 
@@ -612,7 +654,7 @@ export default function DashboardComponents() {
 							<div className="card-icon" style={{ backgroundColor: isDarkMode ? '#FFCC00' : 'var(--load-util-color)' }}>
 								<span className="material-symbols-rounded">electric_bolt</span>
 							</div>
-							<h1 className="card-title">Energy Consumption</h1>
+							<h1 className="card-title">{graphLabel}</h1>
 						</div>
 								{/* <div className="energy-graph-values">
 									<div className="graph-v1">

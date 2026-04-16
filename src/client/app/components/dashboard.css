@@ -1532,7 +1532,7 @@ body.dark-mode .device-count {
     display: grid;
     gap: 18px;
     padding-bottom: 24px;
-    grid-template-columns: 20% 24% 24% 28%;
+    grid-template-columns: 20% 24% 24% 27%;
     grid-template-rows: 115px 115px 360px;
     grid-template-areas:
         "total load energy filter"

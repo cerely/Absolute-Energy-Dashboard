@@ -58,6 +58,18 @@ async function createCikArray(graph, conn) {
 			}
 		}
 	}
+
+	// NEW: Ensure all destination units have an identity mapping in CIK, 
+	// even if they are not in 'sources' (not used by any meter).
+	// This prevents front-end errors when switching to a unit that 
+	// has no active meters but is otherwise valid.
+	for (const dest of destinations) {
+		const destId = dest.id;
+		if (!c.some(item => item.source === destId && item.destination === destId)) {
+			c.push({ source: destId, destination: destId, slope: 1, intercept: 0 });
+		}
+	}
+
 	// TODO: The table in the database for the logical Cik needs to be wiped and these values stored. This code 
 	// will be added once the database table for using it to get readings is set.
 	// At the moment, we just return the array.

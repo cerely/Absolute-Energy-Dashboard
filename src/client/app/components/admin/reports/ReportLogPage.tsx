@@ -42,6 +42,7 @@ export default function ReportLogPage() {
 	const [loading, setLoading] = useState(true);
 	const [deleting, setDeleting] = useState<number | null>(null);
 	const [downloading, setDownloading] = useState<number | null>(null);
+	const [mailing, setMailing] = useState<number | null>(null);
 
 	const load = useCallback(async () => {
 		setLoading(true);
@@ -95,6 +96,27 @@ export default function ReportLogPage() {
 		}
 	};
 
+	const handleEmail = async (id: number) => {
+		setMailing(id);
+		try {
+			const res = await fetch('/api/dashboard/mail-monthly-bill', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ reportId: id })
+			});
+			const data = await res.json();
+			if (data.success) {
+				toast.success('Email sent successfully!');
+			} else {
+				throw new Error(data.error || 'Failed to send email');
+			}
+		} catch (e: any) {
+			toast.error(e.message || 'Error occurred while sending email');
+		} finally {
+			setMailing(null);
+		}
+	};
+
 	const bg = isDark ? '#0d1117' : '#f6f8fa';
 	const cardBg = isDark ? '#161b22' : '#ffffff';
 	const textPrimary = isDark ? '#e6edf3' : '#1a1a2e';
@@ -126,7 +148,7 @@ export default function ReportLogPage() {
 			) : (
 				<div style={{ background: cardBg, borderRadius: '12px', border: `1px solid ${border}`, overflow: 'hidden', boxShadow: isDark ? '0 4px 16px rgba(0,0,0,0.4)' : '0 2px 8px rgba(0,0,0,0.08)' }}>
 					<div style={{ overflowX: 'auto' }}>
-						<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '1100px' }}>
+						<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '1150px' }}>
 							<thead>
 								<tr style={{ background: headerBg, color: '#fff' }}>
 									<th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600 }}>Log Info</th>
@@ -138,6 +160,7 @@ export default function ReportLogPage() {
 									<th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600 }}>kWh</th>
 									<th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600 }}>Grand Total (₹)</th>
 									<th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 600 }}>PDF</th>
+									<th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 600 }}>Email</th>
 									<th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 600 }}>Action</th>
 								</tr>
 							</thead>
@@ -166,7 +189,16 @@ export default function ReportLogPage() {
 													disabled={downloading === r.id}
 													style={{ background: '#0d2d5e', border: 'none', borderRadius: '4px', color: '#fff', cursor: 'pointer', padding: '4px 8px', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
 												>
-													{downloading === r.id ? <Spinner size="sm" /> : <><span className="material-symbols-rounded" style={{ fontSize: '14px' }}>download</span> PDF</>}
+													{downloading === r.id ? <Spinner size="sm" /> : <><span className="material-symbols-rounded" style={{ fontSize: '14px' }}>download</span></>}
+												</button>
+											</td>
+											<td style={{ padding: '9px 12px', textAlign: 'center' }}>
+												<button
+													onClick={() => handleEmail(r.id)}
+													disabled={mailing === r.id}
+													style={{ background: '#10b981', border: 'none', borderRadius: '4px', color: '#fff', cursor: 'pointer', padding: '4px 8px', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+												>
+													{mailing === r.id ? <Spinner size="sm" /> : <><span className="material-symbols-rounded" style={{ fontSize: '14px' }}>mail</span></>}
 												</button>
 											</td>
 											<td style={{ padding: '9px 12px', textAlign: 'center' }}>

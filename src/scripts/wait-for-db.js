@@ -16,15 +16,17 @@ const { getConnection } = require('../server/db');
 		process.exit(0);
 	} catch (err) {
 		const msg = err.message || String(err);
-		console.error(`Database not ready: ${msg}`);
 		
 		// Map known "starting up" errors to exit code 1 for retry
-		if (msg.includes('starting up') || 
-		    msg.includes('not yet accepting connections') || 
-		    msg.includes('ECONNREFUSED')) {
+		if (msg.includes('EAI_AGAIN') || msg.includes('ENOTFOUND')) {
+			console.log('  Waiting for database service to appear on network (DNS lookup)...');
+			process.exit(1);
+		} else if (msg.includes('starting up') || msg.includes('not yet accepting connections') || msg.includes('ECONNREFUSED')) {
+			console.log('  Database container is up; waiting for Postgres system to finish booting...');
 			process.exit(1);
 		}
 		
+		console.error(`Database not ready: ${msg}`);
 		// For unknown/fatal errors, exit with something else
 		process.exit(2);
 	}

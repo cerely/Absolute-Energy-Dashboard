@@ -31,7 +31,7 @@ export default function SimpleLinePage({ selectedDeviceId }: SimpleLinePageProps
 	const allMeters = useAppSelector(selectAllMeters);
 	const theme = useAppSelector(selectTheme);
 	const isDarkMode = theme === 'dark';
-	const { settings } = useDashboardSettings();
+	const { settings, isLoaded } = useDashboardSettings();
 
 	const chartColors = React.useMemo(() => isDarkMode
 		? ['#00f2ea', '#FF007F', '#FFCC00', '#5E5CE6', '#10B981']
@@ -40,6 +40,8 @@ export default function SimpleLinePage({ selectedDeviceId }: SimpleLinePageProps
 
 	// Initial data load effect
 	React.useEffect(() => {
+		if (!isLoaded || !allMeters || allMeters.length === 0) return;
+
 		let meters: { id: number; name: string }[];
 
 		const customDevice = selectedDeviceId ? settings.customDashboardDevices?.find(d => d.id === selectedDeviceId) : null;
@@ -160,9 +162,16 @@ export default function SimpleLinePage({ selectedDeviceId }: SimpleLinePageProps
 		return [min - padding, max + padding];
 	}, [data]);
 
-	if (error) return <div>Error: {error}</div>;
-	if (!loaded) return <div>Loading…</div>;
-	if (data.length === 0) return <div style={{ padding: '20px', textAlign: 'center', color: '#9CA3AF', fontSize: '14px' }}>No data available for the selected meters. Try selecting different meters in Settings.</div>;
+	if (error) return <div style={{ padding: '20px', color: '#EF4444' }}>Error: {error}</div>;
+	if (!isLoaded || !loaded) {
+		return (
+			<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '290px', gap: '12px' }}>
+				<div className="spinner-border text-primary" role="status" style={{ width: '1.5rem', height: '1.5rem', borderRightColor: 'transparent' }}></div>
+				<span style={{ fontSize: '12px', color: '#9CA3AF' }}>Loading energy data...</span>
+			</div>
+		);
+	}
+	if (data.length === 0) return <div style={{ padding: '20px', textAlign: 'center', color: '#9CA3AF', fontSize: '14px', height: '290px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>No data available for the selected meters. Verify settings.</div>;
 
 	return (
 		<Plot

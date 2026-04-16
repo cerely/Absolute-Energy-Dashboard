@@ -58,6 +58,9 @@ data.json
 *.diff
 *.patch
 
+!src/server/sql/global_settings/create_global_settings_table.sql
+!src/server/sql/mqtt/create_mqtt_sources_table.sql
+
 # nohup.out is created when working inside the remote container with Visual Studio Code.
 nohup.out
 

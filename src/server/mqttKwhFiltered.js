@@ -48,6 +48,15 @@ async function getOrCreateUnit(unitName = 'unitless') {
     ]
   );
 
+  // Add identity conversion in CIK table so OED recognises this unit as
+  // compatible for graphing (unit → itself, slope 1, intercept 0).
+  await db.none(
+    `INSERT INTO cik (source_id, destination_id, slope, intercept)
+     VALUES ($1, $1, 1, 0)
+     ON CONFLICT DO NOTHING`,
+    [row.id]
+  );
+
   return row.id;
 }
 

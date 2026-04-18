@@ -128,7 +128,7 @@ export default function RadarChartComponent() {
 					const rData: number[] = [];
 					const hoverText: string[] = [];
 					const readings = values(readingsData);
-					readings.sort((a, b) => moment.utc(a.startTimestamp).valueOf() - moment.utc(b.startTimestamp).valueOf());
+					readings.sort((a, b) => a.startTimestamp - b.startTimestamp);
 					readings.forEach(reading => {
 						// As usual, we want to interpret the readings in UTC. We lose the timezone as these start/endTimestamp
 						// are equivalent to Unix timestamp in milliseconds.
@@ -185,7 +185,7 @@ export default function RadarChartComponent() {
 					const rData: number[] = [];
 					const hoverText: string[] = [];
 					const readings = values(readingsData);
-					readings.sort((a, b) => moment.utc(a.startTimestamp).valueOf() - moment.utc(b.startTimestamp).valueOf());
+					readings.sort((a, b) => a.startTimestamp - b.startTimestamp);
 					readings.forEach(reading => {
 						// As usual, we want to interpret the readings in UTC. We lose the timezone as these start/endTimestamp
 						// are equivalent to Unix timestamp in milliseconds.

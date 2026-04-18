@@ -127,7 +127,7 @@ export const selectPlotlyBarDataFromResult =
 
 						// Center the data point perfectly inside the duration bucket so that 
 						// grouped bars do not straddle past the starting boundaries.
-						const center = moment.utc(start).add(minDurationMs / 2, 'milliseconds');
+						const center = moment.utc(barReading.startTimestamp + minDurationMs / 2);
 						xData.push(center.format('YYYY-MM-DD HH:mm:ss'));
 
 						const readingValue =

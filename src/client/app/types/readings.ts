@@ -27,15 +27,15 @@ export interface LineReading extends BarReading {
 export type LineReadings = Record<number, LineReading[]>;
 export interface BarReading {
 	reading: number;
-	startTimestamp: number;
-	endTimestamp: number;
+	startTimestamp: string | number;
+	endTimestamp: string | number;
 }
 
 export type BarReadings = Record<number, BarReading[]>;
 
 interface ReadingInterval {
-	startTimestamp: number;
-	endTimestamp: number;
+	startTimestamp: string | number;
+	endTimestamp: string | number;
 }
 
 export interface ThreeDReading {

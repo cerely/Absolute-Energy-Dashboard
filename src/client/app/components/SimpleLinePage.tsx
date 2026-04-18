@@ -109,17 +109,25 @@ export default function SimpleLinePage({ selectedDeviceId }: SimpleLinePageProps
 			const x: string[] = [];
 			const y: number[] = [];
 			const days = settings.dashboardGraphDays || 1;
-			const threshold = new Date();
-			threshold.setUTCHours(0, 0, 0, 0);
-			threshold.setUTCDate(threshold.getUTCDate() - days + 1);
+			// Build a local-time threshold string for comparison.
+			// Timestamps from the API are timezone-agnostic local times (e.g. "2026-04-18T18:30:00")
+			// so we must compare against a local time string, NOT UTC.
+			const now = new Date();
+			const thresholdDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - days + 1);
+			const thresholdStr = thresholdDate.getFullYear().toString().padStart(4, '0') + '-' +
+				(thresholdDate.getMonth() + 1).toString().padStart(2, '0') + '-' +
+				thresholdDate.getDate().toString().padStart(2, '0') + 'T00:00:00';
 
 			readings.forEach((r: any) => {
 				const timestamp = r.e ?? r.end_timestamp ?? r.endTimestamp;
 				const reading = r.r ?? r.reading;
 				if (timestamp != null && reading != null) {
-					const date = new Date(timestamp);
-					if (date >= threshold) {
-						x.push(date.toISOString());
+					// The timestamp is already a timezone-agnostic local time string
+					// from the server's patched moment.toJSON (format: "YYYY-MM-DDTHH:mm:ss").
+					// Pass it directly to Plotly to avoid UTC re-interpretation.
+					const tsStr = String(timestamp);
+					if (tsStr >= thresholdStr) {
+						x.push(tsStr);
 						y.push(Number(reading));
 					}
 				}

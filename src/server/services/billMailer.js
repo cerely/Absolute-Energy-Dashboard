@@ -9,31 +9,33 @@ const { log } = require('../log');
  * If reportId is provided, it fetches and mails that specific saved report PDF.
  * Otherwise, it calculates the previous month's bill extract on the fly (Automated).
  */
-async function sendMonthlyBill(reportId = null) {
-	// Skip if mailer is not configured
-	if (!config.mailer || config.mailer.method === 'none' || !config.mailer.method) {
-		log.info('[BillMailer] Mailer not configured — skipping monthly bill email.');
-		return;
-	}
 
-	let transporter;
-	try {
-		if (config.mailer.method === 'secure-smtp') {
-			transporter = nodemailer.createTransport({
-				host: config.mailer.smtp,
-				port: config.mailer.port,
-				secure: true,
-				auth: {
-					user: config.mailer.ident,
-					pass: config.mailer.credential
-				}
-			});
-		} else {
-			log.info(`[BillMailer] Mailer method '${config.mailer.method}' not supported for bills — skipping.`);
-			return;
+// Reusable SMTP transporter (created once, reused across sends to avoid
+// repeated TLS handshakes which are the main source of latency).
+let _transporter = null;
+function getTransporter() {
+	if (_transporter) return _transporter;
+	if (!config.mailer || config.mailer.method === 'none' || !config.mailer.method) return null;
+	if (config.mailer.method !== 'secure-smtp') return null;
+
+	_transporter = nodemailer.createTransport({
+		host: config.mailer.smtp,
+		port: config.mailer.port,
+		secure: true,
+		pool: true,          // keep the connection alive for reuse
+		maxConnections: 3,
+		auth: {
+			user: config.mailer.ident,
+			pass: config.mailer.credential
 		}
-	} catch (err) {
-		log.error(`[BillMailer] Failed to create transporter: ${err.message}`);
+	});
+	return _transporter;
+}
+
+async function sendMonthlyBill(reportId = null) {
+	const transporter = getTransporter();
+	if (!transporter) {
+		log.info('[BillMailer] Mailer not configured — skipping monthly bill email.');
 		return;
 	}
 

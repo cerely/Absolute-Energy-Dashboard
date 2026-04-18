@@ -307,16 +307,17 @@ router.post('/settings', async (req, res) => {
     }
 });
 
-router.post('/mail-monthly-bill', async (req, res) => {
-    try {
-        const { sendMonthlyBill } = require('../services/billMailer');
-        const { reportId } = req.body;
-        await sendMonthlyBill(reportId);
-        res.json({ success: true, message: 'Report email triggered successfully.' });
-    } catch (error) {
-        console.error('Error triggering manual bill email:', error);
-        res.status(500).json({ success: false, error: 'Failed to send report email.' });
-    }
+router.post('/mail-monthly-bill', (req, res) => {
+    const { sendMonthlyBill } = require('../services/billMailer');
+    const { reportId } = req.body;
+
+    // Respond immediately — email sends in the background
+    res.json({ success: true, message: 'Report email queued. It will be delivered shortly.' });
+
+    // Fire-and-forget: send email asynchronously
+    sendMonthlyBill(reportId).catch(error => {
+        console.error('Background bill email error:', error);
+    });
 });
 
 module.exports = router;

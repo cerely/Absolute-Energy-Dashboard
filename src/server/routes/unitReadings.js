@@ -58,10 +58,8 @@ function formatReadingRow(readingRow) {
 		reading: readingRow.reading_rate,
 		min: readingRow.min_rate,
 		max: readingRow.max_rate,
-		// This returns a Unix timestamp in milliseconds. This should be smaller in size when sent to the client
-		// compared to sending the formatted moment object. All values are sent as a string.
-		// The consequence of doing this is that when the client recreates this as a moment it will do it in
-		// the local timezone of the client. That is why the client code generally uses moment.utc().
+		// Send as milliseconds for backwards compat, BUT also send the raw ISO string
+		// so the frontend can display the actual local time instead of UTC-shifted time.
 		startTimestamp: readingRow.start_timestamp.valueOf(),
 		endTimestamp: readingRow.end_timestamp.valueOf()
 	};

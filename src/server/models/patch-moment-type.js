@@ -16,6 +16,12 @@ function patchMomentType(pgp) {
 		return this.format('YYYY-MM-DD HH:mm:ss') + '+00:00';
 	};
 
+	// Override toJSON so that the REST API sends timezone-agnostic strings to the frontend.
+	// This prevents Plotly/React from mis-shifting the time by applying the user's browser timezone.
+	moment.fn.toJSON = function toJSON() {
+		return this.format('YYYY-MM-DDTHH:mm:ss');
+	};
+
 	// This patches timestamps returned from postgres so that they are moment objects.
 	const TIMESTAMPTZ_OID = 1184;
 	const TIMESTAMP_OID = 1114;

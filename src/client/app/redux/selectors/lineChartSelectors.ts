@@ -72,11 +72,11 @@ export const selectPlotlyMeterData = selectFromLineReadingsResult(
 
 				// The scaling is the factor to change the reading by. It divides by the area while will be 1 if no scaling by area.
 				readings.forEach(reading => {
-					// As usual, we want to interpret the readings in UTC. We lose the timezone as this as the start/endTimestamp
-					// are equivalent to Unix timestamp in milliseconds.
-					const st = moment.utc(reading.startTimestamp);
+					// Use local moment so the browser applies its timezone (e.g. +0530 for IST)
+					// to display the correct local time on the graph axis.
+					const st = moment(reading.startTimestamp);
 					// Time reading is in the middle of the start and end timestamp
-					const timeReading = st.add(moment.utc(reading.endTimestamp).diff(st) / 2);
+					const timeReading = st.add(moment(reading.endTimestamp).diff(st) / 2);
 					xData.push(timeReading.format('YYYY-MM-DD HH:mm:ss'));
 					const readingValue = reading.reading * scaling;
 					yData.push(readingValue);
@@ -139,12 +139,11 @@ export const selectPlotlyGroupData = selectFromLineReadingsResult(
 				const yData: number[] = [];
 				const hoverText: string[] = [];
 				readings.forEach(reading => {
-					// As usual, we want to interpret the readings in UTC. We lose the timezone as this as the start/endTimestamp
-					// are equivalent to Unix timestamp in milliseconds.
-					const st = moment.utc(reading.startTimestamp);
+					// Use local moment so the browser applies its timezone (e.g. +0530 for IST)
+					const st = moment(reading.startTimestamp);
 					// Time reading is in the middle of the start and end timestamp
-					const timeReading = st.add(moment.utc(reading.endTimestamp).diff(st) / 2);
-					xData.push(timeReading.utc().format('YYYY-MM-DD HH:mm:ss'));
+					const timeReading = st.add(moment(reading.endTimestamp).diff(st) / 2);
+					xData.push(timeReading.format('YYYY-MM-DD HH:mm:ss'));
 					const readingValue = reading.reading * scaling;
 					yData.push(readingValue);
 					hoverText.push(`<b> ${timeReading.format('ddd, ll LTS')} </b> <br> ${label}: ${readingValue.toPrecision(6)} ${lineUnitLabel}`);

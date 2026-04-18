@@ -4,11 +4,16 @@
 # * file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # *
 
-version: "3.8"
+networks:
+    oed_net:
+        driver: bridge
+
 services:
     # Database service. It's PostgreSQL, see the
     # Dockerfile in ./database
     database:
+        networks:
+            - oed_net
         build: ./containers/database/
         environment:
             # Custom PGDATA per recommendations from official Docker page
@@ -37,7 +42,7 @@ services:
             - OED_DB_DATABASE=oed
             - OED_DB_TEST_DATABASE=oed_testing
             - OED_DB_PASSWORD=opened
-            - OED_DB_HOST=database # Docker will set this hostname
+            - OED_DB_HOST=database
             - OED_DB_PORT=5432
             - OED_TOKEN_SECRET=super_secret_token_123
             - OED_LOG_FILE=log.txt
@@ -56,12 +61,12 @@ services:
             # If in a subdirectory, set it here
             # - OED_SUBDIR=/subdir/
             # Set the correct build environment.
+            - NODE_OPTIONS=--dns-result-order=ipv4first
         build:
             context: ./
             dockerfile: ./containers/web/Dockerfile
-        # Link to the database so the app can persist data
-        links:
-            - database
+        networks:
+            - oed_net
 
         restart: on-failure
 

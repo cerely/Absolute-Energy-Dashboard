@@ -78,7 +78,7 @@ if (process.env.NODE_ENV === 'production') {
 	);
 
 	// Use Terser as an optimization minimizer (not a plugin entry)
-	config.optimization = {
+	config.optimization 	= {
 		minimize: true,
 		minimizer: [
 			new TerserPlugin({

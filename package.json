@@ -63,7 +63,7 @@
 		"@wojtekmaj/react-daterange-picker": "~6.0.0",
 		"axios": "~1.6.2",
 		"bcryptjs": "~2.4.3",
-		"body-parser": "~1.20.2",
+		"body-parser": "~2.2.2",
 		"bootstrap": "~5.3.3",
 		"csv": "~5.3.2",
 		"csv-stringify": "~5.6.5",

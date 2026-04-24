@@ -298,10 +298,15 @@ async function startMqttClient() {
 
   const TOPIC = config.topic || '#';
   const filtersText = config.filters || '';
-  const filterList = filtersText.split(',').map(f => f.trim()).filter(f => f.length > 0);
+  const filterList = filtersText.split(',')
+    .map(f => {
+      let excludeStr = f.trim();
+      if (excludeStr.startsWith('!')) excludeStr = excludeStr.substring(1).trim();
+      return excludeStr.toLowerCase();
+    })
+    .filter(f => f.length > 0);
 
   const meterMap = {};
-  let lastRefreshTime = 0;
   const REFRESH_INTERVAL = 120000;
 
   currentClient.on('connect', () => {
@@ -309,14 +314,24 @@ async function startMqttClient() {
     currentClient.subscribe(TOPIC);
   });
 
+  // Concurrency lock for view refreshes
+  let isRefreshing = false;
+
   // Run view refresh on a dedicated timer — independent of message arrival.
   // This ensures the materialized views (hourly/daily) stay up-to-date
   // even if MQTT message rate slows or stops temporarily.
   let refreshTimer = setInterval(async () => {
+    if (isRefreshing) {
+      console.log('MQTT: Skipping view refresh, previous refresh still in progress.');
+      return;
+    }
+    isRefreshing = true;
     try {
       await refreshAllReadingViews();
     } catch (err) {
       console.error('refreshAllReadingViews timer error:', err);
+    } finally {
+      isRefreshing = false;
     }
   }, REFRESH_INTERVAL);
 
@@ -338,10 +353,8 @@ async function startMqttClient() {
       const lowerCheck = checkPath.toLowerCase();
 
       // All filters are treated as exclusions (ignored prefixes) as per the UI description.
-      for (const f of filterList) {
-        const excludeStr = f.startsWith('!') ? f.substring(1) : f;
-        const exclude = excludeStr.trim().toLowerCase();
-        if (exclude && (lowerFullPath.includes(exclude) || lowerCheck.includes(exclude))) {
+      for (const exclude of filterList) {
+        if (lowerFullPath.includes(exclude) || lowerCheck.includes(exclude)) {
           return;
         }
       }
@@ -403,16 +416,6 @@ async function startMqttClient() {
     }
 
     await processPayload(payload, null, topic);
-
-    const now = Date.now();
-    if (now - lastRefreshTime > REFRESH_INTERVAL) {
-      lastRefreshTime = now;
-      try {
-        await refreshAllReadingViews();
-      } catch (err) {
-        console.error('refreshAllReadingViews error:', err);
-      }
-    }
   });
 
   currentClient.on('error', e => console.error('MQTT error:', e.message));

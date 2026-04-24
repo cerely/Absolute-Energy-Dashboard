@@ -30,6 +30,11 @@ function getDB(connectionParameters) {
 		// clone to avoid mutating caller object
 		connectionParameters = Object.assign({}, connectionParameters, { password: String(connectionParameters.password) });
 	}
+	
+	// Ensure a healthy connection pool size for high-frequency MQTT inserts
+	connectionParameters = connectionParameters || {};
+	connectionParameters.max = connectionParameters.max || 30;
+
 	return pgp(connectionParameters);
 }
 

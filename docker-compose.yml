@@ -15,6 +15,7 @@ services:
         networks:
             - oed_net
         build: ./containers/database/
+        command: postgres -c autovacuum_naptime=15s -c autovacuum_vacuum_scale_factor=0.05 -c autovacuum_analyze_scale_factor=0.05
         environment:
             # Custom PGDATA per recommendations from official Docker page
             - PGDATA=/var/lib/postgresql/data/pgdata
@@ -68,7 +69,7 @@ services:
         networks:
             - oed_net
 
-        restart: on-failure
+        restart: unless-stopped
 
         # Load the source code into the container.
         # Using a volume allows autorebuild to work.
@@ -88,7 +89,7 @@ services:
                 # We need the database and it has to be ready for work (see healthcheck above).
                 condition: service_healthy
         healthcheck:
-            test: [ "CMD", "curl", "-f", "http://localhost:3000" ]
+            test: [ "CMD", "curl", "-f", "http://localhost:3000/api/version" ]
             interval: 10s
             timeout: 5s
             retries: 5

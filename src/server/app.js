@@ -122,6 +122,7 @@ app.use(favicon(path.join(__dirname, '..', 'client', 'public', 'abs-logo.png')))
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: false, limit: '50mb' }));
 
+app.use(require('express-status-monitor')());
 app.use('/api/users', users);
 app.use('/api/meters', meters);
 app.use('/api/readings', readings);
